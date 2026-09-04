@@ -438,7 +438,13 @@ async function loadDiagram(id) {
   resultId.value = String(id)
   const cached = uni.getStorageSync(`aiFlowchartResult:${resultId.value}`)
   if (cached?.nodes?.length || cached?.lanes?.length) chart.value = flattenLanes(cached)
+  const isConversationDraft = String(resultId.value).startsWith('conversation-')
   loading.value = !(cached?.nodes?.length || cached?.lanes?.length)
+  if (isConversationDraft && (cached?.nodes?.length || cached?.lanes?.length)) {
+    loading.value = false
+    queueAutoExport()
+    return
+  }
   try {
     chart.value = flattenLanes(await getFlowchartDetail(resultId.value))
     uni.setStorageSync(`aiFlowchartResult:${resultId.value}`, chart.value)

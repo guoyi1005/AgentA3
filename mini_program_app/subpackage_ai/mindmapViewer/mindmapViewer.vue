@@ -235,7 +235,12 @@ async function loadMindmap(id) {
   if (!id) return
   const cached = uni.getStorageSync(`aiMindmapResult:${id}`)
   if (cached?.nodes) applyMindmap(cached)
+  const isConversationDraft = String(id).startsWith('conversation-')
   loading.value = !cached
+  if (isConversationDraft && cached?.nodes) {
+    loading.value = false
+    return
+  }
   try {
     const result = await getMindmapDetail(id)
     applyMindmap(result)

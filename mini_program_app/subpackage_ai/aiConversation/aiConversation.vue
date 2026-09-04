@@ -194,6 +194,72 @@
               </view>
             </view>
             <view
+              v-if="message.role === 'assistant' && isDiagramMessage(message)"
+              class="diagram-canvas-card"
+            >
+              <view class="diagram-canvas-card__head">
+                <text class="diagram-canvas-card__title">{{ getDiagramTitle(message) }}</text>
+                <text class="diagram-canvas-card__type">{{ getDiagramTypeLabel(message) }}</text>
+              </view>
+              <text v-if="getDiagramSummary(message)" class="diagram-canvas-card__summary">{{ getDiagramSummary(message) }}</text>
+              <view v-if="getDiagramPreviewNodes(message).length" class="diagram-canvas-card__nodes">
+                <text
+                  v-for="(node, nodeIndex) in getDiagramPreviewNodes(message)"
+                  :key="`${message.localId || message.id}-diagram-node-${nodeIndex}`"
+                  class="diagram-canvas-card__node"
+                >{{ node }}</text>
+              </view>
+              <view class="diagram-canvas-card__action" @click="openDiagramCanvas(message)">打开画布查看与编辑</view>
+            </view>
+            <view
+              v-if="message.role === 'assistant' && pptTemplateSelectionFromMessage(message)"
+              class="ppt-template-picker"
+            >
+              <text class="ppt-template-picker__hint">请选择 PPT 模板后继续生成</text>
+              <view
+                v-for="template in pptTemplateSelectionFromMessage(message).templates"
+                :key="`${message.localId || message.id}-ppt-${template.id}`"
+                class="ppt-template-picker__card"
+                @click="confirmPptTemplate(template.id, message)"
+              >
+                <text class="ppt-template-picker__name">{{ template.name || template.id }}</text>
+                <text v-if="template.default" class="ppt-template-picker__tag">默认</text>
+                <text v-if="template.description" class="ppt-template-picker__desc">{{ template.description }}</text>
+              </view>
+            </view>
+            <view
+              v-if="shouldShowEvidence(message)"
+              class="evidence-panel"
+              :class="`evidence-panel--${getEvidenceSummary(message).state}`"
+            >
+              <view class="evidence-panel__header" @click="toggleEvidence(message)">
+                <view class="evidence-panel__heading-row">
+                  <text class="evidence-panel__icon">{{ getEvidenceIcon(message) }}</text>
+                  <text class="evidence-panel__title">{{ getEvidenceCompactLabel(message) }}</text>
+                </view>
+                <text class="evidence-panel__toggle">
+                  {{ isEvidenceExpanded(message) ? '收起' : '查看' }}
+                </text>
+              </view>
+              <view v-if="isEvidenceExpanded(message)" class="evidence-panel__sources">
+                <text class="evidence-panel__meta">
+                  {{ getEvidenceAgentLabel(message) }} · {{ getEvidenceGeneratedAtLabel(message) }}
+                </text>
+                <view
+                  v-for="source in getEvidenceSources(message)"
+                  :key="source.evidenceId"
+                  class="evidence-source"
+                >
+                  <view class="evidence-source__header">
+                    <text class="evidence-source__title">{{ source.title || '未命名来源' }}</text>
+                    <text class="evidence-source__type">{{ getEvidenceSourceLabel(source.sourceType) }}</text>
+                  </view>
+                  <text v-if="source.excerpt" class="evidence-source__excerpt">{{ source.excerpt }}</text>
+                  <text v-if="source.retrievedAt" class="evidence-source__time">检索时间：{{ source.retrievedAt }}</text>
+                </view>
+              </view>
+            </view>
+            <view
               v-if="message.role === 'assistant' && !isSmartWritingContinueMessage(message) && (getMessageChoicePrompt(message) || getFollowUpActions(message).length)"
               class="follow-up-panel"
             >
@@ -270,6 +336,10 @@
       <view id="message-anchor"></view>
     </scroll-view>
 
+    <view v-if="showScrollToBottom" class="scroll-to-bottom" @click="resumeAutoFollow">
+      回到底部 ↓
+    </view>
+
     <scroll-view v-if="pendingResources.length" class="pending-resources" scroll-x>
       <view v-for="item in pendingResources" :key="item.localId" class="pending-resource">
         <view class="pending-resource__body">
@@ -296,22 +366,41 @@
         </view>
       </view>
     </view>
-    <view class="composer">
-      <textarea
-        v-model="inputValue"
-        class="composer-input"
-        placeholder="继续问智能助手"
-        maxlength="4000"
-        auto-height
-        confirm-type="send"
-        :confirm-hold="true"
-        @confirm="handleInputConfirm"
-        @keydown.enter="handleEnterKey"
-      />
-      <view v-if="sending" class="send-btn send-btn--stop" :class="{ disabled: stopping }" @click="stopGeneration">
-        {{ stopping ? '停止中' : '停止' }}
+    <view class="composer-zone">
+      <view class="composer-tools">
+        <view
+          class="composer-tool"
+          :class="{ 'composer-tool--active': onlineSearch }"
+          @click="onlineSearch = !onlineSearch"
+        >联网搜索</view>
+        <view
+          class="composer-tool"
+          :class="{ 'composer-tool--active': deepThinking }"
+          @click="deepThinking = !deepThinking"
+        >深度思考</view>
       </view>
-      <view v-else class="send-btn" :class="{ disabled: !canSend }" @click="sendMessage()">发送</view>
+      <view class="composer">
+        <view
+          class="composer-attach"
+          :class="{ disabled: sending || pendingResources.length >= 8 }"
+          @click="chooseResources"
+        >+</view>
+        <textarea
+          v-model="inputValue"
+          class="composer-input"
+          placeholder="继续问智能助手"
+          maxlength="4000"
+          auto-height
+          confirm-type="send"
+          :confirm-hold="true"
+          @confirm="handleInputConfirm"
+          @keydown.enter="handleEnterKey"
+        />
+        <view v-if="sending" class="send-btn send-btn--stop" :class="{ disabled: stopping }" @click="stopGeneration">
+          {{ stopping ? '停止中' : '停止' }}
+        </view>
+        <view v-else class="send-btn" :class="{ disabled: !canSend }" @click="sendMessage()">发送</view>
+      </view>
     </view>
   </view>
 </template>
@@ -515,9 +604,12 @@ export default {
       activeStreamTask: null,
       activeStreamLocalId: '',
       activeLlmModel: '',
+      onlineSearch: true,
+      deepThinking: false,
       stopRequestedLocalId: '',
       stopping: false,
       autoFollowMessages: true,
+      showScrollToBottom: false,
       exportPanelMessageKey: '',
       viewEpoch: 0,
       localRevision: 0,
@@ -593,12 +685,15 @@ export default {
         const data = res?.data || {}
         this.messages = (data.messages || []).map((item) => {
           const merged = mergeAssistantMessage({}, item)
+          const retrievalMeta = merged.retrievalMeta || {}
           const isAction = item.role === 'user' && String(item.answerType || '').startsWith('action_')
           return {
             ...merged,
             role: isAction ? 'action' : item.role,
             requestContent: isAction ? String(item?.outputMeta?.requestContent || '') : '',
             interactionType: isAction ? String(item?.outputMeta?.interactionType || '') : '',
+            diagram: merged.diagram || retrievalMeta.diagram || null,
+            diagramType: merged.diagramType || retrievalMeta.diagramType || '',
             localId: `${item.role}-${item.id}`
           }
         })
@@ -640,6 +735,9 @@ export default {
       const interactionType = String(requestOptions.interactionType || '').trim()
       const sceneMode = String(requestOptions.sceneMode || '').trim()
       const llmModel = String(requestOptions.llmModel || this.activeLlmModel || '').trim()
+      const metadataExtra = requestOptions.metadata && typeof requestOptions.metadata === 'object'
+        ? requestOptions.metadata
+        : {}
       if (!hasRequestText) {
         this.inputValue = ''
         this.pendingResources = []
@@ -674,6 +772,11 @@ export default {
         input: requestText,
         ...(llmModel ? { llmModel } : {}),
         ...(inputAttachments.length ? { attachments: inputAttachments } : {}),
+        metadata: {
+          onlineSearch: this.onlineSearch,
+          deepThinking: this.deepThinking,
+          ...metadataExtra
+        },
         ...(interactionType ? {
           interactionType,
           displayInput: displayText,
@@ -758,6 +861,7 @@ export default {
             if (!String(finalContent).trim()) {
               throw new Error('模型未返回内容')
             }
+            const retrievalMeta = payload?.retrievalMeta || payload?.metadata || {}
             const merged = mergeAssistantMessage(current, {
               ...(payload || {}),
               ...(Array.isArray(payload?.resources) && payload.resources.length === 0
@@ -767,10 +871,13 @@ export default {
               role: 'assistant',
               type: '',
               content: finalContent,
-              answerType: payload?.answerType || 'text',
-              outputType: payload?.outputType || payload?.answerType || 'text',
+              answerType: payload?.answerType || retrievalMeta.answerType || 'text',
+              outputType: payload?.outputType || payload?.answerType || retrievalMeta.outputType || 'text',
               agentName: payload?.agentName || current?.callDetail?.agentName || 'leader_agent',
               searchKeyword: payload?.searchKeyword || current?.callDetail?.searchKeyword || '',
+              retrievalMeta,
+              diagram: retrievalMeta.diagram || null,
+              diagramType: retrievalMeta.diagramType || '',
               sceneMode: current?.sceneMode || sceneMode,
               callDetail: this.buildFinalCallDetail(payload, current?.callDetail, 'completed'),
               callDetailExpanded: current?.callDetailExpanded || false,
@@ -928,6 +1035,7 @@ export default {
         }
         this.syncSessionId(payload.sessionId)
         const current = this.messages.find((item) => item.localId === localId)
+        const retrievalMeta = payload.retrievalMeta || payload.metadata || {}
         const merged = mergeAssistantMessage(current, {
           ...(payload || {}),
           ...(Array.isArray(payload?.resources) && payload.resources.length === 0
@@ -937,10 +1045,13 @@ export default {
           role: 'assistant',
           type: '',
           content: payload.answer,
-          answerType: payload.answerType || 'text',
-          outputType: payload.outputType || payload.answerType || 'text',
+          answerType: payload.answerType || retrievalMeta.answerType || 'text',
+          outputType: payload.outputType || payload.answerType || retrievalMeta.outputType || 'text',
           agentName: payload.agentName || 'leader_agent',
           searchKeyword: payload.searchKeyword || '',
+          retrievalMeta,
+          diagram: retrievalMeta.diagram || null,
+          diagramType: retrievalMeta.diagramType || '',
           sceneMode: current?.sceneMode || requestPayload?.sceneMode || '',
           callDetail: this.buildFinalCallDetail(payload, null, 'completed'),
           callDetailExpanded: false
@@ -1643,16 +1754,25 @@ export default {
       const deltaY = Number(event?.detail?.deltaY || 0)
       if (deltaY < -2) {
         this.autoFollowMessages = false
+        this.showScrollToBottom = true
       }
     },
     handleReachBottom() {
       this.autoFollowMessages = true
+      this.showScrollToBottom = false
+    },
+    resumeAutoFollow() {
+      this.autoFollowMessages = true
+      this.showScrollToBottom = false
+      this.scrollToBottom(true)
     },
     scrollToBottom(force = false) {
       if (!force && !this.autoFollowMessages) {
+        this.showScrollToBottom = true
         return
       }
       if (force) this.autoFollowMessages = true
+      this.showScrollToBottom = false
       this.$nextTick(() => {
         this.scrollAnchor = ''
         this.$nextTick(() => {
@@ -1681,6 +1801,112 @@ export default {
         // Plain text remains the readable answer; legacy resources render below via the shared helper.
       }
       return content.trim()
+    },
+    diagramTypeFromMessage(message) {
+      const answerType = String(message?.answerType || message?.retrievalMeta?.answerType || '')
+      if (answerType === 'mind_map_json') return 'mind_map'
+      if (answerType === 'flowchart_json') return 'flowchart'
+      if (answerType === 'architecture_json') return 'architecture'
+      return String(message?.diagramType || message?.retrievalMeta?.diagramType || '').trim()
+    },
+    diagramResultFromMessage(message) {
+      const diagram = message?.diagram || message?.retrievalMeta?.diagram
+      return diagram && typeof diagram === 'object' ? diagram : null
+    },
+    isDiagramMessage(message) {
+      return Boolean(this.diagramTypeFromMessage(message) && this.diagramResultFromMessage(message))
+    },
+    getDiagramTitle(message) {
+      const diagram = this.diagramResultFromMessage(message)
+      return String(diagram?.title || '结构化图表').trim() || '结构化图表'
+    },
+    getDiagramTypeLabel(message) {
+      const type = this.diagramTypeFromMessage(message)
+      return ({
+        mind_map: '思维导图',
+        flowchart: '流程图',
+        architecture: '架构图'
+      })[type] || '图表'
+    },
+    getDiagramSummary(message) {
+      const diagram = this.diagramResultFromMessage(message) || {}
+      return String(diagram.fileSummary || diagram.summary || diagram.subtitle || diagram.description || '').trim()
+    },
+    getDiagramPreviewNodes(message) {
+      const diagram = this.diagramResultFromMessage(message) || {}
+      const labels = []
+      const pushLabel = (value) => {
+        const text = String(value || '').trim()
+        if (text && !labels.includes(text)) labels.push(text)
+      }
+      ;(Array.isArray(diagram.nodes) ? diagram.nodes : []).forEach((node) => {
+        pushLabel(node?.label || node?.name || node?.title || node?.text)
+      })
+      ;(Array.isArray(diagram.layers) ? diagram.layers : []).forEach((layer) => {
+        pushLabel(layer?.name || layer?.title)
+        const nodes = Array.isArray(layer?.nodes)
+          ? layer.nodes
+          : (Array.isArray(layer?.groups) ? layer.groups.flatMap((group) => group?.nodes || []) : [])
+        nodes.slice(0, 3).forEach((node) => pushLabel(node?.label || node?.name || node?.title))
+      })
+      return labels.slice(0, 6)
+    },
+    openDiagramCanvas(message) {
+      const type = this.diagramTypeFromMessage(message)
+      const diagram = this.diagramResultFromMessage(message)
+      if (!type || !diagram) {
+        uni.showToast({ title: '暂无可打开的画布', icon: 'none' })
+        return
+      }
+      const id = String(diagram.id || `conversation-${message.localId || message.id || Date.now()}`)
+      const payload = { ...diagram, id }
+      try {
+        if (type === 'mind_map') {
+          uni.setStorageSync(`aiMindmapResult:${id}`, payload)
+          uni.navigateTo({ url: `/subpackage_ai/mindmapViewer/mindmapViewer?id=${encodeURIComponent(id)}` })
+          return
+        }
+        if (type === 'flowchart') {
+          uni.setStorageSync(`aiFlowchartResult:${id}`, payload)
+          uni.navigateTo({ url: `/subpackage_ai/flowchartViewer/flowchartViewer?id=${encodeURIComponent(id)}` })
+          return
+        }
+        if (type === 'architecture') {
+          uni.setStorageSync(`aiArchitectureResult:${id}`, payload)
+          uni.navigateTo({ url: `/subpackage_ai/architecturePreview/architecturePreview?id=${encodeURIComponent(id)}` })
+          return
+        }
+        uni.showToast({ title: '暂不支持该图表类型', icon: 'none' })
+      } catch (error) {
+        uni.showToast({ title: error?.message || '打开画布失败', icon: 'none' })
+      }
+    },
+    pptTemplateSelectionFromMessage(message) {
+      const answerType = String(message?.answerType || message?.retrievalMeta?.answerType || '')
+      if (answerType !== 'ppt_template_selection') return null
+      const meta = message?.retrievalMeta || {}
+      const templates = Array.isArray(meta.pptTemplateCatalog) ? meta.pptTemplateCatalog : []
+      const draft = meta.pptGenerationDraft && typeof meta.pptGenerationDraft === 'object'
+        ? meta.pptGenerationDraft
+        : null
+      if (!templates.length) return null
+      return { templates, draft }
+    },
+    confirmPptTemplate(templateId, message) {
+      if (!templateId || this.sending) return
+      const draft = message?.retrievalMeta?.pptGenerationDraft
+      const templateName = this.pptTemplateSelectionFromMessage(message)?.templates
+        ?.find((item) => String(item.id) === String(templateId))?.name || templateId
+      return this.sendMessage({
+        requestText: `使用 ${templateId} 模板继续生成 PPT`,
+        displayText: `已选择模板：${templateName}`,
+        displayRole: 'action',
+        metadata: {
+          pptTemplateConfirmed: true,
+          pptSettings: { templateId },
+          ...(draft ? { pptGenerationDraft: draft } : {})
+        }
+      })
     },
     getOutputTypeTags(message) {
       const rawTypes = []
@@ -1714,7 +1940,7 @@ export default {
       if (value.includes('image') || value === 'picture') return 'image'
       if (value.includes('video')) return 'video'
       if (value.includes('document') || value.includes('docx') || value.includes('pdf') || value.includes('ppt') || value.includes('excel')) return 'document'
-      if (value.includes('mermaid') || value.includes('diagram')) return 'diagram'
+      if (value.includes('mermaid') || value.includes('diagram') || value.includes('mind_map') || value.includes('flowchart') || value.includes('architecture')) return 'diagram'
       if (value.includes('formula') || value.includes('math')) return 'formula'
       if (value.includes('question_bank')) return 'question'
       if (value.includes('markdown') || value.includes('tool_result')) return 'text'
@@ -2352,6 +2578,175 @@ export default {
 
 .composer > .composer-actions {
   display: none !important;
+}
+
+.composer-zone {
+  flex-shrink: 0;
+  width: 100%;
+  background: #FFFFFF;
+  border-top: 1rpx solid #ECEFF5;
+  box-shadow: 0 -12rpx 28rpx rgba(31, 41, 55, 0.05);
+}
+
+.composer-tools {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 14rpx 22rpx 0;
+}
+
+.composer-tool {
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid #E2E8F0;
+  background: #F8FAFC;
+  color: #64748B;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.composer-tool--active {
+  border-color: rgba(47, 111, 228, 0.35);
+  background: #EEF4FF;
+  color: #2F6FE4;
+}
+
+.composer-attach {
+  flex-shrink: 0;
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 18rpx;
+  background: #F5F7FB;
+  color: #365F7D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.composer-attach.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.diagram-canvas-card {
+  margin-top: 14rpx;
+  padding: 18rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid rgba(100, 116, 139, 0.14);
+  background: #F7F9FD;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.diagram-canvas-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.diagram-canvas-card__title {
+  min-width: 0;
+  flex: 1;
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #243044;
+}
+
+.diagram-canvas-card__type {
+  flex-shrink: 0;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  background: #E8F1FF;
+  color: #2F6FE4;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.diagram-canvas-card__summary {
+  font-size: 22rpx;
+  line-height: 1.45;
+  color: #68768A;
+}
+
+.diagram-canvas-card__nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.diagram-canvas-card__node {
+  max-width: 100%;
+  padding: 6rpx 12rpx;
+  border-radius: 10rpx;
+  background: #FFFFFF;
+  color: #365F7D;
+  font-size: 20rpx;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diagram-canvas-card__action {
+  margin-top: 4rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 14rpx;
+  background: #2F6FE4;
+  color: #FFFFFF;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.ppt-template-picker {
+  margin-top: 14rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.ppt-template-picker__hint {
+  font-size: 22rpx;
+  color: #68768A;
+  font-weight: 700;
+}
+
+.ppt-template-picker__card {
+  padding: 16rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid #E3E8EE;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.ppt-template-picker__name {
+  font-size: 25rpx;
+  font-weight: 800;
+  color: #243044;
+}
+
+.ppt-template-picker__tag {
+  align-self: flex-start;
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+  background: #EEF4FF;
+  color: #2F6FE4;
+  font-size: 18rpx;
+  font-weight: 700;
+}
+
+.ppt-template-picker__desc {
+  font-size: 21rpx;
+  line-height: 1.45;
+  color: #68768A;
 }
 
 .conversation-action {
@@ -3470,6 +3865,26 @@ export default {
   }
 }
 
+.scroll-to-bottom {
+  position: absolute;
+  right: 24rpx;
+  bottom: calc(112rpx + env(safe-area-inset-bottom));
+  margin: 0;
+  z-index: 21;
+  min-height: 60rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background: #FFFFFF;
+  color: #2F6FE4;
+  border: 1rpx solid rgba(47, 111, 228, 0.18);
+  box-shadow: 0 10rpx 24rpx rgba(31, 41, 55, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
 .pending-resources {
   flex-shrink: 0;
   width: 100%;
@@ -3543,11 +3958,11 @@ export default {
   align-items: flex-end;
   gap: 16rpx;
   flex-wrap: nowrap;
-  padding: 18rpx 22rpx calc(18rpx + env(safe-area-inset-bottom));
-  background: #FFFFFF;
-  border-top: 1rpx solid #ECEFF5;
+  padding: 14rpx 22rpx calc(18rpx + env(safe-area-inset-bottom));
+  background: transparent;
+  border-top: 0;
   box-sizing: border-box;
-  box-shadow: 0 -12rpx 28rpx rgba(31, 41, 55, 0.05);
+  box-shadow: none;
 }
 
 .composer-input {

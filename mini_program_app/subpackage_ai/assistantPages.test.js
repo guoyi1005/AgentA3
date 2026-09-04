@@ -537,6 +537,10 @@ test('answer conversion uses a compact action message and a structured leader re
     sessionId: 'session-a',
     agentName: 'leader_agent',
     input: '请把刚才的内容整理成可下载文件。',
+    metadata: {
+      onlineSearch: true,
+      deepThinking: false
+    },
     interactionType: 'transform',
     displayInput: '已请求：生成文件版',
     requestedOutputType: 'document',
