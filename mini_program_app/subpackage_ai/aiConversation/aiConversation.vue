@@ -221,30 +221,48 @@
               <view class="call-detail-heading">
                 <view class="call-detail-status-dot" :class="`call-detail-status-dot--${getCallDetailStatus(message)}`"></view>
                 <view class="call-detail-title-wrap">
-                  <view class="call-detail-thinking-title">
-                    <text class="call-detail-title">思考中</text>
-                    <view class="thinking-dots thinking-dots--inline">
-                      <text></text>
-                      <text></text>
-                      <text></text>
-                    </view>
-                  </view>
+                  <text class="call-detail-title">{{ getCallDetailTitle(message) }}</text>
+                  <text class="call-detail-summary">{{ getCallDetailSummary(message) }}</text>
                 </view>
               </view>
               <text class="call-detail-toggle">{{ isCallDetailExpanded(message) ? '收起' : '展开' }}</text>
             </view>
             <view v-if="isCallDetailExpanded(message)" class="call-detail-body">
-              <view class="simple-thinking-steps">
+              <view class="call-detail-meta">
                 <view
-                  v-for="(step, stepIndex) in getSimpleThinkingSteps(message)"
-                  :key="`${message.localId || message.id}-simple-step-${stepIndex}`"
-                  class="simple-thinking-step"
-                  :class="`simple-thinking-step--${step.status}`"
+                  v-for="item in getCallDetailMetaItems(message)"
+                  :key="`${message.localId || message.id}-meta-${item.label}`"
+                  class="call-detail-meta-item"
                 >
-                  <text class="simple-thinking-step__mark">{{ step.status === 'completed' ? '✓' : '' }}</text>
-                  <text class="simple-thinking-step__label">{{ step.label }}</text>
+                  <text class="call-detail-meta-label">{{ item.label }}</text>
+                  <text class="call-detail-meta-value">{{ item.value }}</text>
                 </view>
               </view>
+              <view v-if="getCallDetailTools(message).length" class="call-detail-tools">
+                <text
+                  v-for="tool in getCallDetailTools(message)"
+                  :key="`${message.localId || message.id}-tool-${tool}`"
+                  class="call-detail-tool"
+                >{{ tool }}</text>
+              </view>
+              <view class="call-detail-steps">
+                <view
+                  v-for="(step, stepIndex) in getCallDetailSteps(message)"
+                  :key="`${message.localId || message.id}-step-${stepIndex}`"
+                  class="call-detail-step"
+                  :class="`call-detail-step--${step.status}`"
+                >
+                  <view class="call-detail-step-dot"></view>
+                  <view class="call-detail-step-body">
+                    <view class="call-detail-step-head">
+                      <text class="call-detail-step-title">{{ step.title }}</text>
+                      <text class="call-detail-step-status">{{ step.statusLabel }}</text>
+                    </view>
+                    <text v-if="step.description" class="call-detail-step-desc">{{ step.description }}</text>
+                  </view>
+                </view>
+              </view>
+              <text v-if="getCallDetailError(message)" class="call-detail-error">{{ getCallDetailError(message) }}</text>
             </view>
           </view>
         </view>
@@ -327,13 +345,18 @@ const STORAGE_KEY = 'aiAssistantSessionId'
 const SMART_WRITING_CONTINUE_CONTEXT_KEY = 'smartWritingContinueContext'
 const CALL_DETAIL_STAGE_LABELS = {
   status: '请求已提交',
+  request_submitted: '请求已提交',
   processing: '处理中',
   session: '建立会话',
+  session_ready: '会话已建立',
   leader_plan: '意图识别与路由',
   leader_route: '意图识别与路由',
+  leader_visual_prompt: '汇总生图提示词',
   retrieve: '检索资料',
   search: '检索资料',
+  retrieval: '检索相关资料',
   answer: '生成回答',
+  generation_start: '开始生成内容',
   direct_agent: '执行智能体',
   agent_answer: '执行智能体',
   agent_failed: '执行智能体',
@@ -341,8 +364,16 @@ const CALL_DETAIL_STAGE_LABELS = {
   tool_start: '准备调用工具',
   tool_call: '调用工具',
   tool_result_summary: '整理结果',
+  prompt_agent: '专业提示词智能体',
+  vision_agent: '图片识别智能体',
+  image_generation_tool: '图片生成工具',
+  input_pipeline: '附件输入预处理',
+  file_content_extraction: '文件内容提取',
+  multimodal_context_merged: '多模态内容汇总',
+  completed: '处理完成',
   done: '完成',
   stopped: '用户停止',
+  failed: '执行失败',
   error: '异常'
 }
 const CALL_DETAIL_STATUS_LABELS = {
@@ -1135,6 +1166,13 @@ export default {
     getCallDetailStatus(message) {
       return this.normalizeCallDetail(message).status || 'completed'
     },
+    getCallDetailTitle(message) {
+      const status = this.getCallDetailStatus(message)
+      if (status === 'running' || message?.type === 'thinking') return '正在执行'
+      if (status === 'failed') return '执行流程失败'
+      if (status === 'stopped') return '执行已停止'
+      return '执行流程已完成'
+    },
     getCallDetailSummary(message) {
       const detail = this.normalizeCallDetail(message)
       const statusLabel = CALL_DETAIL_STATUS_LABELS[detail.status] || '已完成'
@@ -1243,18 +1281,6 @@ export default {
           statusLabel: CALL_DETAIL_STATUS_LABELS[status] || '已完成'
         }
       })
-    },
-    getSimpleThinkingSteps(message) {
-      const detail = this.normalizeCallDetail(message)
-      const labels = ['分析创作内容', '组织续写思路', '生成续写内容', '优化表达细节']
-      const rawCount = Array.isArray(detail.trace) ? detail.trace.length : 1
-      const completedCount = detail.status === 'completed'
-        ? labels.length
-        : Math.max(1, Math.min(labels.length - 1, rawCount))
-      return labels.map((label, index) => ({
-        label,
-        status: index < completedCount ? 'completed' : 'pending'
-      }))
     },
     getCallDetailError(message) {
       return this.normalizeCallDetail(message).error || ''
@@ -3230,14 +3256,8 @@ export default {
 .call-detail-title-wrap {
   min-width: 0;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.call-detail-thinking-title {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
+  flex-direction: column;
+  gap: 4rpx;
 }
 
 .call-detail-title {
@@ -3262,47 +3282,14 @@ export default {
 }
 
 .call-detail-body {
-  margin-top: 16rpx;
-  padding: 4rpx 0 2rpx;
+  margin-top: 12rpx;
+  padding: 16rpx;
+  border-radius: 18rpx;
+  background: #F7F9FD;
+  border: 1rpx solid rgba(100, 116, 139, 0.12);
   display: flex;
   flex-direction: column;
   gap: 18rpx;
-}
-
-.simple-thinking-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 18rpx;
-}
-
-.simple-thinking-step {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  color: #9AA5B5;
-  font-size: 27rpx;
-  line-height: 1.35;
-}
-
-.simple-thinking-step--completed {
-  color: #243044;
-  font-weight: 750;
-}
-
-.simple-thinking-step__mark {
-  width: 22rpx;
-  min-width: 22rpx;
-  color: #6C4DF6;
-  font-size: 26rpx;
-  line-height: 1;
-  text-align: center;
-}
-
-.simple-thinking-step:not(.simple-thinking-step--completed) .simple-thinking-step__mark {
-  width: 18rpx;
-  height: 18rpx;
-  border: 2rpx solid #B9A8FF;
-  border-radius: 50%;
 }
 
 .call-detail-meta {
@@ -3448,10 +3435,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 8rpx;
-}
-
-.thinking-dots--inline {
-  gap: 7rpx;
 }
 
 .thinking-dots text {
