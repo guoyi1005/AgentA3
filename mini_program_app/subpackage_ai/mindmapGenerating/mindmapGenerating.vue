@@ -297,7 +297,13 @@ function computeLayout(branches) {
 }
 
 let timers = []
-function clearTimers() { timers.forEach(t => clearTimeout(t)); timers = [] }
+function clearTimers() {
+  timers.forEach((t) => {
+    clearTimeout(t)
+    clearInterval(t)
+  })
+  timers = []
+}
 function sleep(ms) { return new Promise(r => timers.push(setTimeout(r, ms))) }
 // 给异步请求加超时：到点未返回即 reject，避免请求挂起导致页面无限等待
 function withTimeout(promise, ms) {
@@ -485,6 +491,7 @@ async function run() {
   sweepOn.value = false; settleOn.value = false; smooth.value = false
   showRing.value = true; stepIndex.value = 0
   setStatus(normalizeStructureMode(structure.value) === 'AUTO' ? '正在分析内容结构…' : '正在理解您的主题内容…')
+  const waitingProgress = startWaitingProgress()
   try {
     if (resultId.value) {
       let cached = uni.getStorageSync(`aiMindmapResult:${resultId.value}`)
@@ -515,6 +522,34 @@ async function run() {
     if (runToken) runToken.cancelled = true
     errorMessage.value = (error && (error.msg || error.message)) || '生成失败，请重试'
     pageState.value = 'error'
+  } finally {
+    waitingProgress.stop()
+  }
+}
+
+function startWaitingProgress() {
+  const messages = [
+    '正在理解您的主题内容…',
+    '正在提取关键知识点…',
+    '正在组织知识结构…',
+    '正在生成节点关系…'
+  ]
+  let tick = 0
+  progressPct.value = Math.max(progressPct.value, 6)
+  const timer = setInterval(() => {
+    if (aiFinished.value || pageState.value === 'error' || isCompleted.value) return
+    tick += 1
+    progressPct.value = Math.min(28, 6 + tick * 2)
+    stepIndex.value = Math.min(2, Math.floor(tick / 4))
+    setStatus(messages[Math.min(messages.length - 1, Math.floor(tick / 3))])
+  }, 900)
+  timers.push(timer)
+  return {
+    stop() {
+      clearInterval(timer)
+      const index = timers.indexOf(timer)
+      if (index >= 0) timers.splice(index, 1)
+    }
   }
 }
 
@@ -525,17 +560,39 @@ function viewResult() {
 function regenerate() { if (runToken) runToken.cancelled = true; clearTimers(); aiFinished.value = false; run() }
 function goBack() { clearTimers(); uni.navigateBack() }
 
+function safeDecode(value, fallback = '') {
+  const raw = value == null ? '' : String(value)
+  if (!raw) return fallback
+  try {
+    return decodeURIComponent(raw)
+  } catch (error) {
+    try {
+      return decodeURIComponent(raw.replace(/%(?![0-9A-Fa-f]{2})/g, '%25'))
+    } catch (innerError) {
+      return raw || fallback
+    }
+  }
+}
+
+function applyGenerateOptions(options = {}) {
+  const pending = uni.getStorageSync('aiMindmapPendingPayload') || {}
+  if (pending && typeof pending === 'object') {
+    try { uni.removeStorageSync('aiMindmapPendingPayload') } catch (error) { /* ignore */ }
+  }
+  topicText.value = String(pending.topic || safeDecode(options?.topic, '') || '')
+  centerTopic.value = String(pending.centerTopic || safeDecode(options?.centerTopic, '') || '')
+  centerTopicMode.value = String(pending.centerTopicMode || safeDecode(options?.centerTopicMode, 'AUTO') || 'AUTO')
+  depth.value = String(pending.depth || safeDecode(options?.depth, 'auto') || 'auto')
+  structure.value = String(pending.structure || safeDecode(options?.structure, '知识梳理') || '知识梳理')
+  detail.value = String(pending.detail || safeDecode(options?.detail, 'standard') || 'standard')
+  sourceText.value = String(pending.sourceText || safeDecode(options?.sourceText, '') || '')
+  sourceFile.value = String(pending.sourceFile || safeDecode(options?.sourceFile, '') || '')
+  fileId.value = String(pending.fileId || safeDecode(options?.fileId, '') || '')
+  resultId.value = safeDecode(options?.id, '')
+}
+
 onLoad(options => {
-  topicText.value = decodeURIComponent(options?.topic || '')
-  centerTopic.value = decodeURIComponent(options?.centerTopic || '')
-  centerTopicMode.value = decodeURIComponent(options?.centerTopicMode || 'AUTO')
-  depth.value = decodeURIComponent(options?.depth || 'auto')
-  structure.value = decodeURIComponent(options?.structure || '知识梳理')
-  detail.value = decodeURIComponent(options?.detail || 'standard')
-  sourceText.value = decodeURIComponent(options?.sourceText || '')
-  sourceFile.value = decodeURIComponent(options?.sourceFile || '')
-  fileId.value = decodeURIComponent(options?.fileId || '')
-  resultId.value = decodeURIComponent(options?.id || '')
+  applyGenerateOptions(options || {})
   run()
 })
 onUnload(() => clearTimers())

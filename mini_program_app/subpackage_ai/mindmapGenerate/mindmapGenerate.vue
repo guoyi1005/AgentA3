@@ -519,14 +519,26 @@ const generateMindmap = async () => {
   }
   if (isGenerating.value) return
   isGenerating.value = true
+  uni.setStorageSync('aiMindmapPendingPayload', {
+    topic: finalTopic,
+    centerTopic: finalCenterTopic,
+    centerTopicMode,
+    depth: selectedDepth.value,
+    structure: selectedStructure.value,
+    detail: selectedExpand.value,
+    sourceText,
+    sourceFile: uploadedFile.value?.sourceFile || '',
+    fileId: uploadedFile.value?.fileId || ''
+  })
   uni.navigateTo({
-    url: `/subpackage_ai/mindmapGenerating/mindmapGenerating?topic=${encodeURIComponent(finalTopic)}&centerTopic=${encodeURIComponent(finalCenterTopic)}&centerTopicMode=${encodeURIComponent(centerTopicMode)}&depth=${selectedDepth.value}&structure=${encodeURIComponent(selectedStructure.value)}&detail=${encodeURIComponent(selectedExpand.value)}&sourceText=${encodeURIComponent(sourceText)}&sourceFile=${encodeURIComponent(uploadedFile.value?.sourceFile || '')}&fileId=${encodeURIComponent(uploadedFile.value?.fileId || '')}`,
+    url: '/subpackage_ai/mindmapGenerating/mindmapGenerating',
     fail: error => {
       isGenerating.value = false
       uni.showToast({ title: getErrorMessage(error, '生成页打开失败'), icon: 'none' })
     }
   })
 }
+
 
 onMounted(() => {
   loadRecentItems()
