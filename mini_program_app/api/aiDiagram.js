@@ -19,6 +19,9 @@ export const AI_FLOWCHART_ENDPOINTS = {
   delete: id => `/api/ai/flowchart/${encodeURIComponent(id)}`
 }
 
+/** Client timeout must stay above Java LLM timeout (120s). */
+const DIAGRAM_REQUEST_TIMEOUT_MS = 180000
+
 export function buildMindmapPayload({
   topic = '',
   centerTopic = '',
@@ -51,7 +54,7 @@ export async function generateMindmap(payload = {}) {
     method: 'POST',
     data: payload,
     showError: false,
-    timeout: 120000
+    timeout: DIAGRAM_REQUEST_TIMEOUT_MS
   })
   return normalizeMindmap(response?.data || response)
 }
@@ -62,7 +65,7 @@ export async function optimizeMindmap(payload = {}) {
     method: 'POST',
     data: payload,
     showError: false,
-    timeout: 120000
+    timeout: DIAGRAM_REQUEST_TIMEOUT_MS
   })
   return normalizeMindmap(response?.data || response)
 }
@@ -166,11 +169,23 @@ export function getErrorMessage(error, fallback = '生成失败') {
     const text = String(item || '').trim()
     return text && text !== 'request:ok'
   })
-  if (useful) return useful
+  if (useful) {
+    const text = String(useful).trim()
+    if (/request:fail\s*timeout/i.test(text) || text === 'timeout') {
+      return '生成超时，请缩短输入后重试'
+    }
+    return text
+  }
   if (error?.statusCode === 401 || error?.code === 401) return '请先登录'
   if (error?.statusCode === 404) return '思维导图接口不可用，请确认后端已启动并更新到最新代码'
   if (error?.statusCode >= 500) return '服务器处理失败，请查看后端日志'
-  if (error?.errMsg && error.errMsg !== 'request:ok') return error.errMsg
+  const errMsg = String(error?.errMsg || '').trim()
+  if (errMsg && errMsg !== 'request:ok') {
+    if (/request:fail\s*timeout/i.test(errMsg) || /timeout/i.test(errMsg)) {
+      return '生成超时，请缩短输入后重试'
+    }
+    return errMsg
+  }
   return fallback
 }
 
@@ -180,7 +195,7 @@ export async function generateFlowchart(payload = {}) {
     method: 'POST',
     data: payload,
     showError: false,
-    timeout: 120000
+    timeout: DIAGRAM_REQUEST_TIMEOUT_MS
   })
   return normalizeFlowchart(response?.data || response)
 }

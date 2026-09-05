@@ -12,6 +12,9 @@ MIND_MAP_AGENT_NAME = "diagram_mind_map_agent"
 FLOWCHART_AGENT_NAME = "diagram_flowchart_agent"
 ARCHITECTURE_AGENT_NAME = "diagram_architecture_agent"
 
+# Keep above Java LLM timeout (120s) so BusinessException responses can propagate.
+_DIAGRAM_JAVA_TIMEOUT_SECONDS = 140
+
 
 def _unwrap_java_result(payload: Any) -> Dict[str, Any]:
     if not isinstance(payload, dict):
@@ -25,6 +28,12 @@ def _unwrap_java_result(payload: Any) -> Dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _require_java_payload(result: Any, empty_detail: str) -> Dict[str, Any]:
+    if not isinstance(result, dict) or not result:
+        raise HTTPException(status_code=502, detail=empty_detail)
+    return result
+
+
 def generate_mind_map(authorization: str, input_text: str) -> Dict[str, Any]:
     text = str(input_text or "").strip()
     if not text:
@@ -36,7 +45,16 @@ def generate_mind_map(authorization: str, input_text: str) -> Dict[str, Any]:
         "structure": "AUTO",
         "detail": "AUTO",
     }
-    result = java_backend_retriever.post_json("/api/ai/mindmap/generate", authorization, payload)
+    result = java_backend_retriever.post_json(
+        "/api/ai/mindmap/generate",
+        authorization,
+        payload,
+        timeout_seconds=_DIAGRAM_JAVA_TIMEOUT_SECONDS,
+    )
+    result = _require_java_payload(
+        result,
+        "思维导图生成超时或后端暂时不可用，请稍后重试",
+    )
     diagram = _unwrap_java_result(result)
     if not diagram.get("nodes"):
         raise HTTPException(status_code=502, detail="思维导图生成失败，未返回有效节点结构")
@@ -60,7 +78,16 @@ def generate_flowchart(authorization: str, input_text: str) -> Dict[str, Any]:
         "swimlaneMode": "AUTO",
         "swimlane": "AUTO",
     }
-    result = java_backend_retriever.post_json("/api/ai/flowchart/generate", authorization, payload)
+    result = java_backend_retriever.post_json(
+        "/api/ai/flowchart/generate",
+        authorization,
+        payload,
+        timeout_seconds=_DIAGRAM_JAVA_TIMEOUT_SECONDS,
+    )
+    result = _require_java_payload(
+        result,
+        "流程图生成超时或后端暂时不可用，请稍后重试",
+    )
     diagram = _unwrap_java_result(result)
     if not diagram.get("nodes"):
         raise HTTPException(status_code=502, detail="流程图生成失败，未返回有效节点结构")
@@ -85,7 +112,16 @@ def generate_architecture(authorization: str, input_text: str) -> Dict[str, Any]
         "relationType": "AUTO",
         "hierarchyMode": "STRUCTURED",
     }
-    result = java_backend_retriever.post_json("/api/ai/architecture/generate", authorization, payload)
+    result = java_backend_retriever.post_json(
+        "/api/ai/architecture/generate",
+        authorization,
+        payload,
+        timeout_seconds=_DIAGRAM_JAVA_TIMEOUT_SECONDS,
+    )
+    result = _require_java_payload(
+        result,
+        "架构图生成超时或后端暂时不可用，请稍后重试",
+    )
     diagram = _unwrap_java_result(result)
     layers = diagram.get("layers")
     if not isinstance(layers, list) or not layers:

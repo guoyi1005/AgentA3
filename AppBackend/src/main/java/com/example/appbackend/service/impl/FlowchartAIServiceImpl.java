@@ -12,15 +12,18 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 @Service
 public class FlowchartAIServiceImpl implements FlowchartAIService {
     private static final int MAX_AI_INPUT_CHARS = 60_000;
+    private static final Duration AI_TIMEOUT = Duration.ofSeconds(120);
     private static final String FLOWCHART_AGENT_NAME = "diagram_flowchart_agent";
     private static final String AGENT_MODEL_BINDING_PREFIX = "ai.agent-bindings.";
 
@@ -69,7 +72,8 @@ public class FlowchartAIServiceImpl implements FlowchartAIService {
                     .bodyValue(payload)
                     .retrieve()
                     .bodyToMono(String.class)
-                    .block();
+                    .timeout(AI_TIMEOUT)
+                    .block(AI_TIMEOUT);
 
             JsonNode root = objectMapper.readTree(responseText);
             String content = root.path("choices").path(0).path("message").path("content").asText("");
@@ -82,8 +86,26 @@ public class FlowchartAIServiceImpl implements FlowchartAIService {
         } catch (BusinessException error) {
             throw error;
         } catch (Exception error) {
+            if (isTimeout(error)) {
+                throw new BusinessException(500, "AI 请求超时，请稍后重试");
+            }
             throw new BusinessException(500, "AI 流程图生成失败: " + error.getMessage());
         }
+    }
+
+    private static boolean isTimeout(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof TimeoutException) {
+                return true;
+            }
+            String name = current.getClass().getName();
+            if (name.contains("TimeoutException") || name.contains("ReadTimeout")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private String buildPrompt(FlowchartDTO.GenerateRequest request, String inputText) {
