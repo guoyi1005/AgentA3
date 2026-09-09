@@ -1,9 +1,9 @@
 # A3 提交环境复现手册
 
-> **演示环境快速入口（含测试账号与截图）**  
-> 见同目录 [`演示环境部署与使用说明.md`](./演示环境部署与使用说明.md) / `演示环境部署与使用说明.docx`。  
-> 线上 Web：http://129.211.82.112:3000/ （智能体设置：`/ai/agent-settings`）  
-> 推荐账号：Web `admin/admin123`；APP/小程序 `zzs/admin123`。
+> **演示环境快速入口（终版）**  
+> 见 [`校辩智生-演示环境部署与使用说明.docx`](./校辩智生-演示环境部署与使用说明.docx)。  
+> 线上 Web：http://129.211.82.112:3000/  
+> APP：`zzs` / `Zhang@2114`（安装包随附件）；Web：`admin` / `admin123`。
 
 本手册对应 `deploy/compose.submission.yml`。它启动 MySQL、Redis、Java 后端、Python AI Server 和 AppWeb 五个服务，并将 Java→Python、Python→Java、Python→Redis 的地址固定到 Compose 内部网络。
 

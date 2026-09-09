@@ -16,8 +16,11 @@
             "autoclose" : true,
             "delay" : 0
         },
-        /* 模块配置 */
-        "modules" : {},
+        /* 模块配置：原生地图（高德），打包时必须勾选，否则真机弹 HTML5+ Runtime */
+        "modules" : {
+            "Maps" : {},
+            "Geolocation" : {}
+        },
         /* 应用发布信息 */
         "distribute" : {
             /* android打包配置 */
