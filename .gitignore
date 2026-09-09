@@ -24,6 +24,11 @@ AppFrontend/node_modules/
 AppFrontend/dist/
 AppFrontend/unpackage/
 
+# Local DB dumps (may contain API keys / secrets; do not commit)
+smart-campus.sql
+smart-campus.sqlscp
+*.sqlscp
+
 # Docker runtime data
 ai-servers/.rag-data/
 ai-servers/data/ai-exports/
