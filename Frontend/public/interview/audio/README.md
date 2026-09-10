@@ -1,0 +1,1 @@
+# Opening Greeting Audio\n\nPlace the pre-generated interviewer opening audio file here:\n\n- Required filename: interviewer-opening.mp4\n- Public URL used by frontend: /audio/interviewer-opening.mp4\n\nIf the file is missing, the page still shows the fixed opening text and continues normally.

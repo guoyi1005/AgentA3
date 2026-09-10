@@ -34,6 +34,19 @@ public class JwtInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        String requestUri = request.getRequestURI();
+        if (isOptionalInterviewAuthPath(requestUri)) {
+            if (token != null && token.startsWith("Bearer ")) {
+                String raw = token.substring(7);
+                if (jwtUtil.validateToken(raw)) {
+                    request.setAttribute("username", jwtUtil.getUsernameFromToken(raw));
+                    request.setAttribute("role", jwtUtil.getRoleFromToken(raw));
+                    request.setAttribute("userId", jwtUtil.getUserIdFromToken(raw));
+                }
+            }
+            return true;
+        }
+
         if (token == null || !token.startsWith("Bearer ")) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
@@ -58,6 +71,42 @@ public class JwtInterceptor implements HandlerInterceptor {
         request.setAttribute("userId", userId);
 
         return true;
+    }
+
+    private boolean isOptionalInterviewAuthPath(String requestUri) {
+        if (requestUri == null || requestUri.isBlank()) {
+            return false;
+        }
+        String path = requestUri;
+        int queryIndex = path.indexOf('?');
+        if (queryIndex >= 0) {
+            path = path.substring(0, queryIndex);
+        }
+        String[] prefixes = {
+                "/api/langgraph/",
+                "/api/avatar/",
+                "/api/asr/",
+                "/api/tts/",
+                "/api/face/",
+                "/api/message/",
+                "/api/interview-config/",
+                "/api/conversation/history",
+                "/api/conversation/start",
+                "/api/conversation/end",
+                "/api/conversation/commit",
+                "/api/conversation/new-id",
+                "/api/knowledge/detail",
+                "/api/knowledge/types",
+                "/api/knowledge/positions",
+                "/api/chroma/create",
+                "/api/interview/evaluation/"
+        };
+        for (String prefix : prefixes) {
+            if (path.startsWith(prefix) || path.equals(prefix.replaceAll("/$", ""))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isPublicMapPlaceRead(String requestUri) {

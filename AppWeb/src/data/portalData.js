@@ -98,6 +98,12 @@ export const portalGroups = [
     path: '/career/nebula',
     items: [],
   },
+  {
+    label: 'AI 面试',
+    items: [
+      { path: '/interview/manage', label: 'AI 面试配置', icon: 'robot' },
+    ],
+  },
 ]
 
 export const navigationSections = portalGroups
@@ -119,6 +125,7 @@ export const moduleCards = [
   { title: '知识库管理', description: '维护 MaxKB 账号、环境地址和知识库文档', route: '/ai/knowledge' },
   { title: '知识库聊天', description: '选择 MaxKB 知识库后用 Java 智能体测试问答和召回片段', route: '/admin/knowledge-chat' },
   { title: '画像规则', description: '查看个人画像雷达图来源、更新策略和 Leader 使用边界', route: '/ai/profile-rules' },
+  { title: 'AI 面试配置', description: '维护面试题库、岗位技术栈与面试配置', route: '/interview/manage' },
 ]
 
 const columns = {

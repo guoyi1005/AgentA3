@@ -70,6 +70,20 @@ import DocumentConvertView from '../views/DocumentConvertView.vue'
 import CareerNebulaView from '../views/CareerNebulaView.vue'
 import CareerPlanetView from '../views/CareerPlanetView.vue'
 import HotJobsView from '../views/HotJobsView.vue'
+import InterviewShell from '../views/interview/InterviewShell.vue'
+import InterviewIndex from '../views/interview/pages/Index.vue'
+import InterviewAiMockInterview from '../views/interview/pages/AiMockInterview.vue'
+import InterviewAiConfig from '../views/interview/pages/AiConfig.vue'
+import InterviewAiChat from '../views/interview/pages/AiChat.vue'
+import InterviewAiCareerPlan from '../views/interview/pages/AiCareerPlan.vue'
+import InterviewQuestionBank from '../views/interview/pages/QuestionBank.vue'
+import InterviewAbilityImprovement from '../views/interview/pages/AbilityImprovement.vue'
+import InterviewMy from '../views/interview/pages/My.vue'
+import InterviewMyNote from '../views/interview/pages/MyNote.vue'
+import InterviewWrongQuestionBook from '../views/interview/pages/WrongQuestionBook.vue'
+import InterviewCreateQuestionBank from '../views/interview/pages/CreateQuestionBank.vue'
+import InterviewMockQuestionFilter from '../views/interview/pages/MockQuestionFilter.vue'
+import InterviewAIReport from '../views/interview/pages/AIReport.vue'
 import { getToken } from '../utils/auth'
 
 const routes = [
@@ -156,6 +170,26 @@ const routes = [
   { path: '/career/nebula/:careerId?', name: 'career-nebula', component: CareerNebulaView },
   { path: '/career/nebula/:careerId/planet/:skillId', name: 'career-planet', component: CareerPlanetView },
   { path: '/convert', name: 'convert', component: DocumentConvertView },
+  {
+    path: '/interview',
+    component: InterviewShell,
+    children: [
+      { path: '', redirect: '/interview/index' },
+      { path: 'index', name: 'interview-index', component: InterviewIndex },
+      { path: 'ai-mock-interview', name: 'interview-ai-mock', component: InterviewAiMockInterview },
+      { path: 'ai-interview-config', name: 'interview-ai-config', component: InterviewAiConfig },
+      { path: 'ai-chat', name: 'interview-ai-chat', component: InterviewAiChat },
+      { path: 'ai-career-plan', name: 'interview-ai-career-plan', component: InterviewAiCareerPlan },
+      { path: 'question-bank', name: 'interview-question-bank', component: InterviewQuestionBank },
+      { path: 'ability-improvement', name: 'interview-ability', component: InterviewAbilityImprovement },
+      { path: 'my', name: 'interview-my', component: InterviewMy },
+      { path: 'my-note', name: 'interview-my-note', component: InterviewMyNote },
+      { path: 'wrong-question-book', name: 'interview-wrong-book', component: InterviewWrongQuestionBook },
+      { path: 'create-question-bank', name: 'interview-create-bank', component: InterviewCreateQuestionBank },
+      { path: 'mock-question-filter', name: 'interview-mock-filter', component: InterviewMockQuestionFilter },
+      { path: 'evaluation-report', name: 'interview-evaluation-report', component: InterviewAIReport },
+    ],
+  },
 ]
 
 const router = createRouter({

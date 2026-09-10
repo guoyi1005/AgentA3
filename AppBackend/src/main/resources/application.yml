@@ -167,6 +167,34 @@ exam:
     max-zip-total-bytes: 52428800
     max-zip-entries: 2000
 
+interview:
+  chroma:
+    host: ${CHROMA_HOST:localhost}
+    port: ${CHROMA_PORT:8001}
+    collection: ${CHROMA_COLLECTION_NAME:knowledge_base}
+  tencent:
+    secret-id: ${TENCENTCLOUD_SECRET_ID:}
+    secret-key: ${TENCENTCLOUD_SECRET_KEY:}
+    app-id: ${TENCENTR_APP_ID:}
+    region: ${TENCENTCLOUD_REGION:ap-guangzhou}
+    asr-model: ${TENCENTCLOUD_ASR_MODEL:}
+    voice-type: ${VOICETYPE:}
+    codec: ${CODEC:pcm}
+    sample-rate: ${SAMPLE_RATE:16000}
+  avatar:
+    app-id: ${XFY_AVATAR_APP_ID:}
+    api-key: ${XFY_AVATAR_API_KEY:}
+    api-secret: ${XFY_AVATAR_API_SECRET:}
+    scene-id: ${XFY_SCENE_ID:}
+    server-url: ${XFY_SERVER_URL:}
+    avatar-id: ${XFY_AVATAR_ID:}
+    stream-protocol: ${XFY_STREAM_PROTOCOL:webrtc}
+    opening-greeting: ${XFY_OPENING_GREETING:}
+  face:
+    records-dir: ${INTERVIEW_FACE_RECORDS_DIR:./data/interview-face-records}
+  asr:
+    upload-dir: ${INTERVIEW_ASR_UPLOAD_DIR:./data/interview-asr}
+
 springdoc:
   api-docs:
     version: openapi_3_0

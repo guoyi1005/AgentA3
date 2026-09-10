@@ -67,6 +67,7 @@ const shortcutItems = [
         <RouterLink to="/resume">我的简历</RouterLink>
         <RouterLink to="/ai-tools">AI 工具</RouterLink>
         <RouterLink to="/career/nebula">星图探索</RouterLink>
+        <RouterLink to="/interview">AI 面试</RouterLink>
       </nav>
 
       <div class="app-tab-nav__profile">

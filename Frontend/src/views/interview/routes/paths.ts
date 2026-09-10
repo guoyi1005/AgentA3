@@ -1,0 +1,17 @@
+export const PATHS = {
+  HOME: '/interview/index',
+  INDEX: '/interview/index',
+  LOGIN: '/login',
+  AI_MOCK_INTERVIEW: '/interview/ai-mock-interview',
+  AI_INTERVIEW_CONFIG: '/interview/ai-interview-config',
+  AI_CHAT: '/interview/ai-chat',
+  AI_CAREER_PLAN: '/interview/ai-career-plan',
+  QUESTION_BANK: '/interview/question-bank',
+  ABILITY_IMPROVEMENT: '/interview/ability-improvement',
+  MY: '/interview/my',
+  MY_NOTE: '/interview/my-note',
+  WRONG_QUESTION_BOOK: '/interview/wrong-question-book',
+  CREATE_QUESTION_BANK: '/interview/create-question-bank',
+  MOCK_QUESTION_FILTER: '/interview/mock-question-filter',
+  EVALUATION_REPORT: '/interview/evaluation-report',
+} as const
