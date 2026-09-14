@@ -191,25 +191,31 @@ export const conversationApi = {
     api.post<ChatResponse>("/langgraph/chat", data),
 
   chatStreamUrl: (params: { text: string; job_role?: string }) => {
-    const origin = (import.meta as any).env?.VITE_API_BASE_URL || (import.meta as any).env?.VITE_API_BASE || "http://localhost:8080";
-    const normalized = String(origin).replace(/\/$/, "");
-    const baseApi = normalized.endsWith("/api") ? normalized : `${normalized}/api`;
-    const base = `${baseApi}/conversation/chat/stream`;
-    const qs = new URLSearchParams();
-    qs.set("text", params.text);
-    if (params.job_role) qs.set("job_role", params.job_role);
-    return `${base}?${qs.toString()}`;
+    const raw = (import.meta as any).env?.VITE_API_BASE_URL ?? (import.meta as any).env?.VITE_API_BASE
+    let baseApi = "/api"
+    if (raw !== undefined && raw !== null) {
+      const normalized = String(raw).replace(/\/$/, "")
+      baseApi = !normalized ? "/api" : normalized.endsWith("/api") ? normalized : `${normalized}/api`
+    } else {
+      baseApi = "http://localhost:8080/api"
+    }
+    const base = `${baseApi}/conversation/chat/stream`
+    const qs = new URLSearchParams()
+    qs.set("text", params.text)
+    if (params.job_role) qs.set("job_role", params.job_role)
+    return `${base}?${qs.toString()}`
   },
 
   uploadAudio: async (audio: Blob, fileName = "recording.mp3", voice_format?: string): Promise<AsrUploadResponse> => {
     const baseApi = (() => {
-      const origin = (import.meta as any).env?.VITE_API_BASE_URL || (import.meta as any).env?.VITE_API_BASE || "http://localhost:8080";
-      const normalized = String(origin).replace(/\/$/, "");
-      return normalized.endsWith("/api") ? normalized : `${normalized}/api`;
-    })();
-    const form = new FormData();
-    form.append("audio", audio, fileName);
-    if (voice_format) form.append("voice_format", voice_format);
+      const raw = (import.meta as any).env?.VITE_API_BASE_URL ?? (import.meta as any).env?.VITE_API_BASE
+      if (raw === undefined || raw === null) return "http://localhost:8080/api"
+      const normalized = String(raw).replace(/\/$/, "")
+      return !normalized ? "/api" : normalized.endsWith("/api") ? normalized : `${normalized}/api`
+    })()
+    const form = new FormData()
+    form.append("audio", audio, fileName)
+    if (voice_format) form.append("voice_format", voice_format)
 
     const resp = await fetch(`${baseApi}/asr/upload`, {
       method: "POST",

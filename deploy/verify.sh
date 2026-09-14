@@ -4,6 +4,7 @@ set -euo pipefail
 backend_url="${BACKEND_BASE_URL:-http://localhost:18080}"
 ai_url="${AI_BASE_URL:-http://localhost:18081}"
 web_url="${WEB_BASE_URL:-http://localhost:3000}"
+frontend_url="${FRONTEND_BASE_URL:-http://localhost:5174}"
 
 check_url() {
   local label="$1"
@@ -125,6 +126,7 @@ else
   echo "[INFO] direct /internal/readiness probe skipped; backend readiness already verifies the shared Java→Python token"
 fi
 check_url "web" "${web_url}"
+check_url "frontend" "${frontend_url}"
 
 if [[ -n "$smoke_token" ]]; then
   authorization="$smoke_token"

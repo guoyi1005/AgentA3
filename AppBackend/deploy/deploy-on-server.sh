@@ -11,8 +11,9 @@ DEPLOY_RELEASE_PORTS="${DEPLOY_RELEASE_PORTS:-}"
 BACKEND_PORT="${BACKEND_PORT:-}"
 AI_PORT="${AI_PORT:-}"
 WEB_PORT="${WEB_PORT:-}"
+FRONTEND_PORT="${FRONTEND_PORT:-}"
 
-# BACKEND_IMAGE, AI_SERVER_IMAGE, WEB_IMAGE, MYSQL_IMAGE, REDIS_IMAGE,
+# BACKEND_IMAGE, AI_SERVER_IMAGE, WEB_IMAGE, FRONTEND_IMAGE, MYSQL_IMAGE, REDIS_IMAGE,
 # IMAGE_TAG, BACKEND_PORT, AI_PORT, JWT_SECRET, AI_INTERNAL_TOKEN and
 # MYSQL_ROOT_PASSWORD may come from CI. Docker Compose gives those process
 # values precedence; otherwise it reads deploy/.env.
@@ -61,7 +62,7 @@ dump_deploy_diagnostics() {
   echo "[deploy] Compose service status:" >&2
   "${compose[@]}" ps -a >&2 || true
   local service
-  for service in backend mysql redis ai-server web config-guard; do
+  for service in backend mysql redis neo4j ai-server web frontend config-guard; do
     echo "[deploy] Last logs for ${service}:" >&2
     "${compose[@]}" logs --no-color --tail=200 "$service" >&2 || true
   done
@@ -99,10 +100,11 @@ env_file_value() {
 BACKEND_PORT="${BACKEND_PORT:-$(env_file_value BACKEND_PORT)}"
 AI_PORT="${AI_PORT:-$(env_file_value AI_PORT)}"
 WEB_PORT="${WEB_PORT:-$(env_file_value WEB_PORT)}"
+FRONTEND_PORT="${FRONTEND_PORT:-$(env_file_value FRONTEND_PORT)}"
 DEPLOY_FORCE_RELEASE_PORTS="${DEPLOY_FORCE_RELEASE_PORTS:-$(env_file_value DEPLOY_FORCE_RELEASE_PORTS)}"
 DEPLOY_FORCE_RELEASE_PORTS="${DEPLOY_FORCE_RELEASE_PORTS:-true}"
 DEPLOY_RELEASE_PORTS="${DEPLOY_RELEASE_PORTS:-$(env_file_value DEPLOY_RELEASE_PORTS)}"
-DEPLOY_RELEASE_PORTS="${DEPLOY_RELEASE_PORTS:-8080 8081 18080 18081 ${BACKEND_PORT:-} ${AI_PORT:-} ${WEB_PORT:-3000}}"
+DEPLOY_RELEASE_PORTS="${DEPLOY_RELEASE_PORTS:-8080 8081 18080 18081 ${BACKEND_PORT:-} ${AI_PORT:-} ${WEB_PORT:-3000} ${FRONTEND_PORT:-5174}}"
 
 git fetch origin "$DEPLOY_BRANCH"
 git checkout -f -B "$DEPLOY_BRANCH" "origin/$DEPLOY_BRANCH"
@@ -126,7 +128,7 @@ fi
 compose=(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
 "${compose[@]}" config --quiet
 prune_docker_artifacts "before image pull"
-"${compose[@]}" pull config-guard mysql redis backend ai-server web
+"${compose[@]}" pull config-guard mysql redis neo4j backend ai-server web frontend
 "${compose[@]}" run --rm --no-deps config-guard
 "${compose[@]}" down --remove-orphans
 release_configured_ports
@@ -138,6 +140,7 @@ fi
 if ! BACKEND_BASE_URL="${BACKEND_BASE_URL:-http://127.0.0.1:${BACKEND_PORT:-18080}}" \
   AI_BASE_URL="${AI_BASE_URL:-http://127.0.0.1:${AI_PORT:-18081}}" \
   WEB_BASE_URL="${WEB_BASE_URL:-http://127.0.0.1:${WEB_PORT:-3000}}" \
+  FRONTEND_BASE_URL="${FRONTEND_BASE_URL:-http://127.0.0.1:${FRONTEND_PORT:-5174}}" \
   AI_INTERNAL_TOKEN="${AI_INTERNAL_TOKEN:-}" \
   bash deploy/verify.sh; then
   dump_deploy_diagnostics

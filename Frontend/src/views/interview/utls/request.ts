@@ -40,10 +40,16 @@ function clearInterviewTokens() {
   localStorage.removeItem('nickname')
 }
 
-const apiOrigin = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-const baseURL = String(apiOrigin).replace(/\/$/, '').endsWith('/api')
-  ? String(apiOrigin).replace(/\/$/, '')
-  : `${String(apiOrigin).replace(/\/$/, '')}/api`
+const rawApiOrigin = import.meta.env.VITE_API_BASE_URL
+const apiOrigin =
+  rawApiOrigin === undefined || rawApiOrigin === null
+    ? 'http://localhost:8080'
+    : String(rawApiOrigin).replace(/\/$/, '')
+const baseURL = !apiOrigin
+  ? '/api'
+  : apiOrigin.endsWith('/api')
+    ? apiOrigin
+    : `${apiOrigin}/api`
 
 const request = axios.create({
   baseURL,

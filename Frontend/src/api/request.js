@@ -2,9 +2,12 @@ import { clearAuth, getToken } from '../utils/auth'
 
 const trimTrailingSlash = (value) => String(value || '').replace(/\/+$/, '')
 
-export const API_BASE_URL = trimTrailingSlash(
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
-)
+// Empty string means same-origin (Docker/nginx proxies /api). Unset falls back to local backend.
+const rawApiBase = import.meta.env.VITE_API_BASE_URL
+export const API_BASE_URL =
+  rawApiBase === undefined || rawApiBase === null
+    ? 'http://localhost:8080'
+    : trimTrailingSlash(rawApiBase)
 
 const getErrorMessage = (data, fallback = '请求失败') => {
   if (typeof data === 'string') return data
@@ -19,7 +22,10 @@ const redirectToLogin = () => {
 
 export async function request({ url, method = 'GET', data, params, headers = {} }) {
   const target = url.startsWith('http') ? url : `${API_BASE_URL}${url}`
-  const requestUrl = new URL(target)
+  // Relative paths (empty VITE_API_BASE_URL in Docker) need an origin base.
+  const requestUrl = target.startsWith('http')
+    ? new URL(target)
+    : new URL(target, window.location.origin)
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {

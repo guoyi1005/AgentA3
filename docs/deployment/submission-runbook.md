@@ -3,15 +3,16 @@
 > **演示环境快速入口（终版）**  
 > 见 [`校辩智生-演示环境部署与使用说明.docx`](./校辩智生-演示环境部署与使用说明.docx)。  
 > 线上 Web：http://129.211.82.112:3000/  
+> 线上 Frontend：http://129.211.82.112:5174/  
 > APP：`zzs` / `Zhang@2114`（安装包随附件）；Web：`admin` / `admin123`。
 
-本手册对应 `deploy/compose.submission.yml`。它启动 MySQL、Redis、Java 后端、Python AI Server 和 AppWeb 五个服务，并将 Java→Python、Python→Java、Python→Redis 的地址固定到 Compose 内部网络。
+本手册对应 `deploy/compose.submission.yml`。它启动 MySQL、Redis、Neo4j、Java 后端、Python AI Server、AppWeb 和 Frontend 七个业务服务（另含 config-guard），并将 Java→Python、Python→Java、Python→Redis 的地址固定到 Compose 内部网络。
 
 ## 1. 前置条件
 
 - Docker Engine 24+ 与 Docker Compose v2。
 - 首次构建需要访问容器镜像仓库、Maven、npm 和 PyPI；镜像与依赖已缓存后，运行阶段不需要重新下载。
-- 默认对宿主机开放 `3000`，MySQL、Redis、Java 和 AI 端口只绑定 `127.0.0.1`。
+- 默认对宿主机开放 `3000`（AppWeb）与 `5174`（Frontend），MySQL、Redis、Java 和 AI 端口只绑定 `127.0.0.1`。
 - MaxKB 和模型服务是外部依赖，不打包凭据，也不伪造调用结果。
 
 ## 2. 生成本地配置
@@ -47,6 +48,7 @@ bash deploy/verify.sh
 - `http://localhost:8081/internal/readiness`（传入 `AI_INTERNAL_TOKEN` 时直接复核 Python→Redis）
 - `http://localhost:8081/internal/models/providers`（同时传入 `AI_INTERNAL_TOKEN` 与 `SMOKE_TOKEN` 时复核 Python 内部模型目录接口）
 - `http://localhost:3000`
+- `http://localhost:5174`
 - `http://localhost:8080/api/auth/current-user`（无令牌时必须返回 401；设置 `SMOKE_TOKEN` 时必须完成真实鉴权请求）
 
 若修改端口，可通过 `BACKEND_BASE_URL`、`AI_BASE_URL`、`WEB_BASE_URL` 覆盖验收地址。要执行完整内部与登录态探针，可运行：

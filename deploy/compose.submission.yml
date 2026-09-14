@@ -208,6 +208,25 @@ services:
       retries: 12
       start_period: 10s
 
+  # Campus Frontend (Vue) — public entry on :5174
+  frontend:
+    image: ${FRONTEND_IMAGE:-agent-a3/frontend}:${IMAGE_TAG:-submission}
+    build:
+      context: ../Frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_BIND_ADDRESS:-0.0.0.0}:${FRONTEND_PORT:-5174}:80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--output-document=-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
 volumes:
   mysql-data:
   redis-data:

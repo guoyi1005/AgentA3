@@ -43,10 +43,15 @@ export function redirectToLoginOnSessionExpired(status: number, payload?: any): 
   return true;
 }
 
-const apiOrigin = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE || "http://localhost:8080";
-const API_BASE = String(apiOrigin).replace(/\/$/, "").endsWith("/api")
-  ? String(apiOrigin).replace(/\/$/, "")
-  : `${String(apiOrigin).replace(/\/$/, "")}/api`;
+function resolveApiBase(): string {
+  const raw = import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_BASE
+  if (raw === undefined || raw === null) return "http://localhost:8080/api"
+  const origin = String(raw).replace(/\/$/, "")
+  if (!origin) return "/api"
+  return origin.endsWith("/api") ? origin : `${origin}/api`
+}
+
+const API_BASE = resolveApiBase()
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("token") || localStorage.getItem("session_token") || "";
