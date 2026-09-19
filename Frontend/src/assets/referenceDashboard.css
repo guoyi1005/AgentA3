@@ -1,0 +1,1591 @@
+:root {
+  --ref-bg: #f4f1ea;
+  --ref-surface: #fffdf8;
+  --ref-ink: #191919;
+  --ref-text: #35332f;
+  --ref-muted: #76716a;
+  --ref-line: #25231f;
+  --ref-pink: #f5dddd;
+  --ref-sage: #e2e9dd;
+  --ref-blue: #e1e9f1;
+  --ref-sand: #f0e8d5;
+  --ref-lilac: #e9e1ef;
+  --ref-radius-lg: 24px;
+  --ref-radius-md: 16px;
+}
+
+/* Shared page chrome */
+.reference-theme.map-reference,
+.reference-theme.activities-reference {
+  color: var(--ref-ink);
+}
+
+.map-reference:not(.dark),
+.activities-reference {
+  background: var(--ref-bg);
+}
+
+.map-reference:not(.dark) .app-site-header,
+.activities-reference .app-site-header {
+  top: 12px;
+  right: 12px;
+  left: 12px;
+  height: 60px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.map-reference:not(.dark) .app-site-header__inner,
+.activities-reference .app-site-header__inner {
+  width: 100%;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--ref-ink);
+  box-shadow: 0 10px 28px rgba(25, 25, 25, 0.16);
+}
+
+.map-reference:not(.dark) .app-site-header__nav a,
+.activities-reference .app-site-header__nav a {
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.map-reference:not(.dark) .app-site-header__nav a:hover,
+.map-reference:not(.dark) .app-site-header__nav a.router-link-active,
+.map-reference:not(.dark) .app-site-header__nav a.app-site-header__nav-link--active,
+.activities-reference .app-site-header__nav a:hover,
+.activities-reference .app-site-header__nav a.router-link-active {
+  color: var(--ref-ink);
+  background: var(--ref-sand);
+  box-shadow: none;
+}
+
+.map-reference:not(.dark) .app-tab-nav__panel,
+.activities-reference .app-tab-nav__panel {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 18px;
+  background: var(--ref-surface);
+  box-shadow: 0 14px 34px rgba(25, 25, 25, 0.14);
+}
+
+.map-reference:not(.dark) .app-tab-nav__avatar,
+.activities-reference .app-tab-nav__avatar {
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+/* Map page */
+.map-reference:not(.dark) .map-main {
+  inset: 84px 14px 14px;
+  overflow: hidden;
+  border: 1.5px solid var(--ref-line);
+  border-radius: var(--ref-radius-lg);
+  background: var(--ref-surface);
+}
+
+.map-reference:not(.dark) .map-canvas {
+  border-radius: calc(var(--ref-radius-lg) - 2px);
+}
+
+.map-reference:not(.dark) .map-main::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: calc(var(--ref-radius-lg) - 2px);
+  background: rgba(244, 241, 234, 0.08);
+  pointer-events: none;
+}
+
+.map-reference:not(.dark) .search-wrapper {
+  top: 18px;
+  left: 18px;
+  width: min(500px, calc(100% - 120px));
+}
+
+.map-reference:not(.dark) .search-box {
+  height: 54px;
+  padding: 0 6px 0 18px;
+  border: 1.5px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  box-shadow: 0 8px 22px rgba(25, 25, 25, 0.1);
+}
+
+.map-reference:not(.dark) .search-input {
+  color: var(--ref-ink);
+  font-size: 14px;
+}
+
+.map-reference:not(.dark) .search-input::placeholder {
+  color: #918b83;
+}
+
+.map-reference:not(.dark) .search-clear {
+  background: var(--ref-pink);
+  color: var(--ref-ink);
+}
+
+.map-reference:not(.dark) .search-submit {
+  height: 42px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+.map-reference:not(.dark) .search-dropdown {
+  margin-top: 10px;
+  border: 1.5px solid var(--ref-line);
+  border-radius: 18px;
+  background: var(--ref-surface);
+  box-shadow: 0 16px 36px rgba(25, 25, 25, 0.14);
+}
+
+.map-reference:not(.dark) .search-item + .search-item {
+  border-top-color: rgba(37, 35, 31, 0.14);
+}
+
+.map-reference:not(.dark) .search-item:hover {
+  background: var(--ref-sand);
+}
+
+.map-reference:not(.dark) .notice-bar {
+  top: 82px;
+  padding: 9px 18px;
+  background: var(--ref-ink);
+  box-shadow: 0 10px 24px rgba(25, 25, 25, 0.18);
+}
+
+.map-reference:not(.dark) .top-tools {
+  top: 18px;
+  right: 18px;
+  gap: 8px;
+}
+
+.map-reference:not(.dark) .tool-btn {
+  width: 42px;
+  height: 42px;
+  border: 1.5px solid var(--ref-line);
+  border-radius: 50%;
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+.map-reference:not(.dark) .tool-btn:hover {
+  transform: none;
+  background: var(--ref-blue);
+}
+
+.map-reference:not(.dark) .category-rail {
+  top: 188px;
+  left: 18px;
+  width: 100px;
+  overflow: hidden;
+  border: 1.5px solid var(--ref-line);
+  border-radius: 22px;
+  background: var(--ref-surface);
+  box-shadow: 0 14px 32px rgba(25, 25, 25, 0.12);
+  backdrop-filter: none;
+}
+
+.map-reference:not(.dark) .category-all {
+  color: #fff;
+  background: var(--ref-ink);
+}
+
+.map-reference:not(.dark) .category-item {
+  border-bottom-color: rgba(37, 35, 31, 0.16);
+  color: var(--ref-text);
+}
+
+.map-reference:not(.dark) .category-item--canteen {
+  background: var(--ref-pink);
+}
+
+.map-reference:not(.dark) .category-item--dormitory {
+  background: var(--ref-sage);
+}
+
+.map-reference:not(.dark) .category-item--teaching {
+  background: var(--ref-blue);
+}
+
+.map-reference:not(.dark) .category-item--sports {
+  background: var(--ref-sand);
+}
+
+.map-reference:not(.dark) .category-item-icon {
+  color: var(--ref-ink);
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.map-reference:not(.dark) .category-item.active {
+  color: var(--ref-ink);
+  background: #fff;
+}
+
+.map-reference:not(.dark) .random-modal {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 22px;
+  background: var(--ref-surface);
+  box-shadow: 0 18px 44px rgba(25, 25, 25, 0.16);
+}
+
+.map-reference:not(.dark) .random-close {
+  border-radius: 999px;
+  background: var(--ref-ink);
+}
+
+.map-reference:not(.dark) .quick-bar {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  box-shadow: 0 10px 28px rgba(25, 25, 25, 0.13);
+}
+
+.map-reference:not(.dark) .quick-btn:hover,
+.map-reference:not(.dark) .quick-btn.active {
+  background: var(--ref-sand);
+}
+
+.map-reference:not(.dark) .real-map-marker__title {
+  border-color: var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+  box-shadow: 0 3px 10px rgba(25, 25, 25, 0.12);
+}
+
+.map-reference:not(.dark) .canteen-panel {
+  border: 1.5px solid var(--ref-line);
+  border-radius: var(--ref-radius-md);
+  background: var(--ref-surface);
+  box-shadow: 0 16px 34px rgba(25, 25, 25, 0.16);
+}
+
+.map-reference:not(.dark) .canteen-photo-slot {
+  border-radius: 10px;
+  background: var(--ref-sand);
+}
+
+/* Activities page */
+.activities-reference .ca-page {
+  padding: 92px 18px 56px;
+}
+
+.activities-reference .ca-container {
+  max-width: 1280px;
+}
+
+.activities-reference .ca-header {
+  align-items: end;
+  margin: 8px 0 22px;
+  padding: 0;
+  border: 0;
+}
+
+.activities-reference .ca-header__copy h2 {
+  color: var(--ref-ink);
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.activities-reference .ca-header__subtitle {
+  margin: 8px 0 0;
+  color: var(--ref-muted);
+  font-size: 14px;
+}
+
+.activities-reference .ca-header__actions {
+  gap: 8px;
+}
+
+.activities-reference .ca-header__pill {
+  min-height: 38px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1.5px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-sand);
+  color: var(--ref-ink);
+}
+
+.activities-reference .ca-header__pill .ca-icon {
+  color: var(--ref-ink);
+}
+
+.activities-reference .ca-seg {
+  padding: 4px;
+  border: 1.5px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+}
+
+.activities-reference .ca-seg__item {
+  min-height: 32px;
+  border-radius: 999px;
+  color: var(--ref-muted);
+}
+
+.activities-reference .ca-seg__item.active {
+  background: var(--ref-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+.activities-reference .ca-toolbar {
+  margin-bottom: 22px;
+  padding: 18px;
+  border: 1.5px solid var(--ref-line);
+  border-radius: var(--ref-radius-lg);
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+.activities-reference .ca-toolbar__row + .ca-toolbar__row {
+  border-top-color: rgba(37, 35, 31, 0.14);
+}
+
+.activities-reference .ca-toolbar__label,
+.activities-reference .ca-card__org,
+.activities-reference .ca-card__meta li,
+.activities-reference .ca-card__deadline {
+  color: var(--ref-muted);
+}
+
+.activities-reference .ca-chip {
+  min-height: 32px;
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-text);
+}
+
+.activities-reference .ca-chips .ca-chip:nth-child(5n + 1),
+.activities-reference .ca-card:nth-child(4n + 1) .ca-chip {
+  background: var(--ref-pink);
+}
+
+.activities-reference .ca-chips .ca-chip:nth-child(5n + 2),
+.activities-reference .ca-card:nth-child(4n + 2) .ca-chip {
+  background: var(--ref-sage);
+}
+
+.activities-reference .ca-chips .ca-chip:nth-child(5n + 3),
+.activities-reference .ca-card:nth-child(4n + 3) .ca-chip {
+  background: var(--ref-blue);
+}
+
+.activities-reference .ca-chips .ca-chip:nth-child(5n + 4),
+.activities-reference .ca-card:nth-child(4n + 4) .ca-chip {
+  background: var(--ref-sand);
+}
+
+.activities-reference .ca-chip:hover,
+.activities-reference .ca-chip.active {
+  border-color: var(--ref-line);
+  background: var(--ref-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+.activities-reference .ca-search {
+  height: 46px;
+  padding: 0 5px 0 16px;
+  border: 1.5px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+}
+
+.activities-reference .ca-search:focus-within {
+  border-color: var(--ref-line);
+  box-shadow: 0 0 0 3px rgba(225, 233, 241, 0.9);
+}
+
+.activities-reference .ca-search__btn {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--ref-ink);
+}
+
+.activities-reference .ca-search__btn:hover {
+  background: #000;
+}
+
+.activities-reference .ca-state,
+.activities-reference .ca-calendar__panel,
+.activities-reference .ca-calendar__side {
+  border: 1.5px solid var(--ref-line);
+  border-radius: var(--ref-radius-lg);
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+.activities-reference .ca-grid {
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 18px;
+}
+
+.activities-reference .ca-card {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 20px;
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+.activities-reference .ca-card:hover {
+  border-color: var(--ref-line);
+  box-shadow: 7px 7px 0 var(--ref-ink);
+  transform: translate(-3px, -3px);
+}
+
+.activities-reference .ca-card__cover,
+.activities-reference .ca-card__placeholder {
+  border-bottom: 1.5px solid var(--ref-line);
+  background: var(--ref-blue);
+}
+
+.activities-reference .ca-card:nth-child(4n + 1) .ca-card__cover,
+.activities-reference .ca-card:nth-child(4n + 1) .ca-card__placeholder {
+  background: var(--ref-pink);
+}
+
+.activities-reference .ca-card:nth-child(4n + 2) .ca-card__cover,
+.activities-reference .ca-card:nth-child(4n + 2) .ca-card__placeholder {
+  background: var(--ref-sage);
+}
+
+.activities-reference .ca-card:nth-child(4n + 3) .ca-card__cover,
+.activities-reference .ca-card:nth-child(4n + 3) .ca-card__placeholder {
+  background: var(--ref-blue);
+}
+
+.activities-reference .ca-card:nth-child(4n + 4) .ca-card__cover,
+.activities-reference .ca-card:nth-child(4n + 4) .ca-card__placeholder {
+  background: var(--ref-sand);
+}
+
+.activities-reference .ca-card__shadow,
+.activities-reference .ca-card__shade {
+  display: none;
+}
+
+.activities-reference .ca-card__date,
+.activities-reference .ca-fav,
+.activities-reference .ca-badge {
+  border: 1px solid var(--ref-line);
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+  box-shadow: none;
+}
+
+.activities-reference .ca-badge.status-upcoming {
+  background: var(--ref-sand);
+}
+
+.activities-reference .ca-badge.status-ongoing {
+  background: var(--ref-sage);
+}
+
+.activities-reference .ca-badge.status-ended {
+  background: #eeeae4;
+}
+
+.activities-reference .ca-badge.status-full {
+  background: var(--ref-pink);
+}
+
+.activities-reference .ca-card__body {
+  padding: 18px;
+}
+
+.activities-reference .ca-card__title {
+  color: var(--ref-ink);
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.activities-reference .ca-card__meta .ca-icon {
+  color: var(--ref-ink);
+}
+
+.activities-reference .ca-card__foot {
+  border-top-color: rgba(37, 35, 31, 0.14);
+}
+
+.activities-reference .ca-link {
+  color: var(--ref-ink);
+  font-weight: 750;
+}
+
+.activities-reference .ca-pagination {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1.5px solid var(--ref-line);
+}
+
+.activities-reference .ca-pagination__btn,
+.activities-reference .ca-pagination__num {
+  border: 1px solid var(--ref-line);
+  border-radius: 8px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+.activities-reference .ca-pagination__btn:hover:not(:disabled),
+.activities-reference .ca-pagination__num:hover,
+.activities-reference .ca-pagination__num.active {
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+.activities-reference .ca-calendar__panel,
+.activities-reference .ca-calendar__side {
+  padding: 20px;
+}
+
+.activities-reference .ca-calendar__head h3 {
+  color: var(--ref-ink);
+}
+
+.activities-reference .ca-calendar__today,
+.activities-reference .ca-calendar__nav,
+.activities-reference .ca-cal-btn {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+.activities-reference .ca-calendar__today:hover,
+.activities-reference .ca-calendar__nav:hover,
+.activities-reference .ca-cal-btn.active {
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+.activities-reference .ca-cal-day {
+  border-color: rgba(37, 35, 31, 0.12);
+  border-radius: 10px;
+}
+
+.activities-reference .ca-cal-day:hover {
+  background: var(--ref-blue);
+}
+
+.activities-reference .ca-cal-day.selected {
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+.activities-reference .ca-day-card {
+  border-color: var(--ref-line);
+  border-radius: 14px;
+  background: var(--ref-surface);
+}
+
+.activities-reference .ca-day-card:nth-child(3n + 1) {
+  background: var(--ref-pink);
+}
+
+.activities-reference .ca-day-card:nth-child(3n + 2) {
+  background: var(--ref-sage);
+}
+
+.activities-reference .ca-day-card:nth-child(3n + 3) {
+  background: var(--ref-blue);
+}
+
+@media (max-width: 720px) {
+  .map-reference:not(.dark) .map-main {
+    inset: 80px 8px 8px;
+    border-radius: 18px;
+  }
+
+  .map-reference:not(.dark) .app-site-header,
+  .activities-reference .app-site-header {
+    right: 8px;
+    left: 8px;
+  }
+
+  .map-reference:not(.dark) .app-site-header__inner,
+  .activities-reference .app-site-header__inner {
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .map-reference:not(.dark) .app-site-header__brand,
+  .activities-reference .app-site-header__brand {
+    font-size: 15px;
+  }
+
+  .map-reference:not(.dark) .app-site-header__nav a,
+  .activities-reference .app-site-header__nav a {
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .activities-reference .ca-page {
+    padding: 86px 12px 40px;
+  }
+
+  .activities-reference .ca-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .activities-reference .ca-header__actions {
+    justify-content: space-between;
+  }
+
+  .activities-reference .ca-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Scoped page styles load after this file, so these ID-scoped rules keep the
+   reference theme authoritative without changing the global application. */
+#app .activities-reference {
+  background: var(--ref-bg);
+  color: var(--ref-ink);
+}
+
+#app .activities-reference .ca-header__copy h2 {
+  color: var(--ref-ink);
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+#app .activities-reference .ca-search,
+#app .activities-reference .ca-toolbar,
+#app .activities-reference .ca-state,
+#app .activities-reference .ca-calendar__panel,
+#app .activities-reference .ca-calendar__side {
+  border: 1.5px solid var(--ref-line);
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+#app .activities-reference .ca-search__btn {
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .activities-reference .ca-seg__item.active {
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .activities-reference .ca-chip.active {
+  border-color: var(--ref-line);
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .activities-reference .ca-card {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 20px;
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+#app .activities-reference .ca-card:hover {
+  border-color: var(--ref-line);
+  box-shadow: 7px 7px 0 var(--ref-ink);
+  transform: translate(-3px, -3px);
+}
+
+#app .activities-reference .ca-card__cover,
+#app .activities-reference .ca-card__placeholder {
+  border-bottom: 1.5px solid var(--ref-line);
+}
+
+#app .activities-reference .ca-pagination__btn,
+#app .activities-reference .ca-pagination__num {
+  border: 1px solid var(--ref-line);
+  border-radius: 8px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .activities-reference .ca-pagination__num.active {
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+/* Activity detail and signup surfaces */
+#app .activity-detail-reference,
+#app .signup-reference {
+  background: var(--ref-bg);
+  color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .detail-page,
+#app .signup-reference .signup-main {
+  padding-top: 92px;
+}
+
+#app .activity-detail-reference .back-btn,
+#app .activity-detail-reference .category-tag,
+#app .activity-detail-reference .status-tag,
+#app .activity-detail-reference .tag-chip {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .back-btn:hover {
+  background: var(--ref-sand);
+  color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .detail-title {
+  color: var(--ref-ink);
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 800;
+}
+
+#app .activity-detail-reference .info-card,
+#app .activity-detail-reference .intro-section,
+#app .activity-detail-reference .signup-card {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 20px;
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+#app .activity-detail-reference .info-card {
+  border-radius: 16px;
+}
+
+#app .activity-detail-reference .info-icon {
+  border: 1px solid var(--ref-line);
+  border-radius: 12px;
+  background: var(--ref-blue);
+  color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .info-card:nth-child(2) .info-icon {
+  background: var(--ref-sage);
+}
+
+#app .activity-detail-reference .info-card:nth-child(3) .info-icon {
+  background: var(--ref-sand);
+}
+
+#app .activity-detail-reference .info-label,
+#app .activity-detail-reference .intro-section p,
+#app .activity-detail-reference .seats-left {
+  color: var(--ref-muted);
+}
+
+#app .activity-detail-reference .info-value,
+#app .activity-detail-reference .intro-section h2 {
+  color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .progress-bar {
+  background: var(--ref-blue);
+}
+
+#app .activity-detail-reference .progress-fill {
+  background: var(--ref-ink);
+}
+
+#app .activity-detail-reference .signup-btn {
+  border-radius: 999px;
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .signup-reference .bg-layer {
+  background: var(--ref-bg);
+}
+
+#app .signup-reference .modal-card,
+#app .signup-reference .success-dialog {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 24px;
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+#app .signup-reference .activity-card {
+  border: 1px solid var(--ref-line);
+  border-radius: 16px;
+  background: var(--ref-sand);
+}
+
+#app .signup-reference .activity-thumb,
+#app .signup-reference .thumb-placeholder {
+  border-radius: 12px;
+  background: var(--ref-blue);
+}
+
+#app .signup-reference .form-group input {
+  border: 1px solid var(--ref-line);
+  border-radius: 12px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .signup-reference .form-group input:focus {
+  border-color: var(--ref-line);
+  box-shadow: 0 0 0 3px var(--ref-blue);
+}
+
+#app .signup-reference .submit-btn,
+#app .signup-reference .success-confirm-btn {
+  border-radius: 999px;
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .signup-reference .close-btn {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .signup-reference .activity-title,
+#app .signup-reference .modal-header h2,
+#app .signup-reference .success-title {
+  color: var(--ref-ink);
+}
+
+#app .signup-reference .modal-subtitle,
+#app .signup-reference .activity-meta,
+#app .signup-reference .agreement,
+#app .signup-reference .success-desc {
+  color: var(--ref-muted);
+}
+
+/* Remaining map controls */
+.map-reference:not(.dark) .chat-fab {
+  border: 1.5px solid var(--ref-line);
+  background: var(--ref-ink);
+  box-shadow: 0 8px 20px rgba(25, 25, 25, 0.18);
+}
+
+.map-reference:not(.dark) .chat-fab.expanded {
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+.map-reference:not(.dark) .real-map-marker__icon {
+  filter: saturate(0.62) brightness(0.96) drop-shadow(0 2px 3px rgba(25, 25, 25, 0.18));
+}
+
+/* Unified button system for the two redesigned pages. */
+#app .map-reference:not(.dark) .search-submit,
+#app .map-reference:not(.dark) .random-close,
+#app .map-reference:not(.dark) .more-info-button,
+#app .map-reference:not(.dark) .map-info-window__indoor-button {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .tool-btn,
+#app .map-reference:not(.dark) .poi-close {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 50%;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .tool-btn:hover,
+#app .map-reference:not(.dark) .poi-close:hover {
+  color: var(--ref-ink);
+  background: var(--ref-sand);
+}
+
+#app .map-reference:not(.dark) .category-all {
+  border-bottom: 1.5px solid var(--ref-line);
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .map-reference:not(.dark) .category-item {
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .quick-btn,
+#app .map-reference:not(.dark) .floor-preview button {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .quick-btn:hover,
+#app .map-reference:not(.dark) .quick-btn.active,
+#app .map-reference:not(.dark) .floor-preview button:hover,
+#app .map-reference:not(.dark) .floor-preview button.active {
+  border-color: var(--ref-line);
+  background: var(--ref-sand);
+}
+
+#app .activities-reference .ca-search__btn,
+#app .activities-reference .ca-seg__item.active,
+#app .activities-reference .ca-chip.active,
+#app .activities-reference .ca-btn,
+#app .activities-reference .ca-pagination__num.active,
+#app .activities-reference .ca-calendar__today:hover,
+#app .activities-reference .ca-calendar__nav:hover,
+#app .activities-reference .ca-cal-btn.active,
+#app .activity-detail-reference .signup-btn,
+#app .signup-reference .submit-btn,
+#app .signup-reference .success-confirm-btn {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+#app .activities-reference .ca-btn:not(.active),
+#app .activities-reference .ca-calendar__today,
+#app .activities-reference .ca-calendar__nav,
+#app .activity-detail-reference .back-btn,
+#app .signup-reference .close-btn,
+#app .signup-reference .retry-btn {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+  box-shadow: none;
+}
+
+#app .activities-reference .ca-link,
+#app .activities-reference .ca-calendar__today,
+#app .activities-reference .ca-calendar__nav,
+#app .activities-reference .ca-calendar__count,
+#app .activities-reference .progress-percent,
+#app .activity-detail-reference .back-btn,
+#app .activity-detail-reference .signup-btn:not(.disabled),
+#app .signup-reference .agreement a {
+  color: var(--ref-ink);
+}
+
+#app .activities-reference .ca-calendar__count {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-sand);
+}
+
+#app .activities-reference .ca-calendar__count::before {
+  background: var(--ref-ink);
+}
+
+#app .activities-reference .ca-calendar__today {
+  color: var(--ref-ink);
+}
+
+#app .activities-reference .ca-cal-day.today {
+  border-color: var(--ref-line);
+  background: var(--ref-sand);
+}
+
+#app .activities-reference .ca-cal-day.selected {
+  border-color: var(--ref-line);
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .activities-reference .ca-cal-day.selected .ca-cal-day__num,
+#app .activities-reference .ca-cal-day.today .ca-cal-day__num {
+  color: inherit;
+}
+
+#app .activities-reference .ca-day-card {
+  border: 1px solid var(--ref-line);
+  border-radius: 14px;
+}
+
+#app .activities-reference .ca-day-card:nth-child(3n + 1) {
+  background: var(--ref-pink);
+}
+
+#app .activities-reference .ca-day-card:nth-child(3n + 2) {
+  background: var(--ref-sage);
+}
+
+#app .activities-reference .ca-day-card:nth-child(3n + 3) {
+  background: var(--ref-blue);
+}
+
+#app .activities-reference .ca-day-card .ca-link {
+  padding: 5px 10px;
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+}
+
+#app .activities-reference .ca-card__deadline {
+  color: var(--ref-muted);
+}
+
+#app .activity-detail-reference .info-card,
+#app .activity-detail-reference .intro-section,
+#app .activity-detail-reference .signup-card,
+#app .signup-reference .activity-card,
+#app .signup-reference .modal-card,
+#app .signup-reference .success-dialog {
+  box-shadow: none;
+}
+
+#app .activity-detail-reference .category-tag,
+#app .activity-detail-reference .tag-chip {
+  color: var(--ref-ink);
+  background: var(--ref-blue);
+}
+
+#app .activity-detail-reference .status-tag.ended {
+  background: #eeeae4;
+  color: var(--ref-muted);
+}
+
+#app .signup-reference .submit-btn:disabled,
+#app .signup-reference .submit-btn.disabled,
+#app .activity-detail-reference .signup-btn.disabled,
+#app .activity-detail-reference .signup-btn:disabled {
+  border-color: #b8b2a8;
+  background: #ddd8cf;
+  color: #7e7971;
+}
+
+/* Complete the shared control language for secondary map surfaces. */
+#app .map-reference:not(.dark) .map-info-window,
+#app .map-reference:not(.dark) .poi-panel,
+#app .map-reference:not(.dark) .intro-preview-popover {
+  border: 1.5px solid var(--ref-line);
+  border-radius: var(--ref-radius-md);
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .map-info-window__heading strong,
+#app .map-reference:not(.dark) .poi-name,
+#app .map-reference:not(.dark) .section-label,
+#app .map-reference:not(.dark) .intro-preview-popover strong {
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .map-info-window__type,
+#app .map-reference:not(.dark) .poi-type,
+#app .map-reference:not(.dark) .random-hint,
+#app .map-reference:not(.dark) .board-author,
+#app .map-reference:not(.dark) .intro-preview-popover p {
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .map-info-window p,
+#app .map-reference:not(.dark) .poi-desc,
+#app .map-reference:not(.dark) .poi-location,
+#app .map-reference:not(.dark) .board-empty,
+#app .map-reference:not(.dark) .board-time {
+  color: var(--ref-muted);
+}
+
+#app .map-reference:not(.dark) .poi-section,
+#app .map-reference:not(.dark) .board-msg {
+  border-color: rgba(37, 35, 31, 0.14);
+}
+
+#app .map-reference:not(.dark) .checkin-btn,
+#app .map-reference:not(.dark) .board-send,
+#app .map-reference:not(.dark) .chat-send,
+#app .map-reference:not(.dark) .lost-submit {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .board-author-input,
+#app .map-reference:not(.dark) .board-input,
+#app .map-reference:not(.dark) .chat-input,
+#app .map-reference:not(.dark) .lost-form input,
+#app .map-reference:not(.dark) .lost-form select {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .board-author-input::placeholder,
+#app .map-reference:not(.dark) .board-input::placeholder,
+#app .map-reference:not(.dark) .chat-input::placeholder,
+#app .map-reference:not(.dark) .lost-form input::placeholder {
+  color: var(--ref-muted);
+}
+
+#app .map-reference:not(.dark) .chat-panel {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 20px;
+  background: var(--ref-surface);
+  box-shadow: 0 18px 44px rgba(25, 25, 25, 0.16);
+}
+
+#app .map-reference:not(.dark) .chat-header {
+  border-bottom: 1.5px solid var(--ref-line);
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .map-reference:not(.dark) .chat-tabs button,
+#app .map-reference:not(.dark) .chat-btn {
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+#app .map-reference:not(.dark) .chat-tabs button.active {
+  border-color: var(--ref-surface);
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .chat-body,
+#app .map-reference:not(.dark) .lost-body {
+  background: var(--ref-bg);
+}
+
+#app .map-reference:not(.dark) .chat-msg.user .chat-bubble {
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .map-reference:not(.dark) .chat-msg.assistant .chat-bubble,
+#app .map-reference:not(.dark) .lost-card {
+  border: 1px solid var(--ref-line);
+  border-radius: 14px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .chat-footer {
+  border-top-color: rgba(37, 35, 31, 0.14);
+  background: var(--ref-surface);
+}
+
+#app .map-reference:not(.dark) .lost-new-btn {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .lost-tag.lost,
+#app .map-reference:not(.dark) .lost-tag.found {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .lost-tag.lost {
+  background: var(--ref-pink);
+}
+
+#app .map-reference:not(.dark) .lost-tag.found {
+  background: var(--ref-sage);
+}
+
+#app .map-reference:not(.dark) .chat-fab svg {
+  stroke: currentColor;
+}
+
+#app .map-reference:not(.dark) .chat-fab {
+  border: 1.5px solid var(--ref-line);
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+  box-shadow: 0 7px 18px rgba(25, 25, 25, 0.14);
+}
+
+#app .map-reference:not(.dark) .chat-fab:hover {
+  background: var(--ref-blue);
+}
+
+#app .map-reference:not(.dark) .chat-fab.expanded {
+  background: var(--ref-pink);
+  color: var(--ref-ink);
+}
+
+/* Indoor guide: keep the modal content dense while matching the page language. */
+#app .map-reference:not(.dark) .indoor-guide-mask {
+  background: rgba(25, 25, 25, 0.42);
+  backdrop-filter: blur(5px);
+}
+
+#app .map-reference:not(.dark) .indoor-guide-dialog {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 24px;
+  background: var(--ref-surface);
+  box-shadow: 0 24px 70px rgba(25, 25, 25, 0.22);
+}
+
+#app .map-reference:not(.dark) .indoor-breadcrumb,
+#app .map-reference:not(.dark) .indoor-content-heading span,
+#app .map-reference:not(.dark) .stall-card-meta-row small,
+#app .map-reference:not(.dark) .dish-card-footer span,
+#app .map-reference:not(.dark) .indoor-empty {
+  color: var(--ref-muted);
+}
+
+#app .map-reference:not(.dark) .indoor-breadcrumb b,
+#app .map-reference:not(.dark) .indoor-breadcrumb strong,
+#app .map-reference:not(.dark) .indoor-toolbar h2,
+#app .map-reference:not(.dark) .indoor-content-heading,
+#app .map-reference:not(.dark) .stall-card-title strong,
+#app .map-reference:not(.dark) .indoor-menu-card strong {
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .indoor-guide-close {
+  border: 1px solid var(--ref-line);
+  border-radius: 50%;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .indoor-toolbar,
+#app .map-reference:not(.dark) .indoor-categories,
+#app .map-reference:not(.dark) .indoor-content-heading {
+  border-color: rgba(37, 35, 31, 0.16);
+}
+
+#app .map-reference:not(.dark) .indoor-view-tabs {
+  padding: 4px;
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-bg);
+}
+
+#app .map-reference:not(.dark) .indoor-view-tabs button {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ref-ink);
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .indoor-view-tabs button.active {
+  border-color: var(--ref-line);
+  background: var(--ref-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .indoor-search {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+}
+
+#app .map-reference:not(.dark) .indoor-search span,
+#app .map-reference:not(.dark) .indoor-search input {
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .indoor-categories {
+  background: var(--ref-bg);
+}
+
+#app .map-reference:not(.dark) .indoor-categories button,
+#app .map-reference:not(.dark) .indoor-facility {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .indoor-categories button.active,
+#app .map-reference:not(.dark) .indoor-back-map {
+  border-color: var(--ref-line);
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .map-reference:not(.dark) .indoor-map-stage {
+  background-color: var(--ref-bg);
+  background-image:
+    linear-gradient(rgba(37, 35, 31, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 35, 31, 0.07) 1px, transparent 1px);
+}
+
+#app .map-reference:not(.dark) .indoor-plan-viewport {
+  border: 1px solid var(--ref-line);
+  border-radius: 16px;
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .indoor-zoom-controls {
+  border: 1px solid var(--ref-line);
+  border-radius: 14px;
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .indoor-zoom-controls button {
+  border-bottom-color: rgba(37, 35, 31, 0.16);
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .indoor-zoom-controls button:last-child {
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .indoor-zoom-hint {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-muted);
+}
+
+#app .map-reference:not(.dark) .stall-cluster,
+#app .map-reference:not(.dark) .demo-stall-marker i,
+#app .map-reference:not(.dark) .facility-map-marker i {
+  filter: saturate(0.62) brightness(0.96);
+}
+
+#app .map-reference:not(.dark) .indoor-content-view {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 18px;
+  background: var(--ref-surface);
+}
+
+#app .map-reference:not(.dark) .indoor-stall-grid,
+#app .map-reference:not(.dark) .indoor-menu-grid {
+  background: var(--ref-bg);
+}
+
+#app .map-reference:not(.dark) .indoor-stall-card,
+#app .map-reference:not(.dark) .indoor-menu-card {
+  border: 1px solid var(--ref-line);
+  border-radius: 14px;
+  background: var(--ref-surface);
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .stall-card-title small,
+#app .map-reference:not(.dark) .dish-category {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-blue);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .stall-card-title em.status-1 {
+  border-color: var(--ref-line);
+  background: var(--ref-sage);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .stall-card-title em.status-2 {
+  border-color: var(--ref-line);
+  background: var(--ref-sand);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .stall-card-title em.status-3 {
+  border-color: var(--ref-line);
+  background: #eeeae4;
+  color: var(--ref-muted);
+}
+
+#app .map-reference:not(.dark) .stall-card-intro,
+#app .map-reference:not(.dark) .dish-description {
+  padding: 7px 10px;
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-muted);
+}
+
+#app .map-reference:not(.dark) .stall-card-intro strong,
+#app .map-reference:not(.dark) .dish-description b,
+#app .map-reference:not(.dark) .stall-card-intro i,
+#app .map-reference:not(.dark) .dish-description i {
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .stall-card-actions button,
+#app .map-reference:not(.dark) .intro-preview-popover > button {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+  box-shadow: none;
+}
+
+#app .map-reference:not(.dark) .stall-card-actions button:last-child {
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+#app .map-reference:not(.dark) .dish-card-footer b {
+  color: var(--ref-ink);
+}
+
+/* Shared header popover controls follow the same button hierarchy. */
+#app .map-reference:not(.dark) .app-tab-nav__panel,
+#app .activities-reference .app-tab-nav__panel {
+  border: 1.5px solid var(--ref-line);
+  border-radius: 18px;
+  background: var(--ref-surface);
+}
+
+#app .map-reference:not(.dark) .app-tab-nav__panel-row,
+#app .activities-reference .app-tab-nav__panel-row {
+  border-bottom-color: rgba(37, 35, 31, 0.14);
+  color: var(--ref-ink);
+}
+
+#app .map-reference:not(.dark) .app-tab-nav__logout,
+#app .activities-reference .app-tab-nav__logout {
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-ink);
+  color: #fff;
+}
+
+/* Finish activity states that would otherwise retain the old blue palette. */
+#app .activities-reference .ca-spinner,
+#app .activity-detail-reference .loader,
+#app .signup-reference .loader {
+  border-color: var(--ref-blue);
+  border-top-color: var(--ref-ink);
+}
+
+#app .activities-reference .ca-state__icon,
+#app .activity-detail-reference .info-icon__svg,
+#app .activities-reference .ca-card__date-icon,
+#app .activities-reference .ca-calendar__side-head .ca-icon,
+#app .activities-reference .ca-day-card__meta .ca-icon {
+  color: var(--ref-ink);
+}
+
+#app .activities-reference .ca-state--error .ca-state__icon {
+  color: var(--ref-muted);
+}
+
+#app .activities-reference .ca-fav {
+  border-color: var(--ref-line);
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+  box-shadow: none;
+}
+
+#app .activities-reference .ca-fav:hover,
+#app .activities-reference .ca-fav.active {
+  border-color: var(--ref-line);
+  background: var(--ref-pink);
+  color: var(--ref-ink);
+  box-shadow: none;
+}
+
+#app .activities-reference .ca-card__meta em,
+#app .activities-reference .ca-card__meta em.seat-low {
+  padding: 2px 7px;
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-sage);
+  color: var(--ref-ink);
+}
+
+#app .activities-reference .ca-card__meta em.seat-low {
+  background: var(--ref-sand);
+}
+
+#app .activities-reference .ca-cal-dot.status-upcoming {
+  background: #d8a24a;
+}
+
+#app .activities-reference .ca-cal-dot.status-ongoing {
+  background: #4e9d76;
+}
+
+#app .activities-reference .ca-cal-dot.status-ended {
+  background: #a7b4c2;
+}
+
+#app .activities-reference .ca-cal-dot.status-full {
+  background: #c0655f;
+}
+
+#app .activities-reference .ca-day-card__top .ca-chip {
+  border: 1px solid var(--ref-line);
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .error-state button {
+  padding: 8px 20px;
+  border: 1px solid var(--ref-line);
+  border-radius: 999px;
+  background: var(--ref-surface);
+  color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .status-tag.upcoming {
+  border-color: var(--ref-line);
+  background: var(--ref-sand);
+  color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .status-tag.ongoing {
+  border-color: var(--ref-line);
+  background: var(--ref-sage);
+  color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .intro-section h2 {
+  border-left-color: var(--ref-ink);
+}
+
+#app .activity-detail-reference .info-card:hover {
+  border-color: var(--ref-line);
+  box-shadow: none;
+  transform: none;
+}
+
+#app .signup-reference .agreement input[type="checkbox"] {
+  accent-color: var(--ref-ink);
+}
+
+#app .signup-reference .submit-error {
+  border: 1px solid var(--ref-line);
+  border-radius: 12px;
+  background: var(--ref-pink);
+  color: var(--ref-ink);
+}
+
+#app .signup-reference .success-icon-wrap {
+  border: 1.5px solid var(--ref-line);
+  background: var(--ref-sage);
+  box-shadow: none;
+  animation: none;
+}
+
+#app .signup-reference .success-check-icon {
+  border: 1px solid var(--ref-line);
+  background: var(--ref-ink);
+  color: #fff;
+}

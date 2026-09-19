@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import '../assets/referenceDashboard.css'
 import AppTabBar from '../components/AppTabBar.vue'
 import { getActivityDetail, registerActivity } from '../api/activity'
 import { getUserInfo } from '../utils/auth'
@@ -85,7 +86,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="signup-page">
+  <div class="signup-page reference-theme activities-reference signup-reference">
     <AppTabBar />
 
     <main class="signup-main">

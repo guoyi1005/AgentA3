@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import '../assets/referenceDashboard.css'
 import AppTabBar from '../components/AppTabBar.vue'
 import { getActivityDetail } from '../api/activity'
 
@@ -105,7 +106,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="activity-detail-view">
+  <div class="activity-detail-view reference-theme activities-reference activity-detail-reference">
     <AppTabBar />
 
     <main class="detail-page">

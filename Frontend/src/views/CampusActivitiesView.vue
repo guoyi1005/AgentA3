@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import '../assets/referenceDashboard.css'
 import AppTabBar from '../components/AppTabBar.vue'
 import ActivityCard from '../components/campus/ActivityCard.vue'
 import { getActivityList, getCategoryList, getMyFavorites, getMyRegistrations, addFavorite, removeFavorite } from '../api/activity'
@@ -383,7 +384,7 @@ function getActivitiesForDay(day) {
 </script>
 
 <template>
-  <div class="campus-activities-view">
+  <div class="campus-activities-view reference-theme activities-reference">
     <AppTabBar />
 
     <main ref="pageRef" class="ca-page">
@@ -392,6 +393,7 @@ function getActivitiesForDay(day) {
         <header class="ca-header">
           <div class="ca-header__copy">
             <h2>校园活动</h2>
+            <p class="ca-header__subtitle">浏览、筛选并报名校园活动</p>
           </div>
           <div class="ca-header__actions">
             <div class="ca-seg ca-seg--view">

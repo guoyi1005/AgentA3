@@ -5,6 +5,7 @@
          打卡/留言板/随机漫步/失物招领
    ═══════════════════════════════════════════════════ */
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import '../assets/referenceDashboard.css'
 import AppTabBar from '../components/AppTabBar.vue'
 import {
   getFloorPlan,
@@ -22,7 +23,7 @@ import markerTeaching from '../assets/map/marker-teaching.svg'
 /* ── 高德地图配置 ── */
 const AMAP_KEY = 'e1790a70dfc91f2d3daf1895c0e9f87a'
 const AMAP_SECURITY = 'f3eda2c1d4c4c76bdb907d570b69d8c'
-const MAP_CENTER = [114.897014, 40.755502]
+const MAP_CENTER = [104.146867, 30.674820]
 const MAP_ZOOM = 17
 
 const mapPlaces = ref([])
@@ -36,6 +37,7 @@ const SCENE_META = {
 }
 const DEFAULT_SCENE_META = { label: '其他点位', color: '#64748b', icon: markerOther }
 const sceneMeta = (sceneType) => SCENE_META[sceneType] || DEFAULT_SCENE_META
+const isCampusBoundary = (place) => place?.placeType === 'CAMPUS_BOUNDARY'
 
 const toCoordinate = (value) => {
   if (value === null || value === undefined || value === '') return null
@@ -102,13 +104,9 @@ async function loadMapPlaces() {
 const activePoi = ref(null)          /* 当前选中点位 */
 const activePoiScreen = ref({ x: 0, y: 0, panelX: 18, panelY: 18 })
 const mapViewport = ref({ width: 0, height: 0 })
-const canteenIntroOpen = ref(false)
 const selectedNotice = ref('')       /* 搜索选中提示 */
 const categoryExpanded = ref(false)
 const selectedCategories = ref(new Set(['canteen', 'dormitory', 'teaching', 'sports']))
-const floorPreviewOpen = ref(false)
-const floorPreviewItems = ref([])
-let floorPreviewTimer = null
 const categoryItems = [
   { key: 'canteen', label: '食堂', icon: '餐', sceneType: 'CANTEEN' },
   { key: 'dormitory', label: '宿舍楼', icon: '宿', sceneType: 'DORMITORY' },
@@ -121,24 +119,6 @@ const allCategoriesSelected = computed(() =>
 )
 const isCategorySelected = key => selectedCategories.value.has(key)
 
-const chineseFloorDigits = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 }
-
-function getFloorNumber(floor) {
-  const name = String(floor?.name || '')
-  const arabicMatch = name.match(/-?\d+/)
-  if (arabicMatch) return Number(arabicMatch[0])
-  const chineseMatch = name.match(/[一二三四五六七八九十]/)
-  return chineseMatch ? chineseFloorDigits[chineseMatch[0]] : Number.POSITIVE_INFINITY
-}
-
-const displayedFloorPreview = computed(() => {
-  return floorPreviewItems.value.map((floor, index) => ({
-      id: floor.id,
-      name: floor.name || `第${index + 1}层`,
-      description: floor.description || '餐饮服务区',
-    }))
-})
-
 function updateActivePoiScreen() {
   if (!mapInstance || !activePoi.value) return
   const pixel = mapInstance.lngLatToContainer([activePoi.value.lng, activePoi.value.lat])
@@ -148,9 +128,10 @@ function updateActivePoiScreen() {
   const height = size?.getHeight?.() || size?.height || document.getElementById('container')?.clientHeight || window.innerHeight
   const x = pixel.getX()
   const y = pixel.getY()
-  const cardWidth = Math.min(360, width - 36)
-  const cardHeight = Math.min(activePoi.value.sceneType === 'CANTEEN' ? 430 : 520, height - 36)
-  const gap = 48
+  const panelElement = document.querySelector('.canteen-panel')
+  const cardWidth = Math.min(panelElement?.offsetWidth || 360, width - 36)
+  const cardHeight = Math.min(panelElement?.offsetHeight || 430, height - 36)
+  const gap = 96
   const margin = 18
   let panelX
   let panelY
@@ -176,70 +157,13 @@ function updateActivePoiScreen() {
   activePoiScreen.value = { x, y, panelX, panelY }
 }
 
-const floorPreviewStyle = computed(() => {
-  const panelWidth = Math.min(360, mapViewport.value.width - 36)
-  const floorWidth = Math.min(316, mapViewport.value.width - 36)
-  const floorHeight = 294
-  const gap = 18
-  const margin = 18
-  const right = activePoiScreen.value.panelX + panelWidth + gap
-  const left = activePoiScreen.value.panelX - floorWidth - gap
-  const x = right + floorWidth <= mapViewport.value.width - margin ? right : Math.max(margin, left)
-  const y = Math.max(margin, Math.min(
-    activePoiScreen.value.panelY + 150,
-    mapViewport.value.height - floorHeight - margin,
-  ))
-  return { left: `${x}px`, top: `${y}px` }
-})
-
-const canteenIntroPopoverStyle = computed(() => {
-  const width = 320
-  const gap = 10
-  const margin = 18
-  const right = activePoiScreen.value.panelX + 360 + gap
-  const left = activePoiScreen.value.panelX - width - gap
-  const x = right + width <= mapViewport.value.width - margin ? right : Math.max(margin, left)
-  const y = Math.max(margin, Math.min(
-    activePoiScreen.value.panelY + 220,
-    mapViewport.value.height - 220 - margin,
-  ))
-  return { left: `${x}px`, top: `${y}px` }
-})
-
 function closeActivePoi() {
   activePoi.value = null
-  canteenIntroOpen.value = false
-  floorPreviewOpen.value = false
-}
-
-async function showFloorPreview(poi) {
-  if (!poi || poi.sceneType !== 'CANTEEN') return
-  if (floorPreviewTimer) clearTimeout(floorPreviewTimer)
-  floorPreviewOpen.value = true
-  floorPreviewItems.value = []
-  try {
-    const response = await getMapPlaceList({ sceneType: 'CANTEEN', parentId: poi.id, status: 'ENABLED' })
-    floorPreviewItems.value = (Array.isArray(response?.data) ? response.data : [])
-      .filter(place => place.placeType === 'FLOOR')
-      .sort((left, right) => getFloorNumber(left) - getFloorNumber(right)
-        || (left.sortOrder || 0) - (right.sortOrder || 0))
-  } catch {
-    floorPreviewItems.value = []
-  }
-}
-
-function keepFloorPreview() {
-  if (floorPreviewTimer) clearTimeout(floorPreviewTimer)
-  floorPreviewOpen.value = true
-}
-
-function hideFloorPreview() {
-  if (floorPreviewTimer) clearTimeout(floorPreviewTimer)
-  floorPreviewTimer = setTimeout(() => { floorPreviewOpen.value = false }, 500)
 }
 
 function applyCategoryFilters() {
   const visiblePlaces = mapPlaces.value.filter((place) => {
+    if (isCampusBoundary(place)) return true
     const categoryKey = categoryItems.find(item => item.sceneType === place.sceneType)?.key
     if (!categoryKey || !selectedCategories.value.has(categoryKey)) return false
     return true
@@ -271,19 +195,6 @@ function selectAllCategories() {
 }
 
 /* ═══════════════════════════════════════
-   ① 🌓 日间/夜间模式
-   ═══════════════════════════════════════ */
-const isDark = ref(localStorage.getItem('campus-dark') === '1')
-function toggleDark() {
-  isDark.value = !isDark.value
-  localStorage.setItem('campus-dark', isDark.value ? '1' : '0')
-  applyTheme()
-}
-function applyTheme() {
-  document.documentElement.classList.toggle('dark', isDark.value)
-}
-
-/* ═══════════════════════════════════════
    ② 搜索
    ═══════════════════════════════════════ */
 const searchQuery = ref('')
@@ -294,7 +205,6 @@ const filteredPois = computed(() => {
   return mapPlaces.value.filter(p => p.name.includes(q) || p.desc.toLowerCase().includes(q))
 })
 function selectSearchResult(poi) {
-  if (poi.sceneType !== 'CANTEEN') return
   searchQuery.value = poi.name
   searchFocused.value = false
   selectedNotice.value = `已定位到「${poi.name}」— ${poi.desc}`
@@ -516,7 +426,6 @@ async function goBackIndoor() {
   const previous = indoorHistory.value.pop()
   if (!previous) {
     indoorOpen.value = false
-    floorPreviewOpen.value = true
     return
   }
   indoorView.value = previous.view
@@ -588,7 +497,6 @@ const indoorPositionMap = computed(
 )
 const selectedIndoorFloor = computed(() =>
   indoorFloors.value.find(floor => String(floor.id) === String(indoorFloorId.value))
-  || floorPreviewItems.value.find(floor => String(floor.id) === String(indoorFloorId.value))
   || null,
 )
 const indoorClusters = computed(() => {
@@ -726,7 +634,6 @@ async function selectPoi(poi, marker) {
   try {
     const response = await getMapPlaceDetail(poi.id)
     const detail = response?.data ? toMapPoi(response.data) : poi
-    canteenIntroOpen.value = false
     activePoi.value = detail
     /* 使用页面右侧的统一详情卡，避免同时出现高德默认信息窗。 */
     infoWindow?.close()
@@ -735,6 +642,14 @@ async function selectPoi(poi, marker) {
   } catch (error) {
     mapError.value = error.message || '点位详情加载失败'
   }
+}
+
+async function togglePoi(poi, marker) {
+  if (String(activePoi.value?.id) === String(poi.id)) {
+    closeActivePoi()
+    return
+  }
+  await selectPoi(poi, marker)
 }
 
 /* 动态加载高德 JS API 脚本 */
@@ -776,17 +691,21 @@ async function initMap() {
 
     /* 为接口返回的真实点位添加标记 */
     mapPlaces.value.forEach(poi => {
-      const meta = sceneMeta(poi.sceneType)
+      const boundary = isCampusBoundary(poi)
+      const meta = boundary
+        ? { color: '#2563eb', icon: markerOther }
+        : sceneMeta(poi.sceneType)
       let fenceOverlay = null
       if (poi.fence?.geometryType === 'POLYGON') {
         fenceOverlay = new AMap.Polygon({
           path: poi.fence.path,
           strokeColor: meta.color,
-          strokeWeight: 3,
-          strokeOpacity: 0.95,
+          strokeWeight: boundary ? 4 : 3,
+          strokeOpacity: boundary ? 0.9 : 0.95,
+          strokeStyle: boundary ? 'dashed' : 'solid',
           fillColor: meta.color,
-          fillOpacity: 0.2,
-          zIndex: 80,
+          fillOpacity: boundary ? 0.06 : 0.2,
+          zIndex: boundary ? 20 : 80,
           bubble: false,
         })
       } else if (poi.fence?.geometryType === 'LINESTRING') {
@@ -805,6 +724,8 @@ async function initMap() {
         fenceMap[poi.id] = fenceOverlay
       }
 
+      if (boundary) return
+
       const markerContent = document.createElement('div')
       markerContent.className = 'real-map-marker'
       const markerTitle = document.createElement('span')
@@ -822,9 +743,10 @@ async function initMap() {
         offset: new AMap.Pixel(-70, -64),
       })
 
-      marker.on('click', () => {
+      marker.on('click', (event) => {
+        event?.originEvent?.stopPropagation?.()
         if (poi.sceneType !== 'CANTEEN') return
-        selectPoi(poi, marker)
+        togglePoi(poi, marker)
       })
       fenceOverlay?.on('click', () => {
         if (poi.sceneType !== 'CANTEEN') return
@@ -956,24 +878,32 @@ function onDocClick(e) {
   if (!e.target.closest('.search-wrapper')) searchFocused.value = false
   if (!e.target.closest('.random-modal') && !e.target.closest('.random-btn')) randomPoi.value = null
 }
+
+function onMapContainerClick(e) {
+  if (e.target.closest('.amap-marker')) return
+  closeActivePoi()
+}
+
 onMounted(async () => {
-  applyTheme()
+  document.documentElement.classList.remove('dark')
+  localStorage.removeItem('campus-dark')
   document.addEventListener('click', onDocClick)
+  document.getElementById('container')?.addEventListener('click', onMapContainerClick)
   await loadMapPlaces()
   await nextTick()
   initMap()
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocClick)
+  document.getElementById('container')?.removeEventListener('click', onMapContainerClick)
   stopIndoorDrag()
-  if (floorPreviewTimer) clearTimeout(floorPreviewTimer)
   mapOverlays.splice(0, mapOverlays.length)
   if (mapInstance) { mapInstance.destroy(); mapInstance = null }
 })
 </script>
 
 <template>
-  <div class="map-page" :class="{ dark: isDark }">
+  <div class="map-page reference-theme map-reference">
     <AppTabBar />
 
     <!-- ═══ 主区域 ═══ -->
@@ -1014,7 +944,13 @@ onUnmounted(() => {
 
       <!-- 左侧一级分类：点击“全部”展开或收起 -->
       <aside class="category-rail" :class="{ expanded: categoryExpanded }">
-        <button class="category-all" :class="{ active: allCategoriesSelected }" type="button" :aria-pressed="allCategoriesSelected" @click="selectAllCategories">
+        <button
+          class="category-all"
+          :class="{ active: allCategoriesSelected }"
+          type="button"
+          :aria-pressed="allCategoriesSelected"
+          @click="selectAllCategories"
+        >
           <span class="category-all-icon">⠿</span>
           <span>全部</span>
         </button>
@@ -1040,10 +976,12 @@ onUnmounted(() => {
 
       <!-- 顶部工具栏 -->
       <div class="top-tools">
-        <button class="tool-btn" @click="toggleDark" :title="isDark ? '日间模式' : '夜间模式'">
-          {{ isDark ? '☀️' : '🌙' }}
+        <button class="tool-btn random-btn" @click="randomWalk" title="随机漫步" aria-label="随机漫步">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M16 3h5v5M4 20l5.5-5.5M21 3l-7.5 7.5M16 21h5v-5M4 4l5.5 5.5" />
+            <circle cx="12" cy="12" r="1.6" />
+          </svg>
         </button>
-        <button class="tool-btn random-btn" @click="randomWalk" title="随机漫步">🎲</button>
       </div>
 
       <!-- 随机漫步弹窗 -->
@@ -1063,50 +1001,23 @@ onUnmounted(() => {
           class="poi-panel canteen-panel"
           :style="{ left: `${activePoiScreen.panelX}px`, top: `${activePoiScreen.panelY}px` }"
         >
-          <div class="poi-header canteen-header">
-            <span class="poi-name">{{ activePoi.name }}</span>
-            <button class="poi-close" @click="closeActivePoi">✕</button>
-          </div>
-          <img
-            v-if="activePoi.images?.[0]?.imageUrl"
-            class="canteen-image"
-            :src="activePoi.images[0].imageUrl"
-            :alt="activePoi.name"
-            :style="{ objectPosition: `${activePoi.images[0].focusX ?? 50}% ${activePoi.images[0].focusY ?? 50}%` }"
-          />
-          <button v-if="activePoi.description" class="canteen-intro-line" type="button" @click="canteenIntroOpen = !canteenIntroOpen">
-            <strong>食堂介绍</strong><span>{{ activePoi.description }}</span><i>›</i>
-          </button>
-          <div class="more-info-zone" @mouseenter="showFloorPreview(activePoi)" @mouseleave="hideFloorPreview">
-            <button class="more-info-button" type="button" @click="showFloorPreview(activePoi)">查看更多信息</button>
+          <div class="canteen-photo-slot">
+            <img
+              v-if="activePoi.images?.[0]?.imageUrl"
+              class="canteen-photo"
+              :src="activePoi.images[0].imageUrl"
+              :alt="activePoi.name"
+              :style="{ objectPosition: `${activePoi.images[0].focusX ?? 50}% ${activePoi.images[0].focusY ?? 50}%` }"
+            />
+            <div v-else class="canteen-photo-placeholder" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <circle cx="8.5" cy="9" r="1.5" />
+                <path d="m5 18 5-5 4 4 2-2 3 3" />
+              </svg>
+            </div>
           </div>
         </div>
-      </Transition>
-
-      <Transition name="intro-preview">
-        <aside v-if="activePoi?.sceneType === 'CANTEEN' && canteenIntroOpen" class="canteen-intro-popover" :style="canteenIntroPopoverStyle">
-          <strong>食堂介绍</strong>
-          <button type="button" aria-label="关闭食堂介绍" @click="canteenIntroOpen = false">×</button>
-          <p>{{ activePoi.description }}</p>
-        </aside>
-      </Transition>
-
-      <Transition name="fade">
-        <section
-          v-if="activePoi?.sceneType === 'CANTEEN' && floorPreviewOpen"
-          class="floor-preview"
-          :style="floorPreviewStyle"
-          @mouseenter="keepFloorPreview"
-          @mouseleave="hideFloorPreview"
-        >
-          <h3>选择楼层</h3>
-          <p>进入对应室内地图</p>
-          <div class="floor-preview-list">
-            <button v-for="floor in displayedFloorPreview" :key="floor.id" type="button" :class="{ active: String(indoorFloorId) === String(floor.id) }" @click="openFloorDetail(floor)">
-              <span><strong>{{ floor.name }}</strong><small>{{ floor.description }}</small></span><i>›</i>
-            </button>
-          </div>
-        </section>
       </Transition>
 
       <Transition name="fade">
@@ -1214,10 +1125,10 @@ onUnmounted(() => {
 
     <!-- ═══ 聊天助手 FAB ═══ -->
     <button class="chat-fab" :class="{ expanded: chatExpanded }" @click="toggleChat">
-      <svg v-if="!chatExpanded" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="24" height="24">
+      <svg v-if="!chatExpanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
-      <svg v-else viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="20" height="20">
+      <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
         <path d="M18 6 6 18M6 6l12 12"/>
       </svg>
     </button>
@@ -1287,18 +1198,13 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* ═══ 主题变量：日间 ═══ */
+/* ═══ 页面主题变量 ═══ */
 .map-page {
   --bg: #f0f5ff; --surface: #ffffff; --text: #1e293b; --text2: #64748b;
   --border: #e2e8f0; --primary: #3b82f6; --primary-light: #eff6ff;
   --canvas: #dbeafe; --canvas-text: #3b82f6; --shadow: rgba(0,0,0,.08);
   position: relative; width: 100%; height: 100vh; overflow: hidden;
   background: var(--bg); color: var(--text); transition: background .3s, color .3s;
-}
-.map-page.dark {
-  --bg: #0f172a; --surface: #1e293b; --text: #e2e8f0; --text2: #94a3b8;
-  --border: #334155; --primary: #60a5fa; --primary-light: #1e3a5f;
-  --canvas: #1a2744; --canvas-text: #60a5fa; --shadow: rgba(0,0,0,.3);
 }
 .map-main { position: absolute; inset: 60px 0 0 0; }
 
@@ -1318,9 +1224,10 @@ onUnmounted(() => {
 .map-canvas :global(.real-map-marker) {
   display: flex; width: 140px; height: 64px; align-items: center;
   flex-direction: column; justify-content: flex-end; cursor: pointer;
-  transform-origin: 50% 100%; transition: transform .16s ease;
 }
-.map-canvas :global(.real-map-marker:hover) { transform: translateY(-2px) scale(1.05); }
+.map-canvas :global(.real-map-marker:hover .real-map-marker__title) {
+  border-color: rgba(37,99,235,.35);
+}
 .map-canvas :global(.real-map-marker__title) {
   overflow: hidden; max-width: 136px; margin-bottom: 3px; padding: 4px 9px;
   border: 1px solid rgba(15,23,42,.1); border-radius: 5px;
@@ -1415,10 +1322,19 @@ onUnmounted(() => {
   cursor: pointer; transition: transform .15s;
 }
 .tool-btn:hover { transform: scale(1.1); }
+.tool-btn svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 /* ═══ 左侧校园一级分类 ═══ */
 .category-rail {
-  position: absolute; top: 120px; left: 28px; z-index: 12;
+  position: absolute; top: 168px; left: 28px; z-index: 12;
   width: 96px; height: 94px; overflow: hidden;
   border: 1px solid rgba(148,163,184,.22); border-radius: 24px;
   background: rgba(255,255,255,.96); box-shadow: 0 12px 32px rgba(15,23,42,.14);
@@ -1489,50 +1405,26 @@ onUnmounted(() => {
 }
 
 .canteen-panel {
-  right: auto; bottom: auto; width: 360px;
-  max-height: calc(100% - 36px); margin: 0; padding: 22px; overflow-y: auto;
-  border: 1px solid rgba(148,163,184,.28); border-radius: 20px;
-  background: rgba(255,255,255,.97); box-shadow: 0 16px 46px rgba(15,23,42,.2);
+  right: auto; bottom: auto; width: 280px; max-height: none;
+  margin: 0; padding: 8px; overflow: hidden;
+  border: 1px solid rgba(148,163,184,.24); border-radius: 12px;
+  background: rgba(255,255,255,.97); box-shadow: 0 12px 34px rgba(15,23,42,.2);
 }
-.canteen-header { margin-bottom: 16px; }
-.canteen-image { width: 100%; height: 180px; display: block; border-radius: 12px; object-fit: cover; }
-.canteen-intro-line { width: 100%; margin-top: 16px; padding: 0; border: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; color: #64748b; background: transparent; text-align: left; cursor: pointer; }
-.canteen-intro-line strong { color: #334155; font-size: 13px; }
-.canteen-intro-line span { min-width: 0; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.canteen-intro-line i { color: #0758cf; font-size: 20px; font-style: normal; }
-.canteen-intro-popover { position: absolute; z-index: 13; width: 320px; max-height: 220px; padding: 20px; overflow-y: auto; border: 1px solid #cbd6e5; border-radius: 12px; background: #fff; box-shadow: 0 16px 42px rgba(15,23,42,.2); }
-.canteen-intro-popover > strong { color: #1d2a3d; font-size: 16px; }
-.canteen-intro-popover > button { position: absolute; top: 10px; right: 12px; width: 30px; height: 30px; border: 0; border-radius: 50%; color: #64748b; background: #f1f5f9; font-size: 20px; cursor: pointer; }
-.canteen-intro-popover p { margin: 12px 0 0; color: #566579; font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
-.more-info-zone { margin-top: 16px; padding-top: 2px; }
-.more-info-button { width: 100%; height: 48px; border: 0; border-radius: 10px; color: #fff; background: #0758cf; font-size: 15px; font-weight: 750; cursor: pointer; }
-
-.floor-preview {
-  position: absolute; z-index: 13; width: 316px;
-  padding: 22px; border: 1px solid rgba(148,163,184,.28); border-radius: 20px;
-  background: rgba(255,255,255,.98); box-shadow: 0 16px 46px rgba(15,23,42,.18);
+.canteen-photo-slot {
+  width: 100%; aspect-ratio: 4 / 3; overflow: hidden;
+  border-radius: 8px; background: #edf1f5;
 }
-.floor-preview h3 { margin: 0; color: #1f2937; font-size: 20px; }
-.floor-preview > p { margin: 4px 0 14px; color: #78889d; font-size: 12px; }
-.floor-preview-list {
-  max-height: 216px; overflow-y: auto; overscroll-behavior: contain;
-  scrollbar-width: thin; scrollbar-color: #a9bdd8 transparent;
+.canteen-photo { width: 100%; height: 100%; display: block; object-fit: cover; }
+.canteen-photo-placeholder {
+  width: 100%; height: 100%; display: grid; place-items: center; color: #9aa7b7;
 }
-.floor-preview-list::-webkit-scrollbar { width: 6px; }
-.floor-preview-list::-webkit-scrollbar-thumb { border-radius: 999px; background: #a9bdd8; }
-.floor-preview button {
-  width: 100%; height: 72px; padding: 10px 13px; border: 1px solid transparent; border-radius: 12px;
-  display: flex; align-items: center; gap: 14px; color: #334155; background: transparent; text-align: left;
+.canteen-photo-placeholder svg {
+  width: 46px; height: 46px; fill: none; stroke: currentColor;
+  stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
 }
-.floor-preview button.active { border-color: #8ab3f8; background: #edf4ff; color: #0758cf; }
-.floor-preview button > span { display: flex; flex: 1; flex-direction: column; gap: 3px; }
-.floor-preview button strong { font-size: 14px; }
-.floor-preview button small { color: #78889d; font-size: 12px; font-weight: 500; }
-.floor-preview button i { font-size: 22px; font-style: normal; }
 
 @media (max-width: 900px) {
-  .canteen-panel { right: auto; bottom: auto; width: min(360px, calc(100% - 36px)); }
-  .floor-preview { right: auto; bottom: auto; width: min(316px, calc(100% - 36px)); }
+  .canteen-panel { right: auto; bottom: auto; width: min(280px, calc(100% - 36px)); }
   .category-rail { left: 18px; }
   .search-wrapper { left: 18px; width: calc(100% - 126px); }
 }
@@ -1681,8 +1573,6 @@ onUnmounted(() => {
 }
 .lost-tag.lost { background: #fef2f2; color: #dc2626; }
 .lost-tag.found { background: #f0fdf4; color: #16a34a; }
-.dark .lost-tag.lost { background: #451a1a; color: #fca5a5; }
-.dark .lost-tag.found { background: #14352a; color: #86efac; }
 .lost-title { font-size: 14px; font-weight: 600; color: var(--text); }
 .lost-desc { font-size: 13px; color: var(--text2); margin-top: 2px; }
 .lost-meta { font-size: 11px; color: var(--text2); margin-top: 4px; }
@@ -1732,7 +1622,6 @@ onUnmounted(() => {
 .indoor-guide-tabs button.active {
   border-color: #f97316; background: #fff7ed; color: #c2410c;
 }
-.dark .indoor-guide-tabs button.active { background: rgba(249, 115, 22, .14); color: #fb923c; }
 .indoor-guide-state {
   display: flex; flex: 1; align-items: center; justify-content: center; gap: 12px;
   color: var(--text2); font-size: 14px;
