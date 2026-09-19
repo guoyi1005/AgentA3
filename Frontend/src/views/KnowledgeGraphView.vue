@@ -36,7 +36,7 @@ async function load() {
   } catch (cause) { error.value = cause.message } finally { loading.value = false }
 }
 function generate() {
-  router.push({ path: '/learning/resources', query: { topic: selected.value?.title || '' } })
+  router.push({ path: '/career/nebula/python/resources', query: { topic: selected.value?.title || '' } })
 }
 onMounted(load)
 </script>

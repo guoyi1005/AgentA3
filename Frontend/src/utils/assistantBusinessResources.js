@@ -1,4 +1,4 @@
-const BUSINESS_CARD_KINDS = new Set(['activity', 'secondhand', 'course', 'meeting', 'dining', 'facility'])
+const BUSINESS_CARD_KINDS = new Set(['activity', 'secondhand', 'course', 'dining', 'facility'])
 
 const FIELD_LABELS = {
   title: '名称',
@@ -22,7 +22,6 @@ const KIND_LABELS = {
   activity: '校园活动',
   secondhand: '二手物品',
   course: '课程',
-  meeting: '会议',
   dining: '餐饮',
   facility: '设施',
 }
@@ -64,7 +63,6 @@ export function businessCardDetailRows(resource) {
     activity: ['title', 'startTime', 'endTime', 'location', 'category', 'status'],
     secondhand: ['title', 'price', 'condition', 'category', 'status'],
     course: ['courseName', 'teacherName', 'weekday', 'classroom', 'weekText'],
-    meeting: ['title', 'startTime', 'endTime', 'location', 'status'],
     dining: ['name', 'category', 'location', 'openingHours', 'priceRange'],
     facility: ['name', 'category', 'location', 'openingHours', 'status'],
   }[kind] || ['title', 'name', 'category', 'location']
@@ -86,12 +84,8 @@ export function resolveBusinessResourceRoute(resource) {
   switch (String(resource?.kind || '').trim()) {
     case 'activity':
       return { name: 'activity-detail', params: { activityId: id } }
-    case 'secondhand':
-      return { path: '/marketplace', query: { itemId: id } }
     case 'course':
       return { name: 'campus-course', params: { courseId: id } }
-    case 'meeting':
-      return { path: '/meetings', query: { meetingId: id } }
     case 'dining':
       return { path: '/discount', query: { highlight: id } }
     case 'facility':

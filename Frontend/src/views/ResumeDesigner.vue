@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed } from 'vue'
-import AppTabBar from '../components/AppTabBar.vue'
 
 const hasContent = computed(() => {
   const d = resumeData.value
@@ -32,11 +31,10 @@ const handleSave = () => {
 
 <template>
   <div class="designer">
-    <AppTabBar />
     <!-- 顶部工具栏 -->
     <div class="toolbar">
       <div class="toolbar-inner">
-        <router-link to="/resume" class="toolbar-back">
+        <router-link to="/interview/resume" class="toolbar-back">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           返回
         </router-link>
@@ -200,14 +198,13 @@ const handleSave = () => {
 
 .designer {
   min-height: 100vh;
-  padding-top: 62px;
   background: #f8fafc;
 }
 
 /* ===== 工具栏 ===== */
 .toolbar {
   position: sticky;
-  top: 62px;
+  top: 60px;
   z-index: 10;
   background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid #e2e8f0;

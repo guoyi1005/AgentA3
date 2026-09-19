@@ -8,7 +8,7 @@ const messages = ref([])
 const unread = ref(0)
 const loading = ref(true)
 const error = ref('')
-const categories = [['ALL','全部'],['SYSTEM','系统'],['ACTIVITY','活动'],['FORUM','论坛'],['MARKET','市集'],['LEARNING','学习']]
+const categories = [['ALL','全部'],['SYSTEM','系统'],['ACTIVITY','活动'],['LEARNING','学习']]
 const rows = (value) => Array.isArray(value) ? value : value?.content || value?.records || value?.list || []
 const shown = computed(() => category.value === 'ALL' ? messages.value : messages.value.filter((item) => String(item.moduleType || item.category).toUpperCase() === category.value))
 async function load(){loading.value=true;try{const [data,count]=await Promise.all([getMessages({page:0,size:100}),getUnreadCount()]);messages.value=rows(data);unread.value=Number(count?.count??count??0)}catch(cause){error.value=cause.message}finally{loading.value=false}}

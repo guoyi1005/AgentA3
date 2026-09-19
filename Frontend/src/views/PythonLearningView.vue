@@ -56,13 +56,13 @@ onMounted(load)
         <div><h1>Python 个性化学习</h1><p>根据真实答题和学习记录规划下一步</p></div>
         <div class="feature-actions">
           <button class="feature-button" :disabled="busy === 'replan'" @click="replan">重新规划路径</button>
-          <button class="feature-button feature-button--primary" @click="router.push('/learning/resources')">生成专项资源</button>
+          <button class="feature-button feature-button--primary" @click="router.push('/career/nebula/python/resources')">生成专项资源</button>
         </div>
       </header>
       <div v-if="error" class="feature-error">{{ error }}</div>
       <div v-if="loading" class="feature-empty">正在加载学习数据…</div>
       <div v-else class="learning-dashboard">
-        <section class="feature-card graph-entry" @click="router.push('/learning/knowledge-graph')">
+        <section class="feature-card graph-entry" @click="router.push('/career/nebula/python/knowledge-graph')">
           <div class="graph-entry__copy"><span class="graph-entry__eyebrow">KNOWLEDGE GRAPH</span><h2>个人知识图谱</h2><p>查看知识关系、掌握状态和前置依赖</p><button class="feature-button feature-button--primary">进入知识图谱</button></div>
           <div class="graph-entry__preview" aria-hidden="true">
             <i class="node n1"></i><i class="node n2"></i><i class="node n3"></i><i class="node weak"></i>
@@ -91,10 +91,10 @@ onMounted(load)
           </div>
         </section>
         <section class="feature-card feature-section recommendation-panel">
-          <div class="feature-section__head"><h2>精准推荐</h2><a href="#" @click.prevent="router.push('/learning/resources')">生成资源</a></div>
+          <div class="feature-section__head"><h2>精准推荐</h2><a href="#" @click.prevent="router.push('/career/nebula/python/resources')">生成资源</a></div>
           <div v-if="!recommendations.length" class="feature-empty">完成练习后会展示基于真实证据的推荐</div>
           <div v-else class="feature-list">
-            <button v-for="item in recommendations.slice(0, 6)" :key="item.id" class="recommendation" @click="router.push({ path:'/learning/resources', query:{ topic:item.title || item.knowledgePoint } })">
+            <button v-for="item in recommendations.slice(0, 6)" :key="item.id" class="recommendation" @click="router.push({ path:'/career/nebula/python/resources', query:{ topic:item.title || item.knowledgePoint } })">
               <span>{{ item.title || item.knowledgePoint || '学习建议' }}</span><small>{{ item.reason || item.rationale }}</small>
             </button>
           </div>

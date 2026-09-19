@@ -148,6 +148,13 @@ const icons = {
     <path d="M15.6 11.6L22 7v10l-6.4-4.6"/>
     <rect x="2" y="6" width="14" height="12" rx="2"/>
   </svg>`,
+
+  resume: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/>
+    <path d="M14 2v5h5"/>
+    <path d="M9 13h6"/>
+    <path d="M9 17h4"/>
+  </svg>`,
   
   questionBank: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
@@ -212,6 +219,7 @@ const icons = {
 const menuItems = [
   { name: '能力面板', path: PATHS.INDEX, icon: icons.dashboard },
   { name: '模拟面试', path: PATHS.AI_MOCK_INTERVIEW, icon: icons.mockInterview },
+  { name: '我的简历', path: PATHS.MY_RESUME, icon: icons.resume },
   { name: '题库练习', path: PATHS.QUESTION_BANK, icon: icons.questionBank },
   { name: '错题本', path: PATHS.WRONG_QUESTION_BOOK, icon: icons.wrongQuestion },
   { name: '个人题库', path: PATHS.MY_NOTE, icon: icons.myNote },
@@ -220,7 +228,7 @@ const menuItems = [
 ];
 
 const isActive = (path) => {
-  return currentPath.value === path;
+  return currentPath.value === path || currentPath.value.startsWith(`${path}/`);
 };
 
 const navigateTo = (path) => {

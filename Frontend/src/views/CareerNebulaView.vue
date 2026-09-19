@@ -207,6 +207,14 @@ onBeforeUnmount(() => {
     <AppTabBar />
 
     <main class="nebula-shell">
+      <header v-if="!isLearningGalaxy" class="nebula-hero">
+        <h1>岗位星图</h1>
+        <nav class="nebula-sub-nav" aria-label="星图探索子模块">
+          <RouterLink to="/career/nebula">岗位星图</RouterLink>
+          <RouterLink to="/career/nebula/python">Python 学习</RouterLink>
+        </nav>
+      </header>
+
       <div v-if="loading" class="center-message">
         <span class="loading-ring" aria-hidden="true"></span>
         正在打开岗位星图
@@ -218,10 +226,6 @@ onBeforeUnmount(() => {
       </div>
 
       <template v-else-if="!isLearningGalaxy">
-        <header class="nebula-hero">
-          <h1>岗位星图</h1>
-        </header>
-
         <section class="career-layout" :class="{ 'career-layout--selected': selectedCareer }">
           <aside class="side-panel career-list-panel">
             <div class="panel-heading">
@@ -531,6 +535,40 @@ onBeforeUnmount(() => {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-shadow: 0 0 24px rgba(65, 174, 255, 0.28);
+}
+
+.nebula-sub-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.nebula-sub-nav a {
+  display: grid;
+  min-height: 30px;
+  padding: 0 14px;
+  place-items: center;
+  border: 1px solid rgba(49, 153, 219, 0.4);
+  border-radius: 999px;
+  color: #9dc2de;
+  background: rgba(3, 15, 29, 0.7);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.nebula-sub-nav a:hover {
+  color: #eaf4ff;
+  border-color: rgba(88, 191, 255, 0.7);
+}
+
+.nebula-sub-nav a.router-link-active {
+  color: #eaf4ff;
+  border-color: rgba(88, 191, 255, 0.75);
+  background: rgba(20, 74, 118, 0.75);
+  box-shadow: 0 0 18px rgba(65, 174, 255, 0.22);
 }
 
 .nebula-hero h1 { font-size: 22px; letter-spacing: 0.06em; }

@@ -46,11 +46,11 @@ function difficultyLabel(d) {
 }
 
 function goToProblem(id) {
-  router.replace(`/learning/problems/${id}`)
+  router.replace(`/career/nebula/python/practice/${id}`)
 }
 
 function goToPractice() {
-  router.push(`/learning/practice/${problemId.value}`)
+  router.push(`/career/nebula/python/practice/${problemId.value}`)
 }
 
 onMounted(() => {
@@ -64,7 +64,7 @@ onMounted(() => {
     <AppTabBar />
     <div class="problem-detail-page">
       <header class="page-header">
-        <button class="back-btn" type="button" @click="router.push('/learning')">‹ 返回题库</button>
+        <button class="back-btn" type="button" @click="router.push('/career/nebula/python')">‹ 返回题库</button>
         <h1 class="page-title">题目详情</h1>
       </header>
 

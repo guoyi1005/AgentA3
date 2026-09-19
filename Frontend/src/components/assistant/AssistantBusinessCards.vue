@@ -101,11 +101,6 @@ function openActivity(item) {
   if (!item?.id) return
   router.push({ name: 'activity-detail', params: { activityId: String(item.id) } })
 }
-
-function openSecondhand(item) {
-  if (!item?.id) return
-  router.push({ path: '/marketplace', query: { itemId: String(item.id) } })
-}
 </script>
 
 <template>
@@ -133,7 +128,6 @@ function openSecondhand(item) {
         v-for="(item, index) in secondhandItems"
         :key="item.id || `secondhand-${index}`"
         :item="item"
-        @click="openSecondhand(item)"
       />
     </div>
   </section>
@@ -177,6 +171,15 @@ function openSecondhand(item) {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
+}
+
+.market-grid :deep(.product-card) {
+  cursor: default;
+}
+
+.market-grid :deep(.product-card:hover) {
+  transform: none;
+  box-shadow: 0 8px 24px rgba(30, 43, 76, 0.04);
 }
 
 .assistant-native-results__grid + .assistant-native-results__grid {

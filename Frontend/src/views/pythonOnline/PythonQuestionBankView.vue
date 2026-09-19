@@ -30,7 +30,7 @@ const {
 } = usePythonProblemBank()
 
 function goToPractice(id) {
-  router.push(`/learning/practice/${id}`)
+  router.push(`/career/nebula/python/practice/${id}`)
 }
 
 onMounted(loadProblems)

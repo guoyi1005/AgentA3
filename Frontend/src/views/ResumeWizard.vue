@@ -1,6 +1,5 @@
 <script setup>
 import { ref, reactive, computed, nextTick, onMounted, watch } from 'vue'
-import AppTabBar from '../components/AppTabBar.vue'
 
 const messages = ref([
   {
@@ -111,12 +110,11 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
 
 <template>
   <div class="wizard">
-    <AppTabBar />
     <div class="wizard-layout">
       <!-- 左侧聊天 -->
       <div class="chat-panel">
         <header class="chat-header">
-          <router-link to="/resume" class="back-link">
+          <router-link to="/interview/resume" class="back-link">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
             返回
           </router-link>
@@ -214,7 +212,6 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
 <style scoped>
 .wizard {
   min-height: 100vh;
-  padding-top: 62px;
   background: #f8fafc;
 }
 
@@ -222,7 +219,7 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
   display: grid;
   grid-template-columns: 1fr 420px;
   grid-template-rows: minmax(0, 1fr);
-  height: calc(100vh - 62px);
+  height: calc(100vh - 60px);
   max-width: 1400px;
   margin: 0 auto;
 }

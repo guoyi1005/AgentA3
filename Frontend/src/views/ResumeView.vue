@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import AppTabBar from '../components/AppTabBar.vue'
+import Sidebar from './interview/components/Sidebar.vue'
 
 // ===== Mock 数据（零使用状态）=====
 const processingStatus = ref('pending')
@@ -247,7 +247,7 @@ const groupedResumes = computed(() => {
 
 <template>
   <div class="dashboard">
-    <AppTabBar />
+    <Sidebar />
     <div class="container">
       <header class="page-header">
         <h1>我的简历工作台</h1>
@@ -255,7 +255,7 @@ const groupedResumes = computed(() => {
 
       <!-- AI 助手卡片 -->
       <div class="ai-assist-grid">
-        <router-link to="/resume/wizard/edit" class="ai-card">
+        <router-link to="/interview/resume/wizard/edit" class="ai-card">
           <div class="ai-card-inner">
             <div class="ai-icon-wrap blue">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 16a1 1 0 1 1 1-1 1 1 0 0 1-1 1Zm0-6a1 1 0 1 1 1-1 1 1 0 0 1-1 1Z"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -270,7 +270,7 @@ const groupedResumes = computed(() => {
           </div>
         </router-link>
 
-        <router-link to="/resume/wizard" class="ai-card">
+        <router-link to="/interview/resume/wizard" class="ai-card">
           <div class="ai-card-inner">
             <div class="ai-icon-wrap green">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/><circle cx="12" cy="12" r="3"/></svg>
@@ -285,7 +285,7 @@ const groupedResumes = computed(() => {
           </div>
         </router-link>
 
-        <router-link to="/resume/workspace" class="ai-card">
+        <router-link to="/interview/resume/workspace" class="ai-card">
           <div class="ai-card-inner">
             <div class="ai-icon-wrap purple">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
@@ -300,7 +300,7 @@ const groupedResumes = computed(() => {
           </div>
         </router-link>
 
-        <router-link :to="{ path: '/resume/workspace', query: { tab: 'templates' } }" class="ai-card">
+        <router-link :to="{ path: '/interview/resume/workspace', query: { tab: 'templates' } }" class="ai-card">
           <div class="ai-card-inner">
             <div class="ai-icon-wrap amber">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
@@ -341,7 +341,7 @@ const groupedResumes = computed(() => {
                 v-for="resume in item.resumes"
                 :key="resume.id"
                 class="project-card editable"
-                @click="$router.push('/resume/designer')"
+                @click="$router.push('/interview/resume/designer')"
               >
                 <div class="project-header">
                   <div
@@ -417,6 +417,7 @@ const groupedResumes = computed(() => {
 <style scoped>
 .dashboard {
   min-height: 100vh;
+  padding-left: clamp(220px, 22vw, 280px);
   background: #f8fafc;
 }
 
@@ -426,7 +427,7 @@ const groupedResumes = computed(() => {
   max-width: 1200px;
   min-height: calc(100vh - 60px);
   margin: 0 auto;
-  padding: 90px 40px 32px;
+  padding: 28px 40px 32px;
 }
 
 .page-header {

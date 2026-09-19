@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { clearAuth, getUserInfo } from '../utils/auth'
 
@@ -12,6 +12,7 @@ defineProps({
 })
 
 const router = useRouter()
+const route = useRoute()
 const showProfilePanel = ref(false)
 const userInfo = computed(() => getUserInfo() || {})
 const avatarUrl = computed(() => userInfo.value.avatar || '')
@@ -23,6 +24,11 @@ const avatarText = computed(() => {
 
 function toggleProfilePanel() {
   showProfilePanel.value = !showProfilePanel.value
+}
+
+// 子页面（如星图探索内的 Python 学习）也需要保持所属模块的选中态
+function inSection(basePath) {
+  return route.path === basePath || route.path.startsWith(`${basePath}/`)
 }
 
 function openProfileRoute(path) {
@@ -39,7 +45,6 @@ function handleLogout() {
 const shortcutItems = [
   { label: '我的消息', to: '/mine/messages' },
   { label: '我的课表', to: '/mine/schedule' },
-  { label: '会议日程', to: '/mine/meeting-schedule' },
   { label: '我的活动', to: '/mine/activities' },
   { label: 'AI 会话历史', to: '/mine/ai-history' },
   { label: '我的试卷', to: '/mine/papers' },
@@ -58,15 +63,11 @@ const shortcutItems = [
         <RouterLink to="/home">首页</RouterLink>
         <RouterLink to="/map">校园地图</RouterLink>
         <RouterLink to="/activities">校园活动</RouterLink>
-        <RouterLink to="/meetings">会议</RouterLink>
-        <RouterLink to="/learning">Python 学习</RouterLink>
-        <RouterLink to="/marketplace">校园市集</RouterLink>
-        <RouterLink to="/discount">校园优惠</RouterLink>
-        <RouterLink to="/forum">校园论坛</RouterLink>
-        <RouterLink to="/ai">AI 助手</RouterLink>
-        <RouterLink to="/resume">我的简历</RouterLink>
         <RouterLink to="/ai-tools">AI 工具</RouterLink>
-        <RouterLink to="/career/nebula">星图探索</RouterLink>
+        <RouterLink
+          to="/career/nebula"
+          :class="{ 'app-site-header__nav-link--active': inSection('/career/nebula') }"
+        >星图探索</RouterLink>
         <RouterLink to="/interview">AI 面试</RouterLink>
       </nav>
 
@@ -149,9 +150,10 @@ const shortcutItems = [
 .app-site-header__nav {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-width: 0;
   flex: 1;
-  gap: 6px;
+  gap: 10px;
   overflow-x: auto;
   padding-right: 6px;
   scrollbar-width: none;
@@ -165,7 +167,7 @@ const shortcutItems = [
   display: grid;
   place-items: center;
   min-height: 36px;
-  padding: 0 10px;
+  padding: 0 14px;
   border-radius: 8px;
   color: #ccd5e4;
   font-size: 14px;
@@ -181,7 +183,8 @@ const shortcutItems = [
   background: rgba(255, 255, 255, 0.1);
 }
 
-.app-site-header__nav a.router-link-active {
+.app-site-header__nav a.router-link-active,
+.app-site-header__nav a.app-site-header__nav-link--active {
   color: #ffffff;
   background: rgba(59, 130, 246, 0.28);
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15);

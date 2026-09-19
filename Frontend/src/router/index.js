@@ -6,19 +6,12 @@ import CampusActivitiesView from '../views/CampusActivitiesView.vue'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import MapView from '../views/MapView.vue'
-import MeetingRoomView from '../views/MeetingRoomView.vue'
-import MeetingWorkspaceView from '../views/MeetingWorkspaceView.vue'
 import MessageCenterView from '../views/MessageCenterView.vue'
 import PythonLearningView from '../views/PythonLearningView.vue'
 import PythonQuestionBankView from '../views/pythonOnline/PythonQuestionBankView.vue'
 import PythonPracticeView from '../views/pythonOnline/PythonPracticeView.vue'
 import KnowledgeGraphView from '../views/KnowledgeGraphView.vue'
 import LearningResourceView from '../views/LearningResourceView.vue'
-import MarketplaceView from '../views/MarketplaceView.vue'
-import MarketplaceChatView from '../views/MarketplaceChatView.vue'
-import ForumView from '../views/ForumView.vue'
-import ForumPostView from '../views/ForumPostView.vue'
-import ForumProfileView from '../views/ForumProfileView.vue'
 import AiWritingView from '../views/aiStudio/AiWritingView.vue'
 import AiImageView from '../views/aiStudio/AiImageView.vue'
 import AiPresentationView from '../views/aiStudio/AiPresentationView.vue'
@@ -39,7 +32,6 @@ import AccountSettingsView from '../views/AccountSettingsView.vue'
 import ProfileRadarView from '../views/ProfileRadarView.vue'
 import MineActivitiesView from '../views/MineActivitiesView.vue'
 import MineAiHistoryView from '../views/MineAiHistoryView.vue'
-import MineMeetingScheduleView from '../views/MineMeetingScheduleView.vue'
 import ScheduleWorkspaceView from '../views/ScheduleWorkspaceView.vue'
 import ScheduleSettingsWorkspaceView from '../views/ScheduleSettingsWorkspaceView.vue'
 import MineView from '../views/MineView.vue'
@@ -92,8 +84,6 @@ const routes = [
   { path: '/home', name: 'home', component: HomeView },
   { path: '/map', name: 'map', component: MapView },
   { path: '/activities', name: 'activities', component: CampusActivitiesView },
-  { path: '/meetings', name: 'meetings', component: MeetingWorkspaceView },
-  { path: '/meetings/room/:sessionId', name: 'meeting-room', component: MeetingRoomView },
   { path: '/ai', name: 'ai', component: AiAssistantView },
   { path: '/ai-tools', name: 'ai-tools', component: AiToolsView },
   { path: '/jobs/hot', name: 'hot-jobs', component: HotJobsView },
@@ -127,17 +117,17 @@ const routes = [
     redirect: (to) => (AI_STUDIO_TOOL_IDS.includes(String(to.params.tool || '')) ? `/ai-studio/${to.params.tool}` : '/ai-tools'),
   },
   { path: '/profile-radar', name: 'profile-radar', component: ProfileRadarView },
-  { path: '/learning', name: 'learning', component: PythonQuestionBankView },
-  { path: '/learning/plan', name: 'learning-plan', component: PythonLearningView },
-  { path: '/learning/problems/:id', redirect: (to) => `/learning/practice/${to.params.id}` },
-  { path: '/learning/practice/:id', name: 'python-practice', component: PythonPracticeView },
-  { path: '/learning/knowledge-graph', name: 'knowledge-graph', component: KnowledgeGraphView },
-  { path: '/learning/resources', name: 'learning-resources', component: LearningResourceView },
-  { path: '/marketplace', name: 'marketplace', component: MarketplaceView },
-  { path: '/marketplace/chat', name: 'marketplace-chat', component: MarketplaceChatView },
-  { path: '/forum', name: 'forum', component: ForumView },
-  { path: '/forum/posts/:postId', name: 'forum-post', component: ForumPostView },
-  { path: '/forum/users/:userId', name: 'forum-profile', component: ForumProfileView },
+  { path: '/career/nebula/python', name: 'career-python-bank', component: PythonQuestionBankView },
+  { path: '/career/nebula/python/plan', name: 'career-python-plan', component: PythonLearningView },
+  { path: '/career/nebula/python/practice/:id', name: 'career-python-practice', component: PythonPracticeView },
+  { path: '/career/nebula/python/knowledge-graph', name: 'career-python-knowledge-graph', component: KnowledgeGraphView },
+  { path: '/career/nebula/python/resources', name: 'career-python-resources', component: LearningResourceView },
+  { path: '/learning', redirect: '/career/nebula/python' },
+  { path: '/learning/plan', redirect: '/career/nebula/python/plan' },
+  { path: '/learning/problems/:id', redirect: (to) => `/career/nebula/python/practice/${to.params.id}` },
+  { path: '/learning/practice/:id', redirect: (to) => `/career/nebula/python/practice/${to.params.id}` },
+  { path: '/learning/knowledge-graph', redirect: '/career/nebula/python/knowledge-graph' },
+  { path: '/learning/resources', redirect: '/career/nebula/python/resources' },
   { path: '/discount', name: 'discount', component: CampusDiscountView },
   { path: '/activities/publish', name: 'activity-publish', component: ActivityPublishView },
   { path: '/activities/:activityId', name: 'activity-detail', component: ActivityDetailView },
@@ -152,7 +142,6 @@ const routes = [
   { path: '/mine/period-time', redirect: '/mine/schedule-settings?tab=periods' },
   { path: '/mine/semester', redirect: '/mine/schedule-settings?tab=semesters' },
   { path: '/mine/edu-account', redirect: '/mine/schedule-settings?tab=account' },
-  { path: '/mine/meeting-schedule', name: 'mine-meeting-schedule', component: MineMeetingScheduleView },
   { path: '/mine/activities', name: 'mine-activities', component: MineActivitiesView },
   { path: '/mine/ai-history', name: 'mine-ai-history', component: MineAiHistoryView },
   { path: '/mine/papers', name: 'mine-papers', component: ExamPapersView },
@@ -161,12 +150,12 @@ const routes = [
   { path: '/mine/papers/results/:attemptId', name: 'exam-result', component: ExamResultView },
   { path: '/mine/papers/results/:attemptId/details', name: 'exam-detail', component: ExamDetailView },
   { path: '/mine/account-settings', name: 'account-settings', component: AccountSettingsView },
-  { path: '/resume', name: 'resume', component: ResumeView },
-  { path: '/resume/workspace', name: 'resume-workspace', component: ResumeWorkspaceView },
-  { path: '/resume/legacy', redirect: '/resume' },
-  { path: '/resume/designer', name: 'resume-designer', component: ResumeDesigner },
-  { path: '/resume/wizard', name: 'resume-wizard', component: ResumeWizard },
-  { path: '/resume/wizard/edit', name: 'resume-edit', component: ResumeWizard },
+  { path: '/resume', redirect: '/interview/resume' },
+  { path: '/resume/legacy', redirect: '/interview/resume' },
+  { path: '/resume/workspace', redirect: '/interview/resume/workspace' },
+  { path: '/resume/designer', redirect: '/interview/resume/designer' },
+  { path: '/resume/wizard', redirect: '/interview/resume/wizard' },
+  { path: '/resume/wizard/edit', redirect: '/interview/resume/wizard/edit' },
   { path: '/career/nebula/:careerId?', name: 'career-nebula', component: CareerNebulaView },
   { path: '/career/nebula/:careerId/planet/:skillId', name: 'career-planet', component: CareerPlanetView },
   { path: '/convert', name: 'convert', component: DocumentConvertView },
@@ -183,6 +172,11 @@ const routes = [
       { path: 'question-bank', name: 'interview-question-bank', component: InterviewQuestionBank },
       { path: 'ability-improvement', name: 'interview-ability', component: InterviewAbilityImprovement },
       { path: 'my', name: 'interview-my', component: InterviewMy },
+      { path: 'resume', name: 'interview-resume', component: ResumeView },
+      { path: 'resume/workspace', name: 'interview-resume-workspace', component: ResumeWorkspaceView },
+      { path: 'resume/designer', name: 'interview-resume-designer', component: ResumeDesigner },
+      { path: 'resume/wizard', name: 'interview-resume-wizard', component: ResumeWizard },
+      { path: 'resume/wizard/edit', name: 'interview-resume-edit', component: ResumeWizard },
       { path: 'my-note', name: 'interview-my-note', component: InterviewMyNote },
       { path: 'wrong-question-book', name: 'interview-wrong-book', component: InterviewWrongQuestionBook },
       { path: 'create-question-bank', name: 'interview-create-bank', component: InterviewCreateQuestionBank },
@@ -190,6 +184,7 @@ const routes = [
       { path: 'evaluation-report', name: 'interview-evaluation-report', component: InterviewAIReport },
     ],
   },
+  { path: '/:pathMatch(.*)*', redirect: '/home' },
 ]
 
 const router = createRouter({

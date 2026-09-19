@@ -11,7 +11,6 @@ const studentId = computed(() => userInfo.value.studentId || userInfo.value.pers
 const menuItems = [
   { label: '我的消息', to: '/mine/messages' },
   { label: '我的课表', to: '/mine/schedule' },
-  { label: '会议日程', to: '/mine/meeting-schedule' },
   { label: '我的活动', to: '/mine/activities' },
   { label: 'AI 会话历史', to: '/mine/ai-history' },
   { label: '我的试卷', to: '/mine/papers' },

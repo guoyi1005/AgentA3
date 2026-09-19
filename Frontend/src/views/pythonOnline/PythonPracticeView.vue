@@ -129,12 +129,12 @@ async function loadProblem() {
 }
 
 function goToBank() {
-  router.push('/learning')
+  router.push('/career/nebula/python')
 }
 
 function goToProblem(id) {
   if (!id || id === problemId.value) return
-  router.push(`/learning/practice/${id}`)
+  router.push(`/career/nebula/python/practice/${id}`)
 }
 
 function clearCode() {
