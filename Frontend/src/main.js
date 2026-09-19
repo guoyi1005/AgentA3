@@ -1,4 +1,5 @@
 import './assets/main.css'
+import './assets/soft-brutalism.css'
 import './utils/uniShim.js'
 
 import { createApp } from 'vue'

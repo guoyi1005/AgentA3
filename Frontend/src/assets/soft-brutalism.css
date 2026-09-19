@@ -1,0 +1,19 @@
+/**
+ * Soft Brutalism + Editorial SaaS 设计变量
+ * 首页与各内容页共用，保证奶油底、黑色描边、低饱和马卡龙配色一致。
+ */
+:root {
+  --hp-bg: #f5f0e7;
+  --hp-cream: #fbf8f2;
+  --hp-ink: #171717;
+  --hp-muted: #6f6a60;
+  --hp-line: #222222;
+  --hp-pink: #eec3cf;
+  --hp-pink-soft: #f1dcdd;
+  --hp-yellow: #ead574;
+  --hp-green: #bcc99c;
+  --hp-blue: #bed2e4;
+  --hp-r-lg: 22px;
+  --hp-r-md: 16px;
+  --hp-gap: 28px;
+}

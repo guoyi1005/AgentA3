@@ -135,14 +135,14 @@ const getMonogram = (title) => {
 }
 
 const cardColors = [
-  { bg: '#2563eb', fg: '#ffffff' },
-  { bg: '#10b981', fg: '#ffffff' },
-  { bg: '#0f172a', fg: '#ffffff' },
-  { bg: '#8b5cf6', fg: '#ffffff' },
-  { bg: '#0ea5e9', fg: '#ffffff' },
-  { bg: '#f59e0b', fg: '#ffffff' },
-  { bg: '#ef4444', fg: '#ffffff' },
-  { bg: '#6366f1', fg: '#ffffff' },
+  { bg: '#EEC3CF', fg: '#171717' },
+  { bg: '#BCC99C', fg: '#171717' },
+  { bg: '#BED2E4', fg: '#171717' },
+  { bg: '#EAD574', fg: '#171717' },
+  { bg: '#F1DCDD', fg: '#171717' },
+  { bg: '#DCE3C8', fg: '#171717' },
+  { bg: '#CFDDEA', fg: '#171717' },
+  { bg: '#F2E7BF', fg: '#171717' },
 ]
 
 const hashTitle = (title) => {
@@ -417,27 +417,30 @@ const groupedResumes = computed(() => {
 <style scoped>
 .dashboard {
   min-height: 100vh;
-  background: #f8fafc;
+  color: var(--hp-ink);
+  background: var(--hp-bg);
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .container {
   display: flex;
   flex-direction: column;
-  max-width: 1200px;
+  width: min(1200px, calc(100% - 48px));
   min-height: calc(100vh - 60px);
   margin: 0 auto;
-  padding: 90px 40px 32px;
+  padding: 88px 0 56px;
 }
 
 .page-header {
-  margin-bottom: 28px;
+  margin-bottom: 26px;
 }
 
 .page-header h1 {
   margin: 0;
-  color: #0f172a;
+  color: var(--hp-ink);
   font-size: 28px;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 /* ===== AI 助手区域 ===== */
@@ -451,20 +454,18 @@ const groupedResumes = computed(() => {
 .ai-card {
   display: flex;
   padding: 28px 32px;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  background: #ffffff;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .ai-card:hover {
   transform: translateY(-2px);
-  border-color: #bfdbfe;
-  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.1);
+  background: #f7f2e8;
 }
 
 .ai-card-inner {
@@ -479,26 +480,25 @@ const groupedResumes = computed(() => {
   place-items: center;
   width: 60px;
   height: 60px;
-  border-radius: 16px;
-  color: #ffffff;
+  border-radius: var(--hp-r-md);
+  color: var(--hp-ink);
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .ai-icon-wrap.blue {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: var(--hp-blue);
 }
 
 .ai-icon-wrap.green {
-  background: linear-gradient(135deg, #10b981, #34d399);
+  background: var(--hp-green);
 }
 
 .ai-icon-wrap.purple {
-  background: linear-gradient(135deg, #6d5bd0, #8b7de3);
+  background: var(--hp-pink);
 }
 
 .ai-icon-wrap.amber {
-  background: linear-gradient(135deg, #d28a32, #e8a94f);
+  background: var(--hp-yellow);
 }
 
 .ai-content {
@@ -508,44 +508,16 @@ const groupedResumes = computed(() => {
 
 .ai-content h3 {
   margin: 0 0 6px;
-  color: #0f172a;
-  font-size: 20px;
-  font-weight: 700;
+  color: var(--hp-ink);
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .ai-content p {
-  margin: 0 0 12px;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.ai-stats {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  color: #94a3b8;
+  margin: 0;
+  color: var(--hp-muted);
   font-size: 13px;
-}
-
-.ai-stat-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.ai-stat-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-}
-
-.ai-stat-item strong {
-  color: #0f172a;
-}
-
-.ai-stat-divider {
-  color: #cbd5e1;
+  line-height: 1.7;
 }
 
 .ai-arrow {
@@ -554,19 +526,18 @@ const groupedResumes = computed(() => {
   justify-content: center;
   width: 44px;
   height: 44px;
+  border: 1px solid var(--hp-line);
   border-radius: 50%;
-  color: #2563eb;
-  background: #eff6ff;
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--hp-ink);
+  background: transparent;
   white-space: nowrap;
   flex-shrink: 0;
   transition: background 0.2s, color 0.2s;
 }
 
 .ai-card:hover .ai-arrow {
-  color: #ffffff;
-  background: #2563eb;
+  color: var(--hp-cream);
+  background: var(--hp-ink);
 }
 
 /* ===== 简历分组管理 ===== */
@@ -574,11 +545,10 @@ const groupedResumes = computed(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 28px 32px;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  background: var(--hp-cream);
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  padding: 28px 30px;
 }
 
 .section-header {
@@ -593,32 +563,34 @@ const groupedResumes = computed(() => {
   align-items: center;
   gap: 10px;
   margin: 0;
-  color: #0f172a;
+  color: var(--hp-ink);
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .section-title svg {
-  color: #2563eb;
+  color: var(--hp-ink);
 }
 
 .btn-new-group {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 16px;
-  border: none;
-  border-radius: 10px;
-  color: #ffffff;
-  background: #2563eb;
+  min-height: 38px;
+  padding: 0 18px;
+  border: 1px solid var(--hp-ink);
+  border-radius: 999px;
+  color: var(--hp-cream);
+  background: var(--hp-ink);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .btn-new-group:hover {
-  background: #1d4ed8;
+  color: var(--hp-ink);
+  background: transparent;
 }
 
 .group-list {
@@ -634,20 +606,20 @@ const groupedResumes = computed(() => {
   align-items: center;
   gap: 10px;
   margin: 0 0 16px;
-  color: #334155;
+  color: var(--hp-ink);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .group-count {
-  color: #94a3b8;
+  color: var(--hp-muted);
   font-size: 12px;
   font-weight: 500;
 }
 
 .group-list + .group-list {
   padding-top: 24px;
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px dashed rgba(23, 23, 23, 0.18);
 }
 
 .group-content {
@@ -659,64 +631,7 @@ const groupedResumes = computed(() => {
   margin-bottom: 24px;
 }
 
-.section-title {
-  margin: 0 0 14px;
-  color: #0f172a;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-/* ===== 主简历卡片 ===== */
-.master-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 24px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #ffffff;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-  transition: box-shadow 0.2s;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-}
-
-.master-card:hover {
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-}
-
-.master-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.master-icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  color: #ffffff;
-  background: #2563eb;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.master-left h3 {
-  margin: 0 0 4px;
-  color: #0f172a;
-  font-size: 16px;
-}
-
-.master-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* ===== 定制简历网格 ===== */
+/* ===== 简历卡片网格 ===== */
 .project-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -728,34 +643,18 @@ const groupedResumes = computed(() => {
   display: flex;
   flex-direction: column;
   padding: 22px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: #ffffff;
+  border: 1px solid rgba(23, 23, 23, 0.16);
+  border-radius: var(--hp-r-md);
+  background: #f7f2e8;
   cursor: pointer;
-  transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  transition: transform 0.25s ease, border-color 0.25s ease;
   overflow: hidden;
   min-height: 180px;
 }
 
-.project-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 3px;
-  background: linear-gradient(90deg, #2563eb, #60a5fa);
-  opacity: 0;
-  transition: opacity 0.25s;
-}
-
 .project-card:hover {
-  border-color: #bfdbfe;
-  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.12);
-  transform: translateY(-3px);
-}
-
-.project-card:hover::before {
-  opacity: 1;
+  border-color: var(--hp-line);
+  transform: translateY(-2px);
 }
 
 .project-header {
@@ -770,31 +669,31 @@ const groupedResumes = computed(() => {
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border: 1px solid var(--hp-line);
+  border-radius: 12px;
   font-size: 16px;
   font-weight: 700;
 }
 
 .project-badge {
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
+  color: var(--hp-ink);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .badge-ready {
-  color: #059669;
-  background: #d1fae5;
+  background: var(--hp-green);
 }
 
 .badge-processing {
-  color: #2563eb;
-  background: #dbeafe;
+  background: var(--hp-blue);
 }
 
 .project-title {
   margin: 0 0 6px;
-  color: #0f172a;
+  color: var(--hp-ink);
   font-size: 15px;
   font-weight: 600;
   line-height: 1.4;
@@ -806,7 +705,7 @@ const groupedResumes = computed(() => {
 
 .project-snippet {
   margin: 0 0 16px;
-  color: #64748b;
+  color: var(--hp-muted);
   font-size: 13px;
   line-height: 1.6;
   display: -webkit-box;
@@ -818,7 +717,7 @@ const groupedResumes = computed(() => {
 
 .project-date {
   margin: 0;
-  color: #94a3b8;
+  color: var(--hp-muted);
   font-size: 12px;
 }
 
@@ -828,7 +727,7 @@ const groupedResumes = computed(() => {
   justify-content: space-between;
   margin-top: auto;
   padding-top: 14px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid rgba(23, 23, 23, 0.1);
 }
 
 .resume-score {
@@ -836,57 +735,20 @@ const groupedResumes = computed(() => {
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  border-radius: 8px;
-  color: #f59e0b;
-  background: #fffbeb;
+  border-radius: 999px;
+  color: var(--hp-ink);
+  background: #f6edd2;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .resume-score svg {
-  fill: #fbbf24;
-  stroke: #f59e0b;
+  fill: var(--hp-yellow);
+  stroke: var(--hp-ink);
 }
 
 .project-card.editable:hover {
-  border-color: #bfdbfe;
-}
-
-/* ===== 按钮 ===== */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 24px;
-  border-radius: 10px;
-  color: #ffffff;
-  background: #2563eb;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-
-.btn-primary:hover {
-  background: #1d4ed8;
-}
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 24px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  color: #334155;
-  background: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-ghost:hover {
-  background: #f8fafc;
+  border-color: var(--hp-line);
 }
 
 /* ===== 新建分组弹窗 ===== */
@@ -896,16 +758,14 @@ const groupedResumes = computed(() => {
   z-index: 2000;
   display: grid;
   place-items: center;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(4px);
+  background: rgba(23, 23, 23, 0.42);
 }
 
 .modal-card {
   width: min(460px, calc(100% - 32px));
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.18);
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
   overflow: hidden;
 }
 
@@ -914,8 +774,7 @@ const groupedResumes = computed(() => {
   align-items: center;
   justify-content: space-between;
   padding: 22px 26px;
-  border-bottom: 1px solid #f1f5f9;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid rgba(23, 23, 23, 0.12);
 }
 
 .modal-title {
@@ -923,13 +782,13 @@ const groupedResumes = computed(() => {
   align-items: center;
   gap: 10px;
   margin: 0;
-  color: #0f172a;
+  color: var(--hp-ink);
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .modal-title svg {
-  color: #2563eb;
+  color: var(--hp-ink);
 }
 
 .modal-close {
@@ -937,17 +796,17 @@ const groupedResumes = computed(() => {
   place-items: center;
   width: 34px;
   height: 34px;
-  border: none;
-  border-radius: 10px;
-  color: #94a3b8;
+  border: 1px solid rgba(23, 23, 23, 0.16);
+  border-radius: 50%;
+  color: var(--hp-muted);
   background: transparent;
   cursor: pointer;
   transition: color 0.2s, background 0.2s;
 }
 
 .modal-close:hover {
-  color: #64748b;
-  background: #f1f5f9;
+  color: var(--hp-ink);
+  background: rgba(23, 23, 23, 0.06);
 }
 
 .modal-body {
@@ -957,7 +816,7 @@ const groupedResumes = computed(() => {
 .input-label {
   display: block;
   margin-bottom: 10px;
-  color: #334155;
+  color: var(--hp-ink);
   font-size: 14px;
   font-weight: 600;
 }
@@ -966,24 +825,22 @@ const groupedResumes = computed(() => {
   display: flex;
   align-items: center;
   padding: 2px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #ffffff;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  border: 1px solid rgba(23, 23, 23, 0.24);
+  border-radius: 999px;
+  background: transparent;
+  transition: border-color 0.2s;
 }
 
 .input-wrapper:focus-within {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+  border-color: var(--hp-ink);
 }
 
 .input-wrapper--error {
-  border-color: #fca5a5;
+  border-color: #b4544c;
 }
 
 .input-wrapper--error:focus-within {
-  border-color: #f87171;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+  border-color: #b4544c;
 }
 
 .input-wrapper input {
@@ -991,26 +848,26 @@ const groupedResumes = computed(() => {
   width: 100%;
   padding: 12px 14px;
   border: none;
-  border-radius: 10px;
-  color: #0f172a;
+  border-radius: 999px;
+  color: var(--hp-ink);
   background: transparent;
   font-size: 14px;
   outline: none;
 }
 
 .input-wrapper input::placeholder {
-  color: #cbd5e1;
+  color: #a8a196;
 }
 
 .input-hint {
   margin: 10px 0 0;
-  color: #94a3b8;
+  color: var(--hp-muted);
   font-size: 12px;
 }
 
 .input-error {
   margin: 10px 0 0;
-  color: #dc2626;
+  color: #a54239;
   font-size: 12px;
   font-weight: 500;
 }
@@ -1021,16 +878,16 @@ const groupedResumes = computed(() => {
   justify-content: flex-end;
   gap: 12px;
   padding: 18px 26px;
-  border-top: 1px solid #f1f5f9;
-  background: #fafbfc;
+  border-top: 1px solid rgba(23, 23, 23, 0.12);
 }
 
 .btn-cancel {
-  padding: 10px 20px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  color: #64748b;
-  background: #ffffff;
+  min-height: 38px;
+  padding: 0 20px;
+  border: 1px solid var(--hp-line);
+  border-radius: 999px;
+  color: var(--hp-ink);
+  background: transparent;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -1038,26 +895,25 @@ const groupedResumes = computed(() => {
 }
 
 .btn-cancel:hover {
-  color: #334155;
-  background: #f8fafc;
+  background: rgba(23, 23, 23, 0.06);
 }
 
 .btn-confirm {
-  padding: 10px 22px;
-  border: none;
-  border-radius: 10px;
-  color: #ffffff;
-  background: #2563eb;
+  min-height: 38px;
+  padding: 0 22px;
+  border: 1px solid var(--hp-ink);
+  border-radius: 999px;
+  color: var(--hp-cream);
+  background: var(--hp-ink);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transition: background 0.2s, color 0.2s;
 }
 
 .btn-confirm:hover {
-  background: #1d4ed8;
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.32);
+  color: var(--hp-ink);
+  background: transparent;
 }
 
 /* 弹窗过渡动画 */
@@ -1069,5 +925,47 @@ const groupedResumes = computed(() => {
 .modal-fade-enter-from,
 .modal-fade-leave-to {
   opacity: 0;
+}
+
+/* ===== 响应式 ===== */
+
+@media (max-width: 860px) {
+  .ai-assist-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .container {
+    width: calc(100% - 32px);
+    padding: 82px 0 40px;
+  }
+
+  .ai-card {
+    padding: 22px;
+  }
+
+  .ai-card-inner {
+    gap: 14px;
+  }
+
+  .ai-icon-wrap {
+    width: 50px;
+    height: 50px;
+  }
+
+  .ai-arrow {
+    display: none;
+  }
+
+  .group-section-wrapper {
+    padding: 22px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
 }
 </style>

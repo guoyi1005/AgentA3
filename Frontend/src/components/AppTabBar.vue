@@ -114,10 +114,9 @@ const shortcutItems = [
   inset: 0 0 auto;
   z-index: 1000;
   height: 60px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: #1e2b4c;
-  color: #ffffff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(251, 248, 242, 0.12);
+  background: #14171d;
+  color: #f5f0e7;
 }
 
 .app-site-header--embedded {
@@ -127,33 +126,33 @@ const shortcutItems = [
 .app-site-header__inner {
   display: flex;
   align-items: center;
-  width: min(1480px, calc(100% - 40px));
+  width: min(1440px, calc(100% - 48px));
   height: 100%;
   margin: 0 auto;
-  gap: 18px;
+  gap: 22px;
 }
 
 .app-site-header__brand {
   flex: 0 0 auto;
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 1px;
+  color: #f5f0e7;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .app-site-header__brand span {
-  color: #00b4ff;
+  color: #ead574;
 }
 
 .app-site-header__nav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   min-width: 0;
   flex: 1;
-  gap: 10px;
+  gap: 4px;
   overflow-x: auto;
   padding-right: 6px;
   scrollbar-width: none;
@@ -166,28 +165,46 @@ const shortcutItems = [
 .app-site-header__nav a {
   display: grid;
   place-items: center;
-  min-height: 36px;
+  min-height: 34px;
   padding: 0 14px;
-  border-radius: 8px;
-  color: #ccd5e4;
+  border-radius: 999px;
+  color: rgba(245, 240, 231, 0.72);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
   flex: 0 0 auto;
-  transition: all 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .app-site-header__nav a:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
+  color: #f5f0e7;
+  background: rgba(245, 240, 231, 0.08);
 }
 
 .app-site-header__nav a.router-link-active,
 .app-site-header__nav a.app-site-header__nav-link--active {
-  color: #ffffff;
-  background: rgba(59, 130, 246, 0.28);
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15);
+  color: #14171d;
+  background: #ead574;
+  font-weight: 600;
+}
+
+.app-tab-nav__avatar {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border: 1px solid rgba(245, 240, 231, 0.32);
+  background: #f5f0e7;
+  color: #14171d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.app-tab-nav__panel {
+  border: 1px solid #222222;
+  border-radius: 18px;
+  background: #fbf8f2;
+  box-shadow: none;
 }
 
 @media (max-width: 680px) {

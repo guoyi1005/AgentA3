@@ -1,8 +1,9 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppTabBar from '../components/AppTabBar.vue'
 import { getLatestJobRecommendations, JOB_BOSS_CTA, JOB_SALARY_HINT, resolveBossJobSearchLink, resolveBossJobSearchLinkFromJob } from '../api/jobRecommendations'
+import { getUserInfo } from '../utils/auth'
 
 const router = useRouter()
 const searchKeyword = ref('')
@@ -314,10 +315,7 @@ const categoryDetails = {
   },
 }
 
-const logoColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ff9f43', '#a29bfe']
-
 const displayHotJobs = computed(() => hotJobs.value.slice(0, 3))
-const displayLatestJobs = computed(() => hotJobs.value.slice(0, 6))
 
 const hotDirections = computed(() => {
   const directions = []
@@ -416,909 +414,1278 @@ function releasePreview() {
   detailPinned.value = false
   activeCategoryId.value = ''
 }
+
+/* ============================================================
+ * 首页展示层数据
+ * 1) 问候语、日期、岗位分类编号来自现有数据与登录信息；
+ * 2) 个人成长区（目标岗位 / 能力进度 / 今日计划 / 课程进度）
+ *    后端暂无对应接口，这里统一集中为展示用示例数据，
+ *    接入真实数据时只需替换下面这一段常量，其余结构与逻辑不变。
+ * ============================================================ */
+
+const userInfo = computed(() => getUserInfo() || {})
+const displayName = computed(() => userInfo.value.realName || userInfo.value.username || '同学')
+
+const greeting = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '凌晨好'
+  if (hour < 11) return '早上好'
+  if (hour < 14) return '中午好'
+  if (hour < 18) return '下午好'
+  return '晚上好'
+})
+
+const todayLabel = computed(() => {
+  const now = new Date()
+  const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][now.getDay()]
+  return `${now.getMonth() + 1} 月 ${now.getDate()} 日 · ${weekday}`
+})
+
+const focusJob = {
+  title: 'Python 开发工程师',
+  matchRate: 72,
+  note: '距离目标岗位还差两项能力，先补齐 FastAPI 与项目实战。',
+  skills: ['Python', 'MySQL', 'FastAPI', '项目实战'],
+}
+
+const todayPlan = ref([
+  { id: 'plan-python-basic', title: 'Python 基础', meta: '已完成 2 个课时', state: 'done' },
+  { id: 'plan-fastapi', title: 'FastAPI 实训', meta: '进行中 · 接口调试', state: 'doing' },
+  { id: 'plan-interview', title: 'AI 模拟面试', meta: '安排在今天 20:00', state: 'todo' },
+])
+
+const isAddingPlan = ref(false)
+const newPlanTitle = ref('')
+const planInputRef = ref(null)
+
+const myCourses = [
+  { id: 'fastapi', title: 'FastAPI 接口开发', type: '实训课 · 12 课时', progress: 62, tone: 'pink', cover: 'api' },
+  { id: 'mysql', title: 'MySQL 多表查询', type: '基础课 · 8 课时', progress: 45, tone: 'blue', cover: 'db' },
+  { id: 'project', title: 'Python 项目实战', type: '项目课 · 6 个项目', progress: 28, tone: 'green', cover: 'code' },
+]
+
+const todayPlanDone = computed(() => todayPlan.value.filter((task) => task.state === 'done').length)
+
+function togglePlanTask(task) {
+  task.state = task.state === 'done' ? 'todo' : 'done'
+}
+
+async function startAddPlan() {
+  isAddingPlan.value = true
+  await nextTick()
+  planInputRef.value?.focus()
+}
+
+function submitPlanTask() {
+  const title = newPlanTitle.value.trim()
+  if (title) {
+    todayPlan.value.push({ id: `plan-${Date.now()}`, title, meta: '刚刚添加', state: 'todo' })
+  }
+  newPlanTitle.value = ''
+  isAddingPlan.value = false
+}
+
+function cancelPlanTask() {
+  newPlanTitle.value = ''
+  isAddingPlan.value = false
+}
+
+function formatCategorySub(sub) {
+  return String(sub || '')
+    .split(/[\s、,，·]+/)
+    .filter(Boolean)
+    .join(' · ')
+}
+
+function categoryIndex(index) {
+  return String(currentPage.value * 6 + index + 1).padStart(2, '0')
+}
+
+// 岗位探索：默认展示当前这一组的第一个方向，鼠标经过时切换，避免出现空白区
+const featuredCategoryId = computed(() => activeCategoryId.value || currentCategories.value[0]?.id || '')
+const featuredCategory = computed(() => categoryDetails[featuredCategoryId.value] ?? null)
+
+// 推荐岗位：优先展示本周真实岗位，岗位雷达暂无数据时退回热门方向入口
+const recommendJobs = computed(() => {
+  if (displayHotJobs.value.length) {
+    return displayHotJobs.value.map((job) => ({
+      id: job.id || job.jobTitle,
+      title: job.jobTitle,
+      skills: parseJobSkills(job.skills),
+      meta: JOB_SALARY_HINT,
+      href: resolveJobSearchLink(job),
+      cta: JOB_BOSS_CTA,
+    }))
+  }
+  return hotDirections.value.slice(0, 3).map((direction) => ({
+    id: direction.query,
+    title: direction.label,
+    skills: direction.skills,
+    meta: '岗位方向 · 前往 BOSS 直聘查看真实公司与薪资',
+    href: resolveBossJobSearchLink(direction.query),
+    cta: '查看岗位',
+  }))
+})
 </script>
 
 <template>
   <div class="home-view">
     <AppTabBar embedded />
 
-    <section class="search-area">
-      <div class="container">
-        <div class="search-box-wrap">
-          <input
-            v-model="searchKeyword"
-            type="text"
-            placeholder="搜索职位、公司，例如：AI 大模型工程师"
-            @keyup.enter="openBossSearch(searchKeyword)"
-          />
-          <button type="button" @click="openBossSearch(searchKeyword)">搜索</button>
-        </div>
-        <div class="hot-searches">
-          <span>热门搜索：</span>
-          <span
-            v-for="item in hotSearches"
-            :key="item"
-            class="hot-search-tag"
-            @click="openBossSearch(item)"
-          >{{ item }}</span>
-        </div>
-      </div>
-    </section>
+    <div class="hp-main">
+      <!-- Hero 欢迎区 -->
+      <section class="hp-hero">
+        <div class="hp-hero__body">
+          <p class="hp-eyebrow">{{ todayLabel }} · {{ greeting }}，{{ displayName }}</p>
+          <h1 class="hp-hero__title">找准方向，再开始成长</h1>
+          <p class="hp-hero__desc">
+            上传简历，AI 分析你的能力差距，并生成岗位匹配结果与专属学习路径。
+          </p>
+          <div class="hp-hero__actions">
+            <button class="hp-btn hp-btn--solid" type="button" @click="router.push('/interview/resume')">
+              开始岗位体检
+            </button>
+            <button class="hp-link" type="button" @click="router.push('/career/nebula')">
+              查看岗位星图 →
+            </button>
+          </div>
 
-    <section class="container cat-diagnosis-area">
-      <div class="left-panel" @mouseleave="resetPreview">
-        <div class="cat-menu-page active">
-          <button
-            v-for="item in currentCategories"
-            :key="item.id"
-            type="button"
-            class="cat-menu-item"
-            :class="{ active: activeCategoryId === item.id }"
-            @mouseenter="showCategory(item.id)"
-          >
-            <div class="cat-row">
-              <span class="cat-main">{{ item.main }}</span>
-              <span class="cat-sub-list">{{ item.sub }}</span>
+          <form class="hp-search" @submit.prevent="openBossSearch(searchKeyword)">
+            <svg class="hp-search__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="M16 16.2 20.4 20.6" />
+            </svg>
+            <input
+              v-model="searchKeyword"
+              type="text"
+              placeholder="搜索职位、公司，例如：AI 大模型工程师"
+            />
+            <button type="submit">搜索</button>
+          </form>
+
+          <p class="hp-hotline">
+            <span class="hp-hotline__label">热门</span>
+            <template v-for="(item, index) in hotSearches" :key="item">
+              <span v-if="index" class="hp-hotline__sep">·</span>
+              <button class="hp-hotline__item" type="button" @click="openBossSearch(item)">{{ item }}</button>
+            </template>
+          </p>
+        </div>
+
+        <div class="hp-hero__visual">
+          <svg class="hp-hero__art" viewBox="0 0 320 300" role="img" aria-label="学习中的学生插画">
+                <circle cx="196" cy="142" r="112" fill="#EAD574" />
+                <path d="M126 244c0-44 14-70 34-70s34 26 34 70z" fill="#BED2E4" stroke="#171717" stroke-width="3" />
+                <circle cx="160" cy="140" r="30" fill="#FBF8F2" stroke="#171717" stroke-width="3" />
+              <path d="M130 136c2-20 14-30 30-30s28 10 30 30c-8-8-18-11-30-11s-22 3-30 11z" fill="#171717" />
+              <circle cx="150" cy="141" r="2.6" fill="#171717" />
+              <circle cx="170" cy="141" r="2.6" fill="#171717" />
+              <path
+                d="M152 152c4 4 12 4 16 0"
+                fill="none"
+                stroke="#171717"
+                stroke-width="2.6"
+                stroke-linecap="round"
+              />
+              <path
+                d="M112 244l16-48h64l16 48z"
+                fill="#FBF8F2"
+                stroke="#171717"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path d="M122 238l12-34h52l12 34z" fill="#BCC99C" />
+              <path d="M134 206c-10 8-16 22-18 34" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round" />
+              <path d="M186 206c10 8 16 22 18 34" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round" />
+              <path
+                d="M262 244l4-18h20l4 18z"
+                fill="#EEC3CF"
+                stroke="#171717"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M276 224c0-16-8-24-18-24 0 12 8 22 18 24z"
+                fill="#BCC99C"
+                stroke="#171717"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+          </svg>
+        </div>
+      </section>
+
+      <!-- 岗位探索 -->
+      <section class="hp-section">
+        <header class="hp-section__head">
+          <h2 class="hp-section__title">岗位探索</h2>
+          <div class="hp-pager">
+            <button type="button" :disabled="currentPage === 0" @click="changePage(-1)">上一组</button>
+            <span class="hp-pager__num">{{ currentPage + 1 }} / {{ pageCount }}</span>
+            <button type="button" :disabled="currentPage === pageCount - 1" @click="changePage(1)">下一组</button>
+          </div>
+        </header>
+
+        <ul class="hp-cats" @mouseleave="resetPreview">
+          <li v-for="(item, index) in currentCategories" :key="item.id">
+            <button
+              class="hp-cat"
+              :class="{ 'is-active': featuredCategoryId === item.id }"
+              type="button"
+              @mouseenter="showCategory(item.id)"
+              @focus="showCategory(item.id)"
+            >
+              <span class="hp-cat__num">{{ categoryIndex(index) }}</span>
+              <span class="hp-cat__main">{{ item.main }}</span>
+              <span class="hp-cat__sub">{{ formatCategorySub(item.sub) }}</span>
+            </button>
+          </li>
+        </ul>
+
+        <div
+          v-if="featuredCategory"
+          class="hp-cat-detail"
+          @mouseenter="keepPreview"
+          @mouseleave="releasePreview"
+        >
+          <p class="hp-cat-detail__title">{{ featuredCategory.title }}</p>
+          <div v-for="group in featuredCategory.groups" :key="group.name" class="hp-cat-detail__group">
+            <p class="hp-cat-detail__group-name">{{ group.name }}</p>
+            <div class="hp-tags">
+              <span v-for="tag in group.tags" :key="tag" class="hp-tag">{{ tag }}</span>
             </div>
-            <span class="cat-arrow">></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 继续成长 -->
+      <section class="hp-section">
+        <header class="hp-section__head">
+          <h2 class="hp-section__title">继续成长</h2>
+        </header>
+
+        <div class="hp-growth">
+          <article class="hp-card hp-target">
+            <header class="hp-card__head">
+              <h3 class="hp-card__title">我的目标岗位</h3>
+              <span class="hp-badge">{{ focusJob.matchRate }}% 匹配</span>
+            </header>
+            <p class="hp-target__job">{{ focusJob.title }}</p>
+            <p class="hp-target__note">{{ focusJob.note }}</p>
+            <div class="hp-tags">
+              <span v-for="skill in focusJob.skills" :key="skill" class="hp-tag">{{ skill }}</span>
+            </div>
+            <button class="hp-link hp-link--start" type="button" @click="router.push('/career/nebula')">
+              查看岗位星图 →
+            </button>
+          </article>
+
+          <article class="hp-card hp-plan">
+            <header class="hp-card__head">
+              <h3 class="hp-card__title">今日计划</h3>
+              <div class="hp-plan__tools">
+                <span class="hp-plan__count">{{ todayPlanDone }} / {{ todayPlan.length }}</span>
+                <button
+                  class="hp-plan__add"
+                  type="button"
+                  aria-label="添加今日计划"
+                  title="添加今日计划"
+                  @click="startAddPlan"
+                >+</button>
+              </div>
+            </header>
+            <ul class="hp-plan__list">
+              <li v-for="task in todayPlan" :key="task.id">
+                <button
+                  class="hp-plan__item"
+                  :class="`is-${task.state}`"
+                  type="button"
+                  :aria-pressed="task.state === 'done'"
+                  :title="task.state === 'done' ? '点击标记为未完成' : '点击标记为已完成'"
+                  @click="togglePlanTask(task)"
+                >
+                  <span class="hp-plan__mark"></span>
+                  <span class="hp-plan__title">{{ task.title }}</span>
+                  <span class="hp-plan__meta">{{ task.meta }}</span>
+                </button>
+              </li>
+              <li v-if="isAddingPlan" class="hp-plan__edit">
+                <span class="hp-plan__mark hp-plan__mark--todo"></span>
+                <input
+                  ref="planInputRef"
+                  v-model="newPlanTitle"
+                  type="text"
+                  maxlength="40"
+                  placeholder="输入计划内容，回车保存"
+                  @keyup.enter="submitPlanTask"
+                  @keyup.esc="cancelPlanTask"
+                />
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- 继续学习 -->
+      <section class="hp-section">
+        <header class="hp-section__head">
+          <h2 class="hp-section__title">继续学习</h2>
+          <button class="hp-link" type="button" @click="router.push('/career/nebula/python')">
+            全部课程 →
           </button>
-        </div>
+        </header>
 
-        <div class="cat-pagination">
-          <span class="page-num">{{ currentPage + 1 }} / {{ pageCount }}</span>
-          <div class="page-btns">
-            <button type="button" class="page-btn" :disabled="currentPage === 0" @click="changePage(-1)">
-              <
+        <div class="hp-courses__grid">
+            <button
+              v-for="course in myCourses"
+              :key="course.id"
+              class="hp-course"
+              type="button"
+              @click="router.push('/career/nebula/python')"
+            >
+              <span class="hp-course__cover" :class="`is-${course.tone}`">
+                <svg v-if="course.cover === 'api'" viewBox="0 0 320 200" aria-hidden="true">
+                  <rect x="66" y="46" width="188" height="108" rx="14" fill="#FBF8F2" stroke="#171717" stroke-width="3" />
+                  <path d="M66 76h188" stroke="#171717" stroke-width="3" />
+                  <circle cx="84" cy="61" r="3.5" fill="#171717" />
+                  <circle cx="96" cy="61" r="3.5" fill="#171717" />
+                  <circle cx="108" cy="61" r="3.5" fill="#171717" />
+                  <rect x="84" y="92" width="76" height="7" rx="3.5" fill="#BED2E4" />
+                  <rect x="84" y="110" width="112" height="7" rx="3.5" fill="#BCC99C" />
+                  <rect x="84" y="128" width="56" height="7" rx="3.5" fill="#EAD574" />
+                </svg>
+                <svg v-else-if="course.cover === 'db'" viewBox="0 0 320 200" aria-hidden="true">
+                  <path
+                    d="M102 62v76c0 11 26 20 58 20s58-9 58-20V62"
+                    fill="#FBF8F2"
+                    stroke="#171717"
+                    stroke-width="3"
+                  />
+                  <ellipse cx="160" cy="62" rx="58" ry="20" fill="#FBF8F2" stroke="#171717" stroke-width="3" />
+                  <path d="M102 90c0 11 26 20 58 20s58-9 58-20" fill="none" stroke="#171717" stroke-width="3" />
+                  <path d="M102 118c0 11 26 20 58 20s58-9 58-20" fill="none" stroke="#171717" stroke-width="3" />
+                </svg>
+                <svg v-else viewBox="0 0 320 200" aria-hidden="true">
+                  <path
+                    d="M120 68 94 100l26 32"
+                    fill="none"
+                    stroke="#171717"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M200 68l26 32-26 32"
+                    fill="none"
+                    stroke="#171717"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path d="M176 58l-32 84" fill="none" stroke="#171717" stroke-width="6" stroke-linecap="round" />
+                </svg>
+              </span>
+              <span class="hp-course__title">{{ course.title }}</span>
+              <span class="hp-course__type">{{ course.type }}</span>
+              <span class="hp-course__progress">
+                <span class="hp-bar__track"><i :style="{ width: `${course.progress}%` }"></i></span>
+                <span class="hp-course__value">{{ course.progress }}%</span>
+              </span>
             </button>
-            <button type="button" class="page-btn" :disabled="currentPage === pageCount - 1" @click="changePage(1)">
-              >
-            </button>
-          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="right-panel" @mouseenter="keepPreview" @mouseleave="releasePreview">
-        <div v-if="!activeCategory" class="diagnosis-banner">
-          <div class="text-box">
-            <h2>拒绝盲目内卷，先做岗位体检</h2>
-            <p>
-              上传简历，AI 深度解析你的能力短板。
-              <br />
-              一键生成专属学习路径与高薪岗位适配报告。
-            </p>
-            <button type="button" class="diagnosis-btn" @click="router.push('/ai-tools/resume')">上传简历，开启诊断</button>
-            <button type="button" class="diagnosis-btn diagnosis-btn--ghost" @click="router.push('/jobs/hot')">
-              查看岗位雷达
-            </button>
+      <!-- 推荐岗位 -->
+      <section class="hp-section">
+        <header class="hp-section__head">
+          <h2 class="hp-section__title">推荐岗位</h2>
+          <div class="hp-section__aside">
+            <span v-if="hotJobsWeekLabel" class="hp-section__meta">{{ hotJobsWeekLabel }}</span>
+            <button class="hp-link" type="button" @click="router.push('/jobs/hot')">查看全部 →</button>
           </div>
-        </div>
+        </header>
 
-        <div v-else class="detail-panel active">
-          <div class="detail-title">{{ activeCategory.title }}</div>
-          <div v-for="group in activeCategory.groups" :key="group.name" class="detail-item">
-            <div class="detail-item-title">{{ group.name }}</div>
-            <div class="detail-tags">
-              <span v-for="tag in group.tags" :key="tag">{{ tag }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+        <p v-if="hotJobsLoading" class="hp-jobs__state">正在整理本周岗位…</p>
 
-    <section class="container section-block">
-      <div class="section-header">
-        <h2>热门岗位</h2>
-        <p v-if="hotJobsWeekLabel" class="section-meta">{{ hotJobsWeekLabel }} · 岗位方向由 AI 整理，薪资以 BOSS 直聘为准</p>
-      </div>
-      <div v-if="hotJobsLoading" class="section-empty">正在加载热门岗位…</div>
-      <div v-else-if="!displayHotJobs.length" class="section-empty">
-        <p>暂无岗位推荐</p>
-        <button type="button" class="section-link-btn" @click="router.push('/jobs/hot')">前往岗位雷达</button>
-      </div>
-      <div v-else class="grid-3">
-        <article v-for="job in displayHotJobs" :key="job.id || job.jobTitle" class="info-card">
-          <div class="card-header-simple">
-            <div class="title">{{ job.jobTitle }}</div>
-            <a
-              :href="resolveJobSearchLink(job)"
-              target="_blank"
-              rel="noreferrer"
-              class="salary-hint salary-hint--link"
-            >{{ JOB_SALARY_HINT }}</a>
-          </div>
-          <div class="card-desc">技能方向：{{ job.skills || '详见 BOSS 直聘' }}</div>
-          <div class="card-tags">
-            <span v-for="item in parseJobSkills(job.skills)" :key="item">{{ item }}</span>
-          </div>
-          <div class="card-actions">
-            <a :href="resolveJobSearchLink(job)" target="_blank" rel="noreferrer" class="more-btn">{{ JOB_BOSS_CTA }}</a>
-          </div>
-          <div class="card-benefits">岗位名称与技能方向仅供参考，具体薪资与 JD 以 BOSS 直聘为准</div>
-        </article>
-      </div>
-      <div class="view-more-wrap">
-        <button type="button" class="view-more-btn" @click="router.push('/jobs/hot')">查看更多</button>
-      </div>
-    </section>
-
-    <section class="container section-block">
-      <div class="section-header">
-        <h2>热门招聘方向</h2>
-        <p class="section-meta">由本周岗位雷达整理，点击可前往 BOSS 直聘查看真实公司与薪资</p>
-      </div>
-      <div v-if="hotJobsLoading" class="section-empty">正在加载招聘方向…</div>
-      <div v-else class="grid-3">
-        <article v-for="(direction, index) in hotDirections" :key="direction.query" class="info-card">
-          <div class="company-header">
-            <div class="company-logo" :style="{ background: logoColors[index % logoColors.length] }">
-              {{ direction.label.charAt(0) }}
-            </div>
-            <div class="company-info">
-              <div class="company-name">{{ direction.label }}</div>
-              <a
-                :href="resolveBossJobSearchLink(direction.query)"
-                target="_blank"
-                rel="noreferrer"
-                class="salary-hint salary-hint--link company-meta-link"
-              >{{ JOB_SALARY_HINT }}</a>
-            </div>
-          </div>
-          <div class="card-desc"><strong>相关技能方向：</strong></div>
-          <div class="card-tags">
-            <span v-for="item in direction.skills" :key="item">{{ item }}</span>
-          </div>
-          <div class="card-actions">
-            <a
-              :href="resolveBossJobSearchLink(direction.query)"
-              target="_blank"
-              rel="noreferrer"
-              class="more-btn"
-            >{{ JOB_BOSS_CTA }}</a>
-          </div>
-          <div class="card-benefits no-border">不含具体公司与薪资，请在 BOSS 直聘搜索结果中查看</div>
-        </article>
-      </div>
-      <div class="view-more-wrap">
-        <button type="button" class="view-more-btn" @click="router.push('/jobs/hot')">前往岗位雷达</button>
-      </div>
-    </section>
-
-    <section class="container section-block">
-      <div class="section-header">
-        <h2>最新职位</h2>
-        <p v-if="hotJobsWeekLabel" class="section-meta">{{ hotJobsWeekLabel }} · 岗位来自本周雷达，不含公司与薪资</p>
-        <p v-else class="section-meta">岗位来自本周雷达，公司与薪资请前往 BOSS 直聘查看</p>
-      </div>
-      <div v-if="hotJobsLoading" class="section-empty">正在加载最新职位…</div>
-      <div v-else-if="!displayLatestJobs.length" class="section-empty">
-        <p>暂无职位推荐</p>
-        <button type="button" class="section-link-btn" @click="router.push('/jobs/hot')">前往岗位雷达</button>
-      </div>
-      <div v-else class="job-list">
-        <article v-for="(job, index) in displayLatestJobs" :key="job.id || `latest-${job.jobTitle}`" class="job-list-item">
-          <div class="job-list-main">
-            <div class="job-list-logo" :style="{ background: logoColors[index % logoColors.length] }">
-              {{ String(job.jobTitle || '岗').charAt(0) }}
-            </div>
-            <div class="job-list-info">
-              <div class="job-list-title">{{ job.jobTitle }}</div>
-              <div class="job-list-meta">{{ JOB_SALARY_HINT }}</div>
-              <div class="card-tags job-list-tags">
-                <span v-for="item in parseJobSkills(job.skills)" :key="item">{{ item }}</span>
+        <ul v-else class="hp-jobs__grid">
+          <li v-for="(job, index) in recommendJobs" :key="job.id" class="hp-job">
+            <span class="hp-job__logo" :class="`is-tone-${index % 4}`">{{ job.title.charAt(0) }}</span>
+            <div class="hp-job__copy">
+              <p class="hp-job__title">{{ job.title }}</p>
+              <p class="hp-job__meta">{{ job.meta }}</p>
+              <div class="hp-tags">
+                <span v-for="item in job.skills" :key="item" class="hp-tag">{{ item }}</span>
               </div>
             </div>
-          </div>
-          <a :href="resolveJobSearchLink(job)" target="_blank" rel="noreferrer" class="job-list-btn">{{ JOB_BOSS_CTA }}</a>
-        </article>
-      </div>
-      <div class="view-more-wrap">
-        <button type="button" class="view-more-btn" @click="router.push('/jobs/hot')">查看更多</button>
-      </div>
-    </section>
+            <a class="hp-link hp-job__link" :href="job.href" target="_blank" rel="noreferrer">
+              {{ job.cta }} →
+            </a>
+          </li>
+        </ul>
+      </section>
 
-    <footer class="footer">
-      <div class="container footer-grid">
-        <div>
-          <h4>关于我们</h4>
-          <ul>
-            <li><a href="javascript:void(0)">公司简介</a></li>
-            <li><a href="javascript:void(0)">联系我们</a></li>
-            <li><a href="javascript:void(0)">加入我们</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>产品与服务</h4>
-          <ul>
-            <li><a href="javascript:void(0)" @click="router.push('/jobs/hot')">岗位雷达</a></li>
-            <li><a href="javascript:void(0)" @click="router.push('/ai-tools/resume')">人岗匹配诊断</a></li>
-            <li><a href="javascript:void(0)">学习路径推荐</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>帮助与支持</h4>
-          <ul>
-            <li><a href="javascript:void(0)">帮助中心</a></li>
-            <li><a href="javascript:void(0)">常见问题</a></li>
-            <li><a href="javascript:void(0)">在线客服</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>法律合规</h4>
-          <ul>
-            <li><a href="javascript:void(0)">服务协议</a></li>
-            <li><a href="javascript:void(0)">隐私政策</a></li>
-            <li><a href="javascript:void(0)">免责声明</a></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="container footer-bottom">
+      <footer class="hp-footer">
         <p>© 2026 数智诊断港 | 本平台数据仅用于学术研究与个人职业发展规划</p>
         <p>ICP备案号：粤 ICP 备 XXXXXXX 号</p>
-      </div>
-    </footer>
+      </footer>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .home-view {
-  isolation: isolate;
+  position: relative;
   min-height: 100vh;
-  background: #eaf3fc;
-  color: #333;
+  background: var(--hp-bg);
+  color: var(--hp-ink);
 }
 
-.home-view * {
+.home-view *,
+.home-view *::before,
+.home-view *::after {
   box-sizing: border-box;
 }
 
-.container {
-  width: min(1200px, calc(100% - 40px));
+.hp-main {
+  width: min(1440px, calc(100% - 48px));
   margin: 0 auto;
+  padding: 30px 0 64px;
 }
 
-.footer a {
-  color: inherit;
-  text-decoration: none;
+/* ---------- Hero 欢迎区 ---------- */
+
+.hp-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 42%);
+  align-items: stretch;
+  gap: 24px;
+  padding: 42px 36px 36px 44px;
+  border: 1px solid var(--hp-line);
+  border-radius: 26px;
+  background: var(--hp-pink-soft);
 }
 
-.footer a:hover {
-  color: #fff;
+.hp-hero__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
 }
 
-.search-area {
-  padding: 40px 0 30px;
-  background: linear-gradient(180deg, #dce8f4 0%, #eaf3fc 100%);
-  border-bottom: 1px solid #d0dceb;
+.hp-eyebrow {
+  margin: 0 0 16px;
+  color: #8a7f7f;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
-.search-box-wrap {
+.hp-hero__title {
+  margin: 0;
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.hp-hero__desc {
+  margin: 20px 0 0;
+  max-width: 26em;
+  color: #55504a;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.hp-hero__actions {
   display: flex;
   align-items: center;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 4px 4px 4px 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  gap: 22px;
+  margin-top: 30px;
 }
 
-.search-box-wrap input {
+.hp-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 540px);
+  margin-top: 30px;
+  padding: 5px 5px 5px 18px;
+  border: 1px solid var(--hp-line);
+  border-radius: 20px;
+  background: var(--hp-cream);
+}
+
+.hp-search__icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: var(--hp-ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.hp-search input {
   flex: 1;
   min-width: 0;
+  height: 42px;
   border: 0;
   outline: 0;
-  padding: 12px 0;
-  font-size: 16px;
   background: transparent;
-}
-
-.search-box-wrap button {
-  border: 0;
-  padding: 12px 32px;
-  border-radius: 6px;
-  background: #0066ff;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.hot-searches {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 16px;
-}
-
-.hot-searches span {
-  padding: 4px 12px;
-  border-radius: 20px;
-  background: #fff;
+  color: var(--hp-ink);
   font-size: 14px;
-  color: #444;
 }
 
-.hot-search-tag {
-  cursor: pointer;
+.hp-search input::placeholder {
+  color: #a8a196;
 }
 
-.hot-search-tag:hover {
-  color: #0066ff;
+.hp-search button {
+  flex: 0 0 auto;
+  height: 42px;
+  padding: 0 26px;
+  border-radius: 999px;
+  background: var(--hp-ink);
+  color: var(--hp-cream);
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.section-meta {
-  margin: 8px 0 0;
-  color: #667085;
+/* ---------- 热门搜索轻量行 ---------- */
+
+.hp-hotline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0 0;
   font-size: 13px;
 }
 
-.salary-hint {
-  flex-shrink: 0;
-  max-width: 42%;
-  color: #667085;
+.hp-hotline__label {
+  margin-right: 4px;
+  color: #9a9388;
   font-size: 12px;
-  line-height: 1.4;
-  text-align: right;
+  letter-spacing: 0.04em;
 }
 
-.salary-hint--link {
-  color: #2f76bd;
+.hp-hotline__item {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hp-muted);
+  font-size: 13px;
   text-decoration: none;
+  cursor: pointer;
 }
 
-.salary-hint--link:hover {
+.hp-hotline__item:hover {
+  color: var(--hp-ink);
   text-decoration: underline;
 }
 
-.company-meta-link {
-  display: inline-block;
-  margin-top: 4px;
-  text-align: left;
+.hp-hotline__sep {
+  color: #c9c3b8;
 }
 
-.section-empty {
-  padding: 36px 20px;
-  text-align: center;
-  color: #667085;
+/* ---------- 区块标题 ---------- */
+
+.hp-section {
+  margin-top: 40px;
 }
 
-.section-link-btn,
-.view-more-btn {
-  cursor: pointer;
-}
-
-.card-actions {
-  margin-top: auto;
-  padding-top: 12px;
-}
-
-.diagnosis-btn--ghost {
-  margin-left: 12px;
-  color: #0066ff;
-  background: rgba(255, 255, 255, 0.92);
-}
-
-.cat-diagnosis-area {
+.hp-section__head {
   display: flex;
-  gap: 20px;
-  align-items: stretch;
-  padding: 30px 0;
-}
-
-.left-panel {
-  display: flex;
-  flex-direction: column;
-  width: 280px;
-  flex-shrink: 0;
-  background: #fff;
-  border: 1px solid #dae5f0;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-}
-
-.cat-menu-page {
-  display: flex;
-  flex-direction: column;
-}
-
-.cat-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 16px;
-  border: 0;
-  border-bottom: 1px solid #eef5fb;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-}
-
-.cat-menu-item:hover,
-.cat-menu-item.active {
-  background: #eaf3fc;
-  color: #0066ff;
-}
-
-.cat-row {
-  flex: 1;
-  overflow: hidden;
-}
-
-.cat-main {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.cat-sub-list {
-  display: inline-block;
-  max-width: 150px;
-  margin-left: 8px;
-  overflow: hidden;
-  color: #888;
-  font-size: 12px;
-  text-overflow: ellipsis;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.cat-arrow {
-  margin-left: auto;
-  color: #ccd5e4;
-}
-
-.cat-pagination {
-  display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  margin-top: auto;
-  padding: 12px 16px;
-  border-top: 1px solid #eef5fb;
-}
-
-.page-num {
-  color: #0066ff;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.page-btns {
-  display: flex;
-  gap: 8px;
-}
-
-.page-btn {
-  width: 24px;
-  height: 24px;
-  border: 0;
-  border-radius: 4px;
-  background: #dcecfb;
-  color: #0066ff;
-  cursor: pointer;
-}
-
-.page-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.right-panel {
-  flex: 1;
-  overflow: hidden;
-  border-radius: 8px;
-  background: #fff;
-}
-
-.diagnosis-banner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 380px;
-  padding: 30px;
-  background-image: url('/banner-bg.jpg');
-  background-position: center;
-  background-size: cover;
-  text-align: center;
-}
-
-.text-box {
-  max-width: 85%;
-  padding: 30px 40px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
-
-.text-box h2 {
-  margin: 0 0 12px;
-  color: #1e2b4c;
-  font-size: 28px;
-}
-
-.text-box p {
-  margin: 0 0 24px;
-  color: #444;
-  font-size: 15px;
-  line-height: 1.7;
-}
-
-.diagnosis-btn {
-  border: 0;
-  padding: 12px 36px;
-  border-radius: 30px;
-  background: #1a5cff;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(26, 92, 255, 0.25);
-}
-
-.detail-panel {
-  max-height: 380px;
-  padding: 24px 30px;
-  overflow-y: auto;
-}
-
-.detail-title {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #eef5fb;
-  color: #0066ff;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.detail-item {
+  gap: 16px;
   margin-bottom: 18px;
 }
 
-.detail-item-title {
-  margin-bottom: 8px;
-  font-size: 14px;
+.hp-section__title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hp-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--hp-muted);
+  font-size: 12px;
+}
+
+.hp-pager button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hp-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.hp-pager button:hover:not(:disabled) {
+  color: var(--hp-ink);
+}
+
+.hp-pager button:disabled {
+  color: #cfc9bd;
+  cursor: not-allowed;
+}
+
+.hp-pager__num {
+  color: #a8a196;
+}
+
+.hp-card__title {
+  margin: 0;
+  font-size: 16px;
   font-weight: 600;
 }
 
-.detail-tags,
-.card-tags {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+/* ---------- 岗位探索（横向内容卡） ---------- */
 
-.detail-tags span,
-.card-tags span {
-  padding: 4px 12px;
-  border-radius: 4px;
-  background: #eaf3fc;
-  color: #555;
-  font-size: 13px;
-}
-
-.section-block {
-  padding: 40px 0 20px;
-}
-
-.section-header {
-  margin-bottom: 30px;
-  text-align: center;
-}
-
-.section-header h2 {
-  margin: 0;
-  color: #222;
-  font-size: 26px;
-}
-
-.section-header span,
-.salary {
-  color: #0066ff;
-}
-
-.grid-3 {
+.hp-cats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.info-card {
+.hp-cats li {
+  display: flex;
+}
+
+.hp-cat {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+  width: 100%;
   padding: 20px;
-  border: 1px solid #dae5f0;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid transparent;
+  border-radius: var(--hp-r-md);
+  background: var(--hp-cream);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 
-.info-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+.hp-cat:hover {
+  transform: translateY(-2px);
 }
 
-.card-header-simple,
-.company-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+.hp-cat.is-active {
+  border-color: var(--hp-line);
+  background: var(--hp-yellow);
 }
 
-.card-header-simple {
+.hp-cat__num {
+  color: #a8a196;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.hp-cat__main {
+  color: var(--hp-ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.hp-cat__sub {
+  margin-top: auto;
+  padding-top: 8px;
+  color: var(--hp-muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.hp-cat.is-active .hp-cat__num,
+.hp-cat.is-active .hp-cat__sub {
+  color: #6a5f3a;
+}
+
+.hp-btn {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 10px;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 24px;
+  border: 1px solid var(--hp-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hp-ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
-.card-header-simple.compact {
-  margin-bottom: 6px;
+.hp-btn:hover {
+  background: var(--hp-ink);
+  color: var(--hp-cream);
 }
 
-.title {
-  color: #222;
+.hp-btn--solid {
+  background: var(--hp-ink);
+  color: var(--hp-cream);
+}
+
+.hp-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hp-ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hp-link:hover {
+  text-decoration: underline;
+}
+
+.hp-link--start {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.hp-hero__visual {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.hp-hero__art {
+  display: block;
+  width: min(100%, 400px);
+  height: auto;
+}
+
+/* 岗位方向详情：跟随上方卡片切换，横向铺开 */
+
+.hp-cat-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px 40px;
+  min-height: 218px;
+  margin-top: 16px;
+  padding: 24px 26px;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-md);
+  background: var(--hp-cream);
+}
+
+.hp-cat-detail__title {
+  flex: 0 0 100%;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.hp-cat-detail__group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.hp-cat-detail__group-name {
+  margin: 0;
+  color: var(--hp-muted);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.hp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hp-tag {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(23, 23, 23, 0.06);
+  color: #4c473f;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+/* ---------- 继续成长 ---------- */
+
+.hp-growth {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--hp-gap);
+  align-items: stretch;
+}
+
+.hp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 26px;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
+}
+
+.hp-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.hp-section__meta {
+  margin: 0;
+  color: var(--hp-muted);
+  font-size: 12px;
+}
+
+.hp-section__aside {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.hp-badge {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--hp-yellow);
+  color: var(--hp-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hp-target__job {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hp-target__note {
+  margin: 0;
+  color: var(--hp-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.hp-bar__track {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(23, 23, 23, 0.09);
+  overflow: hidden;
+}
+
+.hp-bar__track > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--hp-ink);
+}
+
+/* ---------- 今日计划（轻量任务摘要） ---------- */
+
+.hp-plan__tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.hp-plan__count {
+  color: var(--hp-muted);
+  font-size: 12px;
+}
+
+.hp-plan__add {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(23, 23, 23, 0.24);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hp-ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.hp-plan__add:hover {
+  border-color: var(--hp-ink);
+  background: var(--hp-ink);
+  color: var(--hp-cream);
+}
+
+.hp-plan__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hp-plan__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid rgba(23, 23, 23, 0.08);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hp-plan__list > li:last-child .hp-plan__item {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.hp-plan__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.hp-plan__item.is-done .hp-plan__mark {
+  background: var(--hp-green);
+}
+
+.hp-plan__item.is-done .hp-plan__mark::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border-right: 1.6px solid var(--hp-ink);
+  border-bottom: 1.6px solid var(--hp-ink);
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.hp-plan__item.is-doing .hp-plan__mark {
+  border: 4px solid var(--hp-yellow);
+}
+
+.hp-plan__item.is-todo .hp-plan__mark,
+.hp-plan__mark--todo {
+  border: 1.5px solid rgba(23, 23, 23, 0.28);
+}
+
+.hp-plan__title {
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.18s ease;
+}
+
+.hp-plan__meta {
+  margin-left: auto;
+  color: var(--hp-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.hp-plan__item.is-done .hp-plan__title {
+  color: #9c968b;
+}
+
+.hp-plan__item:hover .hp-plan__title {
+  color: #8a6d1f;
+}
+
+.hp-plan__item:hover .hp-plan__mark {
+  border-color: var(--hp-ink);
+}
+
+.hp-plan__edit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 0;
+}
+
+.hp-plan__edit input {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(23, 23, 23, 0.24);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hp-ink);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.18s ease;
+}
+
+.hp-plan__edit input::placeholder {
+  color: #a8a196;
+}
+
+.hp-plan__edit input:focus {
+  border-color: var(--hp-ink);
+}
+
+.hp-courses__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.hp-course {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+.hp-course:hover {
+  transform: translateY(-2px);
+}
+
+.hp-course__cover {
+  display: block;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-md);
+  overflow: hidden;
+}
+
+.hp-course__cover.is-pink {
+  background: var(--hp-pink);
+}
+
+.hp-course__cover.is-blue {
+  background: var(--hp-blue);
+}
+
+.hp-course__cover.is-green {
+  background: var(--hp-green);
+}
+
+.hp-course__cover svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hp-course__title {
   font-size: 17px;
   font-weight: 600;
 }
 
-.title.small {
-  font-size: 15px;
-}
-
-.company-header {
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.company-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.company-name {
-  margin-bottom: 2px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.company-meta {
-  color: #999;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.card-desc {
-  margin-bottom: 10px;
-  color: #555;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.card-benefits {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #eef5fb;
-  color: #0066ff;
+.hp-course__type {
+  color: var(--hp-muted);
   font-size: 13px;
 }
 
-.card-benefits.no-border {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.company-salary .salary {
-  font-weight: 600;
-}
-
-.more-btn-wrap {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-}
-
-.more-btn,
-.view-more-btn {
-  display: inline-block;
-  border: 1px solid #0066ff;
-  color: #0066ff;
-  text-decoration: none;
-  text-align: center;
-}
-
-.more-btn {
-  width: 100%;
-  padding: 8px 0;
-  border-radius: 4px;
-}
-
-.view-more-wrap {
-  margin-top: 30px;
-  padding-bottom: 10px;
-  text-align: center;
-}
-
-.view-more-btn {
-  padding: 10px 40px;
-  border-radius: 6px;
-}
-
-.job-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.job-list-item {
+.hp-course__progress {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
-  border: 1px solid #dae5f0;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  gap: 10px;
+  margin-top: 2px;
 }
 
-.job-list-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-}
-
-.job-list-main {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
+.hp-course__progress .hp-bar__track {
   flex: 1;
-  min-width: 0;
 }
 
-.job-list-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
+.hp-course__progress .hp-bar__track > i {
+  background: var(--hp-green);
 }
 
-.job-list-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.job-list-title {
-  color: #222;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.job-list-meta {
-  margin-top: 4px;
-  color: #667085;
+.hp-course__value {
+  color: var(--hp-muted);
   font-size: 12px;
 }
 
-.job-list-tags {
-  margin-top: 8px;
+.hp-jobs__state {
+  margin: 0;
+  color: var(--hp-muted);
+  font-size: 13px;
 }
 
-.job-list-btn {
-  flex-shrink: 0;
-  padding: 8px 18px;
-  border: 1px solid #0066ff;
-  border-radius: 4px;
-  color: #0066ff;
-  font-size: 14px;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.job-list-btn:hover {
-  background: #f0f7ff;
-}
-
-.footer {
-  margin-top: 20px;
-  padding: 40px 0 20px;
-  border-top: 1px solid #3a3a3a;
-  background: #222;
-  color: #d0d0d0;
-}
-
-.footer-grid {
+.hp-jobs__grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 30px;
-  margin-bottom: 30px;
-}
-
-.footer h4 {
-  margin: 0 0 15px;
-  color: #fff;
-  font-size: 16px;
-}
-
-.footer ul {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 14px;
-  line-height: 2.2;
 }
 
-.footer-bottom {
-  padding-top: 20px;
-  border-top: 1px solid #3a3a3a;
-  color: #888;
+.hp-job {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border-radius: var(--hp-r-md);
+  background: #f7f2e8;
+}
+
+.hp-job__logo {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.hp-job__logo.is-tone-0 {
+  background: var(--hp-pink);
+}
+
+.hp-job__logo.is-tone-1 {
+  background: var(--hp-blue);
+}
+
+.hp-job__logo.is-tone-2 {
+  background: var(--hp-green);
+}
+
+.hp-job__logo.is-tone-3 {
+  background: var(--hp-yellow);
+}
+
+.hp-job__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hp-job__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.hp-job__meta {
+  margin: 0;
+  color: var(--hp-muted);
   font-size: 12px;
-  text-align: center;
+  line-height: 1.6;
 }
 
-@media (max-width: 992px) {
-  .cat-diagnosis-area {
-    flex-direction: column;
-    align-items: stretch;
+.hp-job__link {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* ---------- 页脚 ---------- */
+
+.hp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(23, 23, 23, 0.14);
+  color: #9a9388;
+  font-size: 12px;
+}
+
+.hp-footer p {
+  margin: 0;
+}
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width: 1200px) {
+  .hp-growth {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .left-panel {
-    width: 100%;
+  .hp-jobs__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1000px) {
+  .hp-hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 32px 26px 26px;
   }
 
-  .grid-3,
-  .footer-grid {
+  .hp-hero__visual {
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .hp-cats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hp-courses__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 680px) {
-  .container {
-    width: min(100%, calc(100% - 24px));
+  .hp-main {
+    width: calc(100% - 32px);
+    padding: 22px 0 48px;
   }
 
-  .search-box-wrap {
+  .hp-hero__title {
+    font-size: 32px;
+  }
+
+  .hp-hero__desc {
+    font-size: 15px;
+  }
+
+  .hp-cats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hp-courses__grid,
+  .hp-jobs__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hp-plan__item {
+    flex-wrap: wrap;
+  }
+
+  .hp-plan__meta {
+    margin-left: 32px;
+    white-space: normal;
+  }
+
+  .hp-footer {
     flex-direction: column;
-    gap: 12px;
-    padding: 16px;
-  }
-
-  .search-box-wrap button {
-    width: 100%;
-  }
-
-  .grid-3,
-  .footer-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .job-list-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .job-list-btn {
-    width: 100%;
-    text-align: center;
-  }
-
-  .text-box {
-    max-width: 100%;
-    padding: 24px;
+    align-items: flex-start;
   }
 }
 </style>

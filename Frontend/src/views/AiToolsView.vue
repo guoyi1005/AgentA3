@@ -2,9 +2,6 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import examHero from '../assets/ai-tools/exam-hero.png'
-import campusIllustrations from '../assets/ai-tools/campus-illustrations-strip.png'
-import toolIllustrations from '../assets/ai-tools/tool-illustrations-strip.png'
 import { getCampusCourses } from '../api/campusCourse'
 import AppTabBar from '../components/AppTabBar.vue'
 
@@ -29,7 +26,6 @@ const heroSlides = [
     subtitle: '智能生成各学科标准化试卷',
     features: ['多学科支持', '题型智能匹配', '一键导出打印'],
     color: '#ff3943',
-    image: examHero,
     route: '/paper',
   },
   {
@@ -39,7 +35,6 @@ const heroSlides = [
     subtitle: '把复杂知识整理成清晰结构',
     features: ['章节知识梳理', '层级关系清晰', '支持继续编辑'],
     color: '#6c43d9',
-    image: toolIllustrations,
     artSet: 'core',
     art: 4,
     route: 'mind_map',
@@ -51,7 +46,6 @@ const heroSlides = [
     subtitle: '从主题到演示文稿一站完成',
     features: ['智能规划大纲', '自动生成逐页内容', '快速导出课件'],
     color: '#ff9900',
-    image: toolIllustrations,
     artSet: 'core',
     art: 3,
     route: 'presentation',
@@ -63,7 +57,6 @@ const heroSlides = [
     subtitle: '把文字描述转化为视觉作品',
     features: ['自然语言描述', '多种画面风格', '生成结果预览'],
     color: '#7546d9',
-    image: toolIllustrations,
     artSet: 'core',
     art: 1,
     route: 'image',
@@ -75,7 +68,6 @@ const heroSlides = [
     subtitle: '快速生成校园常用文稿',
     features: ['多种表达语气', '目标字数控制', '支持继续润色'],
     color: '#2975df',
-    image: toolIllustrations,
     artSet: 'core',
     art: 0,
     route: 'writing',
@@ -87,7 +79,6 @@ const heroSlides = [
     subtitle: '上传资料，即问即答',
     features: ['多资源理解', '图片智能识别', '校园服务协作'],
     color: '#1768e6',
-    image: campusIllustrations,
     artSet: 'service',
     art: 0,
     route: 'writing',
@@ -240,18 +231,150 @@ function openHero(slide) {
   router.push(`/ai-studio/${slide.route}`)
 }
 
-function spriteStyle(artSet, index) {
-  const isService = artSet === 'service'
-  return {
-    backgroundImage: `url(${isService ? campusIllustrations : toolIllustrations})`,
-    backgroundSize: `${isService ? 300 : 700}% 100%`,
-    backgroundPosition: `${index * (isService ? 50 : (100 / 6))}% center`,
-  }
+/**
+ * 工具卡片插图：与首页同一套画法（奶油底、黑色描边、低饱和马卡龙色），
+ * 全部为内联 SVG，按工具用途挑选图形，避免位图被拉伸变形。
+ */
+const TOOL_ART = {
+  doc: `
+    <path d="M88 30h48l28 28v64a12 12 0 0 1-12 12H88a12 12 0 0 1-12-12V42a12 12 0 0 1 12-12z" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <path d="M136 30v28h28" fill="none" stroke="#171717" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="94" y="72" width="52" height="8" rx="4" fill="#BED2E4"/>
+    <rect x="94" y="92" width="52" height="8" rx="4" fill="#BCC99C"/>
+    <rect x="94" y="112" width="32" height="8" rx="4" fill="#EAD574"/>`,
+  image: `
+    <rect x="60" y="36" width="120" height="88" rx="14" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <circle cx="96" cy="66" r="11" fill="#EAD574" stroke="#171717" stroke-width="3"/>
+    <path d="M72 114l34-38 22 26 18-16 22 28z" fill="#BCC99C" stroke="#171717" stroke-width="3" stroke-linejoin="round"/>`,
+  slides: `
+    <rect x="62" y="34" width="116" height="76" rx="12" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <rect x="82" y="80" width="14" height="18" rx="4" fill="#EEC3CF"/>
+    <rect x="104" y="66" width="14" height="32" rx="4" fill="#EAD574"/>
+    <rect x="126" y="54" width="14" height="44" rx="4" fill="#BCC99C"/>
+    <rect x="148" y="74" width="14" height="24" rx="4" fill="#BED2E4"/>
+    <path d="M108 110v14M132 110v14M94 124h52" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round"/>`,
+  exam: `
+    <rect x="66" y="26" width="94" height="108" rx="12" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <rect x="82" y="46" width="62" height="8" rx="4" fill="#BED2E4"/>
+    <rect x="82" y="66" width="46" height="8" rx="4" fill="#BCC99C"/>
+    <rect x="82" y="86" width="62" height="8" rx="4" fill="#EAD574"/>
+    <circle cx="164" cy="116" r="19" fill="#BCC99C" stroke="#171717" stroke-width="3"/>
+    <path d="M155 116l6 6 12-14" fill="none" stroke="#171717" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>`,
+  mind: `
+    <path d="M120 80H74V46M120 80H74V114M120 80h46" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round"/>
+    <rect x="56" y="32" width="36" height="28" rx="9" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <rect x="56" y="100" width="36" height="28" rx="9" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <rect x="166" y="66" width="36" height="28" rx="9" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <circle cx="120" cy="80" r="17" fill="#EAD574" stroke="#171717" stroke-width="3"/>`,
+  network: `
+    <path d="M120 70v24M76 74h12M152 74h12" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round"/>
+    <rect x="54" y="40" width="44" height="30" rx="10" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <rect x="142" y="40" width="44" height="30" rx="10" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <rect x="98" y="94" width="44" height="30" rx="10" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <circle cx="76" cy="74" r="5" fill="#EEC3CF"/>
+    <circle cx="164" cy="74" r="5" fill="#BED2E4"/>
+    <circle cx="120" cy="94" r="5" fill="#BCC99C"/>`,
+  flow: `
+    <rect x="46" y="62" width="52" height="36" rx="11" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <path d="M128 62l22 18-22 18-22-18z" fill="#EAD574" stroke="#171717" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="158" y="62" width="52" height="36" rx="11" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>`,
+  code: `
+    <rect x="62" y="38" width="116" height="80" rx="12" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <path d="M62 62h116" stroke="#171717" stroke-width="3"/>
+    <circle cx="80" cy="50" r="3.5" fill="#171717"/>
+    <circle cx="92" cy="50" r="3.5" fill="#171717"/>
+    <circle cx="104" cy="50" r="3.5" fill="#171717"/>
+    <path d="M92 80l-9 9 9 9M130 80l9 9-9 9M122 74l-8 30" fill="none" stroke="#171717" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  graph: `
+    <path d="M120 80L84 54M120 80l30-34M120 80l36 36M120 80l-28 42" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="84" cy="54" r="10" fill="#EEC3CF" stroke="#171717" stroke-width="3"/>
+    <circle cx="150" cy="46" r="9" fill="#BED2E4" stroke="#171717" stroke-width="3"/>
+    <circle cx="156" cy="116" r="11" fill="#BCC99C" stroke="#171717" stroke-width="3"/>
+    <circle cx="92" cy="122" r="9" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <circle cx="120" cy="80" r="14" fill="#EAD574" stroke="#171717" stroke-width="3"/>`,
+  map: `
+    <path d="M46 46l46-14 48 14 46-14v82l-46 14-48-14-46 14z" fill="#FBF8F2" stroke="#171717" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M92 32v82M140 46v82" fill="none" stroke="#171717" stroke-width="3"/>
+    <path d="M164 62c-10 0-18 8-18 18 0 13 18 32 18 32s18-19 18-32c0-10-8-18-18-18z" fill="#EEC3CF" stroke="#171717" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="164" cy="80" r="6" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>`,
+  resume: `
+    <rect x="56" y="42" width="128" height="80" rx="14" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <circle cx="92" cy="76" r="17" fill="#BED2E4" stroke="#171717" stroke-width="3"/>
+    <rect x="120" y="62" width="48" height="8" rx="4" fill="#EAD574"/>
+    <rect x="120" y="80" width="36" height="8" rx="4" fill="#BCC99C"/>
+    <rect x="74" y="100" width="94" height="8" rx="4" fill="#EEC3CF"/>`,
+  jobs: `
+    <rect x="50" y="36" width="104" height="92" rx="14" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <rect x="68" y="56" width="68" height="8" rx="4" fill="#BED2E4"/>
+    <rect x="68" y="76" width="52" height="8" rx="4" fill="#BCC99C"/>
+    <rect x="68" y="96" width="68" height="8" rx="4" fill="#EAD574"/>
+    <circle cx="158" cy="104" r="24" fill="none" stroke="#171717" stroke-width="3.4"/>
+    <path d="M176 122l18 18" fill="none" stroke="#171717" stroke-width="3.6" stroke-linecap="round"/>`,
+  chat: `
+    <path d="M62 42h116a16 16 0 0 1 16 16v46a16 16 0 0 1-16 16h-58l-26 22v-22H62a16 16 0 0 1-16-16V58a16 16 0 0 1 16-16z" fill="#FBF8F2" stroke="#171717" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="96" cy="81" r="6" fill="#EAD574"/>
+    <circle cx="120" cy="81" r="6" fill="#BCC99C"/>
+    <circle cx="144" cy="81" r="6" fill="#EEC3CF"/>`,
+  seal: `
+    <rect x="54" y="38" width="112" height="80" rx="12" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <circle cx="88" cy="64" r="9" fill="#EAD574"/>
+    <path d="M64 106l28-26 20 18 16-12 24 20z" fill="#BCC99C"/>
+    <rect x="146" y="86" width="44" height="44" rx="10" fill="#EEC3CF" stroke="#171717" stroke-width="3" transform="rotate(-12 168 108)"/>
+    <path d="M158 108l7 7 12-14" fill="none" stroke="#171717" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" transform="rotate(-12 168 108)"/>`,
+  convert: `
+    <rect x="40" y="46" width="64" height="68" rx="12" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <path d="M60 68h26M60 84h26M60 100h16" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round"/>
+    <rect x="136" y="46" width="64" height="68" rx="12" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <path d="M156 68h26M156 84h26M156 100h16" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round"/>
+    <path d="M110 68h22M124 60l8 8-8 8M130 96h-22M116 88l-8 8 8 8" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`,
+  course: `
+    <rect x="52" y="40" width="136" height="84" rx="14" fill="#FBF8F2" stroke="#171717" stroke-width="3"/>
+    <path d="M52 66h136" stroke="#171717" stroke-width="3"/>
+    <circle cx="120" cy="88" r="18" fill="#EAD574" stroke="#171717" stroke-width="3"/>
+    <path d="M114 80l14 8-14 8z" fill="#171717"/>`,
 }
 
-function heroArtStyle(slide) {
-  if (!slide.artSet) return { backgroundImage: `url(${slide.image})` }
-  return spriteStyle(slide.artSet, slide.art)
+const HERO_ART_KEYS = {
+  exam: 'exam',
+  mind: 'mind',
+  ppt: 'slides',
+  image: 'image',
+  writing: 'doc',
+  chat: 'chat',
+}
+
+function toolArtKey(tool) {
+  const route = String(tool?.route || '')
+  if (route.startsWith('/convert')) return 'convert'
+  if (route.startsWith('/ai-original')) return 'seal'
+  if (route.startsWith('/ai-studio/writing')) return 'doc'
+  if (route.startsWith('/ai-studio/image')) return 'image'
+  if (route.startsWith('/ai-studio/presentation')) return 'slides'
+  if (route.startsWith('/ai-studio/mind_map')) return 'mind'
+  if (route.startsWith('/ai-studio/architecture')) return 'network'
+  if (route.startsWith('/ai-studio/flowchart')) return 'flow'
+  if (route.startsWith('/paper')) return 'exam'
+  if (route.startsWith('/career/nebula/python/knowledge-graph')) return 'graph'
+  if (route.startsWith('/career/nebula/python')) return 'code'
+  if (route.startsWith('/courses')) return 'course'
+  if (route.startsWith('/map')) return 'map'
+  if (route.startsWith('/jobs')) return 'jobs'
+  if (route.startsWith('/resume') || route.startsWith('/ai-tools/resume')) return 'resume'
+  if (route.startsWith('/ai')) return 'chat'
+  return 'doc'
+}
+
+function artSvg(kind) {
+  const shapes = TOOL_ART[kind] || TOOL_ART.doc
+  return `<svg viewBox="0 0 240 160" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${shapes}</svg>`
+}
+
+function toolArtSvg(tool) {
+  return artSvg(toolArtKey(tool))
+}
+
+function heroArtSvg(slide) {
+  return artSvg(HERO_ART_KEYS[slide.key] || 'doc')
 }
 
 async function loadCampusCourses() {
@@ -317,8 +440,6 @@ onBeforeUnmount(() => {
           :class="heroClass(index)"
           :style="{ '--hero-color': slide.color }"
         >
-          <span class="hero-slide__image" :style="heroArtStyle(slide)" aria-hidden="true"></span>
-          <div class="hero-slide__veil"></div>
           <div class="hero-slide__content">
             <span>{{ slide.eyebrow }}</span>
             <h1>{{ slide.title }}</h1>
@@ -334,6 +455,7 @@ onBeforeUnmount(() => {
               <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></svg>
             </button>
           </div>
+          <span class="hero-slide__art" aria-hidden="true" v-html="heroArtSvg(slide)"></span>
         </article>
 
         <button class="carousel-arrow carousel-arrow--right" type="button" aria-label="下一个工具" @click="changeHero(1)">
@@ -410,7 +532,7 @@ onBeforeUnmount(() => {
                 type="button"
                 @click="selectCarouselTool(tool, index)"
               >
-                <span class="tool-poster__art" :style="spriteStyle(tool.artSet, tool.art)"></span>
+                <span class="tool-poster__art" v-html="toolArtSvg(tool)"></span>
                 <span class="tool-poster__content">
                   <strong>{{ tool.name }}</strong>
                   <em>{{ tool.desc }}</em>
@@ -455,16 +577,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .ai-tools-page {
-  --ink: #17191f;
   min-height: 100vh;
   padding-top: 60px;
   overflow: hidden;
-  color: var(--ink);
-  background:
-    radial-gradient(circle at 8% 20%, rgba(207, 232, 255, 0.38), transparent 28%),
-    radial-gradient(circle at 95% 30%, rgba(255, 229, 190, 0.34), transparent 25%),
-    #fffdfa;
-  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--hp-ink);
+  background: var(--hp-bg);
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 button,
@@ -480,180 +598,35 @@ svg {
   stroke-width: 1.9;
 }
 
-.tools-header {
-  position: relative;
-  z-index: 30;
-  height: 76px;
-  border-bottom: 1px solid rgba(16, 24, 40, 0.06);
-  background: rgba(255, 254, 251, 0.92);
-  backdrop-filter: blur(18px);
-}
-
-.tools-header__inner {
-  display: flex;
-  align-items: center;
-  width: min(1440px, calc(100% - 48px));
-  height: 100%;
-  margin: 0 auto;
-  gap: 28px;
-}
-
-.campus-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: inherit;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.campus-brand__mark {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-  color: #fff;
-  background: linear-gradient(145deg, #1068f4, #1846b9);
-  box-shadow: 0 10px 22px rgba(21, 94, 239, 0.24);
-  font-size: 20px;
-  font-weight: 900;
-}
-
-.campus-brand > span:last-child {
-  display: grid;
-  gap: 2px;
-}
-
-.campus-brand strong {
-  font-size: 20px;
-  letter-spacing: 0.02em;
-}
-
-.campus-brand em {
-  color: #5f636e;
-  font-size: 11px;
-  font-style: normal;
-  letter-spacing: 0.22em;
-}
-
-.tools-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  gap: clamp(12px, 2.2vw, 36px);
-}
-
-.tools-nav a {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: 76px;
-  color: #252831;
-  font-size: 14px;
-  font-weight: 650;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.tools-nav a::after {
-  position: absolute;
-  right: 4px;
-  bottom: 9px;
-  left: 4px;
-  height: 4px;
-  border-radius: 99px;
-  background: #1758db;
-  content: "";
-  opacity: 0;
-  transform: scaleX(0.3);
-  transition: 0.25s ease;
-}
-
-.tools-nav a:hover,
-.tools-nav a.active {
-  color: #174fc2;
-}
-
-.tools-nav a.active::after {
-  opacity: 1;
-  transform: scaleX(1);
-}
-
-.user-entry {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: #252831;
-  font-size: 13px;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.user-entry > svg {
-  width: 17px;
-  height: 17px;
-}
-
-.user-avatar {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  overflow: hidden;
-  color: #174fc2;
-  background: #e9f1ff;
-  box-shadow: 0 3px 10px rgba(27, 42, 72, 0.15);
-  font-weight: 800;
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .hero-stage {
   position: relative;
   width: 100%;
-  height: clamp(340px, 31vw, 455px);
-  margin-top: 14px;
+  height: clamp(360px, 32vw, 470px);
+  margin-top: 16px;
   touch-action: pan-y;
   user-select: none;
-}
-
-.hero-stage::after {
-  position: absolute;
-  right: 0;
-  bottom: 14px;
-  left: 0;
-  height: 54px;
-  background: linear-gradient(180deg, transparent, rgba(29, 53, 100, 0.08));
-  clip-path: polygon(0 0, 50% 68%, 100% 0, 100% 100%, 0 100%);
-  content: "";
-  pointer-events: none;
 }
 
 .hero-slide {
   position: absolute;
   top: 0;
   left: 50%;
-  width: min(760px, 32vw);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 42%);
+  align-items: center;
+  gap: 26px;
+  width: min(880px, 46vw);
   height: calc(100% - 40px);
-  border-radius: 30px;
-  overflow: hidden;
-  background: var(--hero-color);
-  box-shadow: 0 22px 54px rgba(28, 33, 48, 0.14);
+  padding: 38px 40px;
+  border: 1px solid var(--hp-line);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--hero-color) 14%, var(--hp-cream));
   opacity: 0;
   transform-origin: center;
   transform: translateX(-50%) scale(0.84);
   transition:
     transform 0.72s cubic-bezier(0.22, 0.82, 0.22, 1),
-    opacity 0.45s ease,
-    filter 0.45s ease;
+    opacity 0.45s ease;
 }
 
 .hero-slide.active {
@@ -665,31 +638,29 @@ svg {
 .hero-slide.previous,
 .hero-slide.next {
   z-index: 3;
-  opacity: 0.9;
-  filter: saturate(0.88) brightness(0.98);
+  opacity: 0.92;
 }
 
 .hero-slide.previous {
-  transform: translateX(calc(-50% - min(22vw, 540px))) scale(0.66) rotate(-2.5deg);
+  transform: translateX(calc(-50% - min(38vw, 700px))) scale(0.7) rotate(-2deg);
 }
 
 .hero-slide.next {
-  transform: translateX(calc(-50% + min(22vw, 540px))) scale(0.66) rotate(2.5deg);
+  transform: translateX(calc(-50% + min(38vw, 700px))) scale(0.7) rotate(2deg);
 }
 
 .hero-slide.previous-far,
 .hero-slide.next-far {
   z-index: 1;
-  opacity: 0.54;
-  filter: saturate(0.62) brightness(0.94);
+  opacity: 0.5;
 }
 
 .hero-slide.previous-far {
-  transform: translateX(calc(-50% - min(36vw, 760px))) scale(0.38) rotate(-5deg);
+  transform: translateX(calc(-50% - min(58vw, 1060px))) scale(0.42) rotate(-4deg);
 }
 
 .hero-slide.next-far {
-  transform: translateX(calc(-50% + min(36vw, 760px))) scale(0.38) rotate(5deg);
+  transform: translateX(calc(-50% + min(58vw, 1060px))) scale(0.42) rotate(4deg);
 }
 
 .hero-slide.hidden {
@@ -697,64 +668,51 @@ svg {
   transform: translateX(-50%) scale(0.72);
 }
 
-.hero-slide__image {
-  position: absolute;
-  inset: 0;
+.hero-slide__art {
   display: block;
   width: 100%;
-  height: 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  transition: transform 4.5s ease;
-}
-
-.hero-slide.active .hero-slide__image {
-  transform: scale(1.035);
-}
-
-.hero-slide__veil {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, var(--hero-color) 0%, color-mix(in srgb, var(--hero-color) 90%, transparent) 38%, transparent 75%);
+  aspect-ratio: 3 / 2;
+  padding: 14px 18px;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-md);
+  background: #ffffff;
+  overflow: hidden;
 }
 
 .hero-slide__content {
-  position: relative;
-  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 52%;
+  min-width: 0;
   height: 100%;
-  padding: clamp(30px, 3.2vw, 52px);
-  color: #fff;
 }
 
 .hero-slide__content > span {
+  color: var(--hp-muted);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.18em;
-  opacity: 0.78;
 }
 
 .hero-slide h1 {
-  margin: 12px 0 5px;
-  font-size: clamp(30px, 2.9vw, 58px);
-  line-height: 1.05;
-  letter-spacing: -0.03em;
+  margin: 12px 0 6px;
+  font-size: clamp(28px, 2.4vw, 42px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
 .hero-slide p {
   margin: 0;
-  font-size: clamp(15px, 1.4vw, 19px);
-  font-weight: 600;
+  color: #55504a;
+  font-size: clamp(14px, 1.2vw, 16px);
+  font-weight: 500;
 }
 
 .hero-slide ul {
   display: grid;
   gap: 7px;
-  margin: 22px 0 18px;
+  margin: 20px 0 18px;
   padding: 0;
   list-style: none;
 }
@@ -763,37 +721,37 @@ svg {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 650;
+  color: var(--hp-muted);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .hero-slide li svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   padding: 3px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.24);
+  background: var(--hp-green);
+  color: var(--hp-ink);
 }
 
 .hero-slide__content > button {
   display: flex;
   align-items: center;
   gap: 7px;
-  min-height: 38px;
+  min-height: 40px;
   margin-top: auto;
-  padding: 0 16px;
+  padding: 0 20px;
   border-radius: 999px;
-  color: var(--hero-color);
-  background: #fff;
-  box-shadow: 0 8px 20px rgba(17, 22, 39, 0.16);
+  color: var(--hp-cream);
+  background: var(--hp-ink);
   font-size: 13px;
-  font-weight: 800;
-  transition: 0.2s ease;
+  font-weight: 600;
+  transition: background 0.2s ease;
 }
 
 .hero-slide__content > button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(17, 22, 39, 0.2);
+  background: #2f2f2f;
 }
 
 .hero-slide__content > button svg,
@@ -809,31 +767,30 @@ svg {
   z-index: 12;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(22, 31, 49, 0.1);
+  border: 1px solid var(--hp-line);
   border-radius: 50%;
-  color: #252a34;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 8px 22px rgba(23, 32, 52, 0.15);
-  backdrop-filter: blur(8px);
+  color: var(--hp-ink);
+  background: var(--hp-cream);
   transition: 0.22s ease;
 }
 
 .carousel-arrow {
   top: 43%;
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
 }
 
 .carousel-arrow:hover,
 .tool-arrow:hover:not(:disabled) {
-  color: #1758db;
-  transform: scale(1.08);
+  color: var(--hp-cream);
+  background: var(--hp-ink);
+  transform: scale(1.06);
 }
 
 .carousel-arrow svg,
 .tool-arrow svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 }
 
 .carousel-arrow--left {
@@ -861,14 +818,14 @@ svg {
   height: 8px;
   padding: 0;
   border-radius: 99px;
-  background: #c7c8cc;
+  background: #d8d1c4;
   transition: 0.25s ease;
 }
 
 .hero-dots button.active,
 .tool-dots button.active {
   width: 22px;
-  background: #ef3441;
+  background: var(--hp-ink);
 }
 
 .category-dock {
@@ -876,14 +833,13 @@ svg {
   z-index: 16;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  width: min(1080px, calc(100% - 56px));
-  min-height: 72px;
-  margin: -32px auto 0;
-  border: 1px solid rgba(21, 31, 50, 0.08);
+  width: min(1180px, calc(100% - 56px));
+  min-height: 70px;
+  margin: -30px auto 0;
+  border: 1px solid var(--hp-line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 18px 34px rgba(25, 36, 62, 0.16);
-  backdrop-filter: blur(18px);
+  background: var(--hp-cream);
+  overflow: hidden;
 }
 
 .category-dock button {
@@ -891,29 +847,31 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
   border-radius: 999px;
-  color: #30343c;
+  color: var(--hp-ink);
   background: transparent;
-  font-size: 17px;
-  transition: 0.3s ease;
+  font-size: 15px;
+  font-weight: 600;
+  transition: 0.25s ease;
 }
 
 .category-dock button + button::before {
   position: absolute;
   left: 0;
   width: 1px;
-  height: 28px;
-  background: #e7e8ec;
+  height: 26px;
+  background: rgba(23, 23, 23, 0.12);
   content: "";
 }
 
+.category-dock button:hover {
+  background: rgba(23, 23, 23, 0.04);
+}
+
 .category-dock button.active {
-  color: #fff;
-  background: var(--category-color);
-  box-shadow: 0 10px 25px color-mix(in srgb, var(--category-color) 34%, transparent);
-  transform: scale(1.025);
+  background: var(--hp-yellow);
 }
 
 .category-dock button.active::before,
@@ -924,23 +882,23 @@ svg {
 .category-icon {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  color: var(--category-color);
+  width: 30px;
+  height: 30px;
+  color: color-mix(in srgb, var(--category-color) 30%, var(--hp-ink));
 }
 
 .category-dock button.active .category-icon {
-  color: #fff;
+  color: var(--hp-ink);
 }
 
 .category-icon svg {
-  width: 30px;
-  height: 30px;
-  stroke-width: 2;
+  width: 27px;
+  height: 27px;
+  stroke-width: 1.9;
 }
 
 .tools-section {
-  padding: 62px 0 28px;
+  padding: 58px 0 28px;
 }
 
 .section-title {
@@ -948,33 +906,24 @@ svg {
   align-items: flex-end;
   justify-content: space-between;
   width: min(1420px, calc(100% - 48px));
-  margin: 0 auto 24px;
+  margin: 0 auto 22px;
 }
 
 .section-title p {
-  position: relative;
   width: max-content;
-  margin: 0 0 7px;
-  font-size: 22px;
-  font-weight: 900;
-}
-
-.section-title p::after {
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  width: 34px;
-  height: 4px;
-  border-radius: 999px;
-  background: #ef3441;
-  content: "";
+  margin: 0 0 8px;
+  color: var(--hp-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
 }
 
 .section-title h2 {
-  margin: 17px 0 0;
-  color: #858994;
-  font-size: 13px;
-  font-weight: 500;
+  margin: 0;
+  color: var(--hp-ink);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .section-title > button {
@@ -982,13 +931,19 @@ svg {
   align-items: center;
   gap: 7px;
   min-height: 38px;
-  padding: 0 16px;
-  border: 1px solid #dfe1e6;
+  padding: 0 18px;
+  border: 1px solid var(--hp-line);
   border-radius: 999px;
-  color: #30343c;
-  background: #fff;
+  color: var(--hp-ink);
+  background: transparent;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.section-title > button:hover {
+  background: var(--hp-ink);
+  color: var(--hp-cream);
 }
 
 .tool-carousel {
@@ -1023,19 +978,18 @@ svg {
   width: var(--card-width);
   height: 328px;
   padding: 0;
-  border: 1px solid rgba(19, 34, 59, 0.08);
-  border-radius: 22px;
+  border: 1px solid rgba(23, 23, 23, 0.16);
+  border-radius: 18px;
   overflow: hidden;
-  color: #151820;
-  background: #fff;
-  box-shadow: 0 15px 32px rgba(23, 37, 63, 0.13);
+  color: var(--hp-ink);
+  background: var(--hp-cream);
   text-align: left;
-  opacity: 0.78;
+  opacity: 0.8;
   transform: translateY(16px) scale(0.94);
   transition:
     transform 0.5s cubic-bezier(0.22, 0.82, 0.22, 1),
     opacity 0.35s ease,
-    box-shadow 0.35s ease;
+    border-color 0.35s ease;
 }
 
 .tool-poster:hover {
@@ -1046,15 +1000,16 @@ svg {
 .tool-poster.active {
   z-index: 3;
   opacity: 1;
+  border-color: var(--hp-line);
   transform: translateY(-4px) scale(1.08);
-  box-shadow: 0 25px 48px color-mix(in srgb, var(--accent) 20%, rgba(23, 37, 63, 0.18));
 }
 
 .tool-poster__art {
   display: block;
   width: 100%;
   height: 214px;
-  background-repeat: no-repeat;
+  padding: 20px 24px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--hp-cream));
 }
 
 .tool-poster__content {
@@ -1064,17 +1019,18 @@ svg {
   flex: 1;
   align-content: start;
   padding: 16px 18px;
-  border-top: 4px solid color-mix(in srgb, var(--accent) 85%, #fff);
-  background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--accent) 5%, #fff));
+  border-top: 3px solid color-mix(in srgb, var(--accent) 50%, var(--hp-cream));
+  background: var(--hp-cream);
 }
 
 .tool-poster__content strong {
-  font-size: 20px;
-  line-height: 1.25;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .tool-poster__content em {
-  color: #6d717c;
+  color: var(--hp-muted);
   font-size: 12px;
   font-style: normal;
 }
@@ -1088,10 +1044,10 @@ svg {
   min-height: 32px;
   margin-top: 8px;
   border-radius: 999px;
-  color: #fff;
-  background: var(--accent);
+  color: var(--hp-cream);
+  background: var(--hp-ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   animation: action-in 0.35s ease both;
 }
 
@@ -1113,7 +1069,7 @@ svg {
   display: grid;
   min-height: 340px;
   place-items: center;
-  color: #727782;
+  color: var(--hp-muted);
 }
 
 .tool-dots {
@@ -1131,10 +1087,10 @@ svg {
   width: max-content;
   margin: 18px auto 0;
   padding: 8px 14px;
-  border: 1px solid #e1e3e8;
+  border: 1px solid rgba(23, 23, 23, 0.16);
   border-radius: 999px;
-  color: #858994;
-  background: rgba(255, 255, 255, 0.7);
+  color: var(--hp-muted);
+  background: transparent;
   font-size: 11px;
 }
 
@@ -1162,88 +1118,54 @@ svg {
 }
 
 @media (max-width: 1120px) {
-  .tools-header__inner {
-    gap: 16px;
-  }
-
-  .tools-nav {
-    justify-content: flex-start;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .user-entry > span:not(.user-avatar) {
-    display: none;
-  }
-
   .hero-slide {
-    width: 38vw;
+    width: 62vw;
   }
 
   .hero-slide.previous {
-    transform: translateX(calc(-50% - 25vw)) scale(0.62);
+    transform: translateX(calc(-50% - 46vw)) scale(0.72);
   }
 
   .hero-slide.next {
-    transform: translateX(calc(-50% + 25vw)) scale(0.62);
+    transform: translateX(calc(-50% + 46vw)) scale(0.72);
   }
 
   .hero-slide.previous-far {
-    transform: translateX(calc(-50% - 43vw)) scale(0.34);
+    transform: translateX(calc(-50% - 68vw)) scale(0.44);
   }
 
   .hero-slide.next-far {
-    transform: translateX(calc(-50% + 43vw)) scale(0.34);
+    transform: translateX(calc(-50% + 68vw)) scale(0.44);
   }
 }
 
 @media (max-width: 760px) {
-  .tools-header {
-    height: 64px;
-  }
-
-  .tools-header__inner {
-    width: calc(100% - 24px);
-  }
-
-  .campus-brand__mark {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    font-size: 17px;
-  }
-
-  .campus-brand strong {
-    font-size: 16px;
-  }
-
-  .campus-brand em,
-  .user-entry {
-    display: none;
-  }
-
-  .tools-nav a {
-    height: 64px;
-    font-size: 13px;
-  }
-
   .hero-stage {
-    height: 390px;
+    height: 470px;
     margin-top: 8px;
   }
 
   .hero-slide {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 16px;
     width: calc(100% - 38px);
-    height: 346px;
-    border-radius: 24px;
+    height: 430px;
+    padding: 24px;
+    border-radius: 20px;
+  }
+
+  .hero-slide__art {
+    width: 180px;
+    aspect-ratio: 3 / 2;
   }
 
   .hero-slide.previous {
-    transform: translateX(calc(-50% - 92vw)) scale(0.9);
+    transform: translateX(calc(-50% - 92vw)) scale(0.92);
   }
 
   .hero-slide.next {
-    transform: translateX(calc(-50% + 92vw)) scale(0.9);
+    transform: translateX(calc(-50% + 92vw)) scale(0.92);
   }
 
   .hero-slide.previous-far,
@@ -1252,17 +1174,12 @@ svg {
     pointer-events: none;
   }
 
-  .hero-slide__content {
-    width: 68%;
-    padding: 28px 24px;
-  }
-
   .hero-slide h1 {
-    font-size: 38px;
+    font-size: 30px;
   }
 
   .hero-slide p {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .hero-slide li {
@@ -1309,11 +1226,11 @@ svg {
   }
 
   .section-title p {
-    font-size: 20px;
+    font-size: 12px;
   }
 
   .section-title h2 {
-    display: none;
+    font-size: 18px;
   }
 
   .tool-track {
