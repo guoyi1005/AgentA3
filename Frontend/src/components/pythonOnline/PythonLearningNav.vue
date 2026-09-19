@@ -31,30 +31,31 @@ function isActive(link) {
 <style scoped>
 .py-learning-nav {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   padding: 4px;
-  border: 1px solid #e1e7ed;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid rgba(148, 163, 184, .12);
+  border-radius: 999px;
+  background: rgba(5, 8, 15, .66);
 }
 
 .py-learning-nav__link {
-  padding: 8px 16px;
-  border-radius: 6px;
-  color: #667085;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 999px;
+  color: #7e899f;
+  font-size: 13px;
+  font-weight: 700;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .py-learning-nav__link:hover {
-  color: #344054;
-  background: #f4f7fb;
+  color: #cbd3e5;
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .py-learning-nav__link--active {
-  color: #2f76bd;
-  background: #eaf4fd;
+  color: #ffffff;
+  background: linear-gradient(135deg, #626bf0, #8177ed);
+  box-shadow: 0 7px 22px rgba(88, 93, 220, 0.3);
 }
 </style>

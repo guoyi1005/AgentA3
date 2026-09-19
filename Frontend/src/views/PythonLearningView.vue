@@ -49,7 +49,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="feature-page">
+  <div class="feature-page py-dark">
     <AppTabBar />
     <main class="feature-container">
       <header class="feature-heading">
@@ -106,4 +106,24 @@ onMounted(load)
 
 <style scoped>
 .learning-dashboard{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:20px}.graph-entry{display:flex;min-height:310px;padding:30px;cursor:pointer}.graph-entry__copy{position:relative;z-index:2;width:42%}.graph-entry__eyebrow{color:#6c8196;font-size:11px;font-weight:800;letter-spacing:1.4px}.graph-entry h2{margin:14px 0 8px;color:#20344b;font-size:25px}.graph-entry p{margin:0 0 28px;color:#718096}.graph-entry__preview{position:relative;flex:1;min-height:240px}.node{position:absolute;width:70px;height:32px;border:2px solid #6d8ca8;border-radius:17px;background:#f4f8fb}.node:after{content:'';position:absolute;inset:9px 27px;border-radius:50%;background:#527696}.n1{left:5%;top:45%}.n2{left:42%;top:14%;border-color:#5d9b7d}.n2:after{background:#4c9471}.n3{left:48%;top:67%;border-color:#5d9b7d}.n3:after{background:#4c9471}.weak{right:3%;top:42%;border-color:#bb6c65}.weak:after{background:#b85f57}.line{position:absolute;height:1px;background:#9eb0c1;transform-origin:left}.l1{left:22%;top:48%;width:115px;transform:rotate(-28deg)}.l2{left:22%;top:52%;width:126px;transform:rotate(23deg)}.l3{left:61%;top:34%;width:105px;transform:rotate(20deg)}.overview__row{display:flex;justify-content:space-between;padding:16px 0;border-top:1px solid #edf1f5}.overview__row span{color:#65758a}.overview__row strong{color:#26384d}.path-panel{grid-column:1}.recommendation-panel{grid-column:2}.path-sequence{display:grid;flex:0 0 30px;place-items:center;width:30px;height:30px;border-radius:50%;color:#315f8c;background:#eaf1f7;font-weight:800}.feature-row__copy{flex:1}.feature-section__head p{margin:5px 0 0;color:#718096;font-size:13px}.recommendation{display:block;width:100%;padding:14px;border:1px solid #e1e7ed;border-radius:8px;color:#26384d;background:#fff;text-align:left}.recommendation span,.recommendation small{display:block}.recommendation span{font-weight:750}.recommendation small{margin-top:7px;color:#718096;line-height:1.5}@media(max-width:900px){.learning-dashboard{grid-template-columns:1fr}.graph-entry,.overview,.path-panel,.recommendation-panel{grid-column:1}.graph-entry__copy{width:55%}}
+
+/* 深色未来感 Dashboard 主题补充 */
+.py-dark .graph-entry{background:linear-gradient(135deg,rgba(31,36,58,.9),rgba(20,24,38,.86))}
+.py-dark .graph-entry__eyebrow{color:#8d98ae}
+.py-dark .graph-entry h2{color:#f2f5ff}
+.py-dark .graph-entry p{color:#93a0b8}
+.py-dark .node{border-color:rgba(124,137,255,.5);background:rgba(23,28,43,.85)}
+.py-dark .node:after{background:#8f9bff}
+.py-dark .node.n2,.py-dark .node.n3{border-color:rgba(117,221,185,.55)}
+.py-dark .node.n2:after,.py-dark .node.n3:after{background:#75ddb9}
+.py-dark .node.weak{border-color:rgba(239,158,183,.6)}
+.py-dark .node.weak:after{background:#ef9eb7}
+.py-dark .line{background:rgba(124,137,255,.34)}
+.py-dark .overview__row span{color:#8893aa}
+.py-dark .overview__row strong{color:#e7ecf8}
+.py-dark .path-sequence{color:#c9d2ff;background:rgba(83,91,199,.24)}
+.py-dark .feature-section__head p{color:#8893aa}
+.py-dark .recommendation{border-color:rgba(148,163,184,.14);border-radius:16px;color:#e7ecf8;background:rgba(23,28,43,.72)}
+.py-dark .recommendation:hover{border-color:rgba(124,137,255,.45);background:rgba(52,59,94,.6)}
+.py-dark .recommendation small{color:#8893aa}
 </style>

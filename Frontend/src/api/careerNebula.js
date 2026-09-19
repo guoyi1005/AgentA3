@@ -1,7 +1,7 @@
 import { request } from './request'
 
 export const getCareerNebulaMap = async () => {
-  const response = await request({ url: '/api/admin/career-nebula' })
+  const response = await request({ url: '/api/app/career-nebula' })
   return response?.data || { careers: [], skills: [], edges: [] }
 }
 

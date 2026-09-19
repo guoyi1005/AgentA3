@@ -149,13 +149,6 @@ const icons = {
     <rect x="2" y="6" width="14" height="12" rx="2"/>
   </svg>`,
 
-  resume: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/>
-    <path d="M14 2v5h5"/>
-    <path d="M9 13h6"/>
-    <path d="M9 17h4"/>
-  </svg>`,
-  
   questionBank: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
@@ -219,7 +212,6 @@ const icons = {
 const menuItems = [
   { name: '能力面板', path: PATHS.INDEX, icon: icons.dashboard },
   { name: '模拟面试', path: PATHS.AI_MOCK_INTERVIEW, icon: icons.mockInterview },
-  { name: '我的简历', path: PATHS.MY_RESUME, icon: icons.resume },
   { name: '题库练习', path: PATHS.QUESTION_BANK, icon: icons.questionBank },
   { name: '错题本', path: PATHS.WRONG_QUESTION_BOOK, icon: icons.wrongQuestion },
   { name: '个人题库', path: PATHS.MY_NOTE, icon: icons.myNote },
@@ -742,4 +734,37 @@ onMounted(() => {
     font-size: 16px;
   }
 }
+/* Soft brutalist navigation treatment */
+.sidebar-wrapper {
+  --sidebar-bg: #171715;
+  --sidebar-bg-secondary: #24231f;
+  --sidebar-bg-hover: rgba(255, 255, 255, .08);
+  --sidebar-bg-active: #f2e8d7;
+  --sidebar-border: rgba(255, 255, 255, .14);
+  --sidebar-text: #a7a49d;
+  --sidebar-text-hover: #ffffff;
+  --sidebar-text-active: #201f1c;
+  --sidebar-primary: #d6c28a;
+  --sidebar-primary-glow: transparent;
+  --sidebar-card-bg: #24231f;
+  top: 72px;
+  left: 14px;
+  width: clamp(220px, 20vw, 268px);
+  height: calc(100vh - 86px);
+}
+.sidebar { border: 1px solid #0d0d0c; border-radius: 26px; }
+.logo { font-size: 24px; letter-spacing: -.04em; }
+.logo-sub { color: #aaa69d; letter-spacing: .1em; }
+.user-card { border-radius: 16px; }
+.user-avatar { border-width: 1px; border-color: #e9d8a7; }
+.nav-item { border-radius: 999px; transition: color .18s ease, background .18s ease, transform .18s ease; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,.07); transform: translateX(2px); }
+.nav-item.active { color: var(--sidebar-text-active); background: var(--sidebar-bg-active); }
+.nav-item.active .nav-icon { color: #201f1c; }
+.nav-item.active::before { display: none; }
+.mentor-card { border-radius: 18px; box-shadow: none; }
+.mentor-card:hover { border-color: rgba(255,255,255,.28); box-shadow: none; }
+.mentor-btn { border: 1px solid #f7f0e4; border-radius: 999px; color: #1d1c19; background: #f7f0e4; }
+.mentor-btn:hover { color: #1d1c19; background: #ddcfae; }
+@media (max-width: 900px) { .sidebar-wrapper { left: 8px; width: 68px; } }
 </style>

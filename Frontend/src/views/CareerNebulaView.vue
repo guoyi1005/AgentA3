@@ -20,6 +20,7 @@ const loadError = ref('')
 const selectedCareerId = ref('')
 const selectedSkill = ref(null)
 const showFullCareerDescription = ref(false)
+const searchQuery = ref('')
 const detailDescription = ref(null)
 const descriptionOverflow = ref(false)
 let latestLoadRequest = 0
@@ -27,6 +28,43 @@ let lastAutomaticRefreshAt = 0
 
 const isLearningGalaxy = computed(() => Boolean(route.params.careerId))
 const enabledCareers = computed(() => careers.value.filter((career) => career.status === 'enabled'))
+const enabledSkills = computed(() => skills.value.filter((skill) => skill.status === 'enabled'))
+const configuredSkills = computed(() => enabledSkills.value.filter((skill) => skill.configured))
+const learningSummary = computed(() => {
+  const totalChapters = enabledSkills.value.reduce((sum, skill) => sum + Number(skill.chapterCount || 0), 0)
+  const completedChapters = enabledSkills.value.reduce(
+    (sum, skill) => sum + Number(skill.completedChapterCount || 0),
+    0,
+  )
+  const averageProgress = enabledCareers.value.length
+    ? Math.round(enabledCareers.value.reduce((sum, career) => sum + careerProgress(career).percentage, 0) / enabledCareers.value.length)
+    : 0
+  return { totalChapters, completedChapters, averageProgress }
+})
+const chapterPercent = computed(() => {
+  const total = learningSummary.value.totalChapters
+  return total ? Math.round((learningSummary.value.completedChapters / total) * 100) : 0
+})
+const inProgressSkills = computed(() => configuredSkills.value
+  .filter((skill) => Number(skill.explorationProgress || 0) > 0 && Number(skill.explorationProgress || 0) < 100)
+  .sort((a, b) => Number(b.explorationProgress || 0) - Number(a.explorationProgress || 0)))
+// 学习任务卡：优先展示进行中的星球，其次是尚未开始的星球
+const taskSkills = computed(() => {
+  const notStarted = configuredSkills.value
+    .filter((skill) => Number(skill.explorationProgress || 0) <= 0)
+    .sort((a, b) => Number(a.chapterCount || 0) - Number(b.chapterCount || 0))
+  return [...inProgressSkills.value, ...notStarted].slice(0, 3)
+})
+const careerProgressRows = computed(() => enabledCareers.value
+  .map((career) => ({ id: career.id, name: career.name, percentage: careerProgress(career).percentage }))
+  .sort((a, b) => b.percentage - a.percentage))
+const visibleCareers = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return enabledCareers.value
+  return enabledCareers.value.filter((career) => {
+    return `${career.name || ''} ${career.description || ''}`.toLowerCase().includes(query)
+  })
+})
 const activeCareer = computed(() => careers.value.find((career) => career.id === route.params.careerId))
 const activeCareerSkills = computed(() => {
   if (!activeCareer.value) return []
@@ -88,6 +126,21 @@ function closeCareerDetail() {
 
 function enterLearningGalaxy(career) {
   router.push({ name: 'career-nebula', params: { careerId: career.id } })
+}
+
+const careerNameOf = (skill) => {
+  const careerId = skill?.careerId || 'testing'
+  return careers.value.find((career) => career.id === careerId)?.name || '岗位学习'
+}
+
+// 任务卡跳转：同一岗位星系直接打开星球，否则进入对应星系
+async function openTaskSkill(skill) {
+  const careerId = skill?.careerId || 'testing'
+  if (route.params.careerId === careerId) {
+    await openSkill(skill)
+    return
+  }
+  router.push({ name: 'career-nebula', params: { careerId } })
 }
 
 function returnToCareerMap() {
@@ -208,12 +261,108 @@ onBeforeUnmount(() => {
 
     <main class="nebula-shell">
       <header v-if="!isLearningGalaxy" class="nebula-hero">
-        <h1>岗位星图</h1>
-        <nav class="nebula-sub-nav" aria-label="星图探索子模块">
-          <RouterLink to="/career/nebula">岗位星图</RouterLink>
-          <RouterLink to="/career/nebula/python">Python 学习</RouterLink>
-        </nav>
+        <div class="nebula-hero__intro">
+          <p>CAREER CONSTELLATION</p>
+          <h1>星图探索</h1>
+          <span>沿着岗位与能力路径，发现下一站成长方向。</span>
+          <div class="nebula-hero__status">
+            <i aria-hidden="true"></i>
+            <span>学习数据已连接</span>
+          </div>
+        </div>
+        <article class="python-entry">
+          <p class="python-entry__eyebrow">PYTHON PATH</p>
+          <h2 class="python-entry__title">进入 Python 学习空间</h2>
+          <p class="python-entry__desc">课程、练习、知识图谱</p>
+          <RouterLink class="python-entry__action" to="/career/nebula/python">进入 Python 空间</RouterLink>
+        </article>
       </header>
+
+      <section v-if="!loading && !loadError && !isLearningGalaxy" class="nebula-metrics" aria-label="学习概览">
+        <article>
+          <span>开放岗位</span>
+          <strong>{{ enabledCareers.length }}</strong>
+          <small>条可探索方向</small>
+        </article>
+        <article>
+          <span>学习星球</span>
+          <strong>{{ configuredSkills.length }}<em>/{{ enabledSkills.length }}</em></strong>
+          <small>已关联课程内容</small>
+        </article>
+        <article>
+          <span>章节进度</span>
+          <strong>{{ learningSummary.completedChapters }}<em>/{{ learningSummary.totalChapters }}</em></strong>
+          <small>来自真实学习记录</small>
+        </article>
+        <article>
+          <span>平均探索度</span>
+          <strong>{{ learningSummary.averageProgress }}<em>%</em></strong>
+          <small>全部岗位综合进度</small>
+        </article>
+      </section>
+
+      <section v-if="!loading && !loadError && !isLearningGalaxy" class="nebula-panels" aria-label="学习任务与统计">
+        <article class="nebula-panel nebula-panel--tasks">
+          <header class="nebula-panel__head">
+            <div>
+              <small>LEARNING TASKS</small>
+              <h2>继续学习</h2>
+            </div>
+            <span>{{ inProgressSkills.length }} 个进行中</span>
+          </header>
+          <div v-if="taskSkills.length" class="task-list">
+            <button
+              v-for="skill in taskSkills"
+              :key="skill.id"
+              class="task-card"
+              type="button"
+              @click="openTaskSkill(skill)"
+            >
+              <span class="task-planet" :style="skill.image ? { backgroundImage: `url(${skill.image})` } : {}">
+                <span v-if="!skill.image">{{ monogram(skill.name) }}</span>
+              </span>
+              <span class="task-copy">
+                <strong>{{ skill.name }}</strong>
+                <small>{{ careerNameOf(skill) }} · {{ skillProgress(skill).completed }}/{{ skillProgress(skill).total }} 章节</small>
+                <i class="progress-track"><i :style="{ width: `${skillProgress(skill).percentage}%` }"></i></i>
+              </span>
+              <em>{{ skillProgress(skill).percentage }}%</em>
+            </button>
+          </div>
+          <p v-else class="task-empty">暂无可继续的学习星球，先从一个岗位星系开始探索。</p>
+        </article>
+
+        <article class="nebula-panel nebula-panel--chart">
+          <header class="nebula-panel__head">
+            <div>
+              <small>CHAPTER COMPLETION</small>
+              <h2>章节完成度</h2>
+            </div>
+            <span>{{ learningSummary.completedChapters }}/{{ learningSummary.totalChapters }}</span>
+          </header>
+          <div class="chapter-ring" :style="{ '--value': chapterPercent }">
+            <span>{{ chapterPercent }}<em>%</em></span>
+          </div>
+          <p class="chapter-hint">全部学习星球的章节完成比例，数据来自学习记录。</p>
+        </article>
+
+        <article class="nebula-panel nebula-panel--progress">
+          <header class="nebula-panel__head">
+            <div>
+              <small>CAREER PROGRESS</small>
+              <h2>岗位进度</h2>
+            </div>
+            <span>{{ enabledCareers.length }} 个岗位</span>
+          </header>
+          <ul class="career-progress">
+            <li v-for="row in careerProgressRows" :key="row.id">
+              <span class="career-progress__name">{{ row.name }}</span>
+              <i class="progress-track"><i :style="{ width: `${row.percentage}%` }"></i></i>
+              <em>{{ row.percentage }}%</em>
+            </li>
+          </ul>
+        </article>
+      </section>
 
       <div v-if="loading" class="center-message">
         <span class="loading-ring" aria-hidden="true"></span>
@@ -233,12 +382,25 @@ onBeforeUnmount(() => {
                 <small>CAREER NEBULA</small>
                 <h2>岗位星云</h2>
               </div>
-              <span>{{ enabledCareers.length }}</span>
+              <span>{{ visibleCareers.length }}</span>
             </div>
+
+            <label class="career-search">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+              <input
+                v-model="searchQuery"
+                type="search"
+                placeholder="搜索岗位或方向"
+                aria-label="搜索岗位"
+              />
+            </label>
 
             <div class="career-list">
               <button
-                v-for="(career, index) in enabledCareers"
+                v-for="(career, index) in visibleCareers"
                 :key="career.id"
                 class="career-list-item"
                 :class="{ active: selectedCareerId === career.id }"
@@ -262,7 +424,7 @@ onBeforeUnmount(() => {
             <div class="orbit orbit--one" aria-hidden="true"></div>
             <div class="orbit orbit--two" aria-hidden="true"></div>
             <button
-              v-for="career in enabledCareers"
+              v-for="career in visibleCareers"
               :key="career.id"
               class="career-node"
               :class="{ active: selectedCareerId === career.id, muted: selectedCareer && selectedCareerId !== career.id }"
@@ -535,40 +697,6 @@ onBeforeUnmount(() => {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-shadow: 0 0 24px rgba(65, 174, 255, 0.28);
-}
-
-.nebula-sub-nav {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.nebula-sub-nav a {
-  display: grid;
-  min-height: 30px;
-  padding: 0 14px;
-  place-items: center;
-  border: 1px solid rgba(49, 153, 219, 0.4);
-  border-radius: 999px;
-  color: #9dc2de;
-  background: rgba(3, 15, 29, 0.7);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-}
-
-.nebula-sub-nav a:hover {
-  color: #eaf4ff;
-  border-color: rgba(88, 191, 255, 0.7);
-}
-
-.nebula-sub-nav a.router-link-active {
-  color: #eaf4ff;
-  border-color: rgba(88, 191, 255, 0.75);
-  background: rgba(20, 74, 118, 0.75);
-  box-shadow: 0 0 18px rgba(65, 174, 255, 0.22);
 }
 
 .nebula-hero h1 { font-size: 22px; letter-spacing: 0.06em; }
@@ -1048,5 +1176,515 @@ onBeforeUnmount(() => {
   .content-item { grid-template-columns: 38px minmax(0, 1fr); }
   .content-item em { grid-column: 2; justify-self: start; margin-top: 4px; }
   .content-item select { grid-column: 2; width: 100%; margin-top: 4px; }
+}
+/* Editorial SaaS / retro pastel refresh */
+.nebula-page {
+  --ink: #24231f;
+  --muted: #736f67;
+  --paper: #f3efe6;
+  --surface: #fffdf7;
+  --pink: #ead5d8;
+  --olive: #b7c3a2;
+  --blue: #bdcbd2;
+  color: var(--ink);
+  background: var(--paper);
+}
+.nebula-page::before {
+  inset: 60px 0 0;
+  opacity: .32;
+  background-image: radial-gradient(circle, #bdb6aa 0 1px, transparent 1.2px);
+  background-position: 12px 12px;
+  background-size: 28px 28px;
+}
+.nebula-shell { width: min(1680px, calc(100% - 48px)); padding-top: 74px; }
+.editorial-toolbar { margin-bottom: 14px; }
+.nebula-hero { height: 94px; margin-bottom: 14px; padding: 0 8px; }
+.nebula-hero p,
+.learning-header p,
+.detail-kicker,
+.learning-modal > small { color: #787268; letter-spacing: .18em; }
+.nebula-hero h1,
+.learning-header h1 { color: var(--ink); font-size: clamp(30px, 3vw, 46px); font-weight: 800; letter-spacing: -.045em; text-shadow: none; }
+.nebula-hero span,
+.learning-header span { display: block; margin-top: 5px; color: var(--muted); font-size: 13px; }
+.career-layout { height: calc(100vh - 272px); grid-template-columns: 252px minmax(0, 1fr); }
+.career-layout--selected { grid-template-columns: 236px minmax(0, 1fr) 342px; }
+.learning-layout { height: calc(100vh - 246px); }
+.side-panel,
+.map-panel,
+.learning-header { border: 1px solid var(--ink); border-radius: 26px; background: rgba(255, 253, 247, .96); box-shadow: none; }
+.panel-heading { border-bottom-color: #cfc8bb; }
+.panel-heading small { color: #7b756b; }
+.panel-heading h2 { color: var(--ink); font-weight: 750; }
+.panel-heading > span { color: var(--ink); }
+.career-list,
+.skill-list { scrollbar-color: #aaa398 #eee7da; }
+.career-list-item,
+.skill-list-item { border-color: #cbc4b8; border-radius: 18px; color: #4e4b45; background: #f7f2e9; }
+.career-list-item:nth-child(3n + 1),
+.skill-list-item:nth-child(3n + 1) { background: #f0e1df; }
+.career-list-item:nth-child(3n + 2),
+.skill-list-item:nth-child(3n + 2) { background: #e7ecdf; }
+.career-list-item:hover,
+.career-list-item.active,
+.skill-list-item:hover,
+.skill-list-item.active { border-color: var(--ink); color: var(--ink); background: #fffdf7; transform: translateY(-1px); }
+.item-index { color: #736f67; font-weight: 800; }
+.item-copy small { color: #7d786f; }
+.mini-nebula { border-color: var(--ink); color: var(--ink); background-color: var(--blue); background-image: none; box-shadow: none; }
+.map-panel { background: #e7ded0; }
+.map-grid { opacity: .5; background-image: linear-gradient(rgba(60, 57, 52, .11) 1px, transparent 1px), linear-gradient(90deg, rgba(60, 57, 52, .11) 1px, transparent 1px); background-size: 52px 52px; }
+.orbit { border-color: rgba(36, 35, 31, .22); }
+.node-image { border-color: var(--ink); color: var(--ink); background-image: radial-gradient(circle at 34% 28%, #fff8e8 0, #d9c4d8 34%, #aebfbd 70%, #7e8f8b 100%); box-shadow: 6px 7px 0 rgba(36, 35, 31, .15); }
+.career-node:nth-of-type(3n + 1) .node-image,
+.skill-node:nth-of-type(3n + 1) .node-image { background-image: radial-gradient(circle at 34% 28%, #fff8e8, #e4c9c9 44%, #b98f91); }
+.career-node:nth-of-type(3n + 2) .node-image,
+.skill-node:nth-of-type(3n + 2) .node-image { background-image: radial-gradient(circle at 34% 28%, #fff8e8, #d9d7a9 44%, #9fac88); }
+.career-node:hover .node-image,
+.career-node.active .node-image,
+.skill-node:hover .node-image,
+.skill-node.active .node-image { box-shadow: 8px 9px 0 rgba(36, 35, 31, .22); transform: translate(-2px, -2px); }
+.node-label { color: var(--ink); text-shadow: none; }
+.node-label small { color: #5f5b54; }
+.node-progress,
+.progress-track { background: rgba(36, 35, 31, .14); }
+.node-progress i,
+.progress-track i,
+.progress-track span { background: var(--ink); box-shadow: none; }
+.career-detail { color: var(--ink); background: #f3ded9; }
+.career-detail h2,
+.career-detail h3,
+.detail-progress-summary strong,
+.planet-progress-item strong { color: var(--ink); }
+.detail-description,
+.detail-progress-summary span,
+.planet-progress-item small { color: #625d55; }
+.detail-image,
+.progress-planet { border-color: var(--ink); box-shadow: none; }
+.panel-close { color: var(--ink); background: rgba(255,255,255,.45); border-color: var(--ink); }
+.enter-button,
+.center-message button,
+.modal-close-button { border-color: var(--ink); border-radius: 999px; color: #fff; background: var(--ink); box-shadow: none; }
+.enter-button:hover,
+.center-message button:hover,
+.modal-close-button:hover { color: #fff; border-color: var(--ink); background: #3a3833; transform: translateY(-1px); }
+.career-description-popover,
+.learning-modal { border: 1px solid var(--ink); border-radius: 26px; color: var(--ink); background: var(--surface); box-shadow: 10px 12px 0 rgba(36,35,31,.18); }
+.career-description-popover h2,
+.learning-modal h2 { color: var(--ink); }
+.career-description-popover p,
+.content-empty { color: #5d5952; }
+@media (max-width: 1120px) { .career-layout--selected { grid-template-columns: 210px minmax(0, 1fr) 300px; } }
+@media (max-width: 860px) {
+  .nebula-shell { width: min(100% - 24px, 760px); padding-top: 72px; }
+  .career-layout,
+  .career-layout--selected,
+  .learning-layout { height: auto; }
+  .nebula-hero { height: auto; min-height: 118px; align-items: flex-start; gap: 14px; }
+}
+/* Deep future dashboard — scoped to Star Map content, the global navbar is untouched. */
+.nebula-page {
+  --ink: #edf2ff;
+  --muted: #8893aa;
+  --paper: #070910;
+  --surface: #111521;
+  --violet: #737cff;
+  --blue: #72c7ff;
+  --mint: #75ddb9;
+  --pink: #ef9eb7;
+  --yellow: #ead27b;
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 84% 12%, rgba(104, 82, 220, .18), transparent 28%),
+    radial-gradient(circle at 12% 36%, rgba(39, 124, 184, .13), transparent 24%),
+    linear-gradient(145deg, #060810 0%, #0a0d16 48%, #070911 100%);
+}
+.nebula-page::before {
+  opacity: .2;
+  background-image: radial-gradient(circle, rgba(142, 160, 205, .56) 0 1px, transparent 1.2px);
+  background-size: 32px 32px;
+}
+.nebula-shell {
+  width: min(1640px, calc(100% - 48px));
+  height: auto;
+  min-height: 100vh;
+  padding: 74px 0 30px;
+}
+
+.career-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 12px 0 10px;
+  padding: 0 12px;
+  border: 1px solid rgba(148, 163, 184, .16);
+  border-radius: 999px;
+  background: rgba(5, 8, 15, .66);
+  transition: border-color .2s ease, background .2s ease;
+}
+
+.career-search:focus-within {
+  border-color: rgba(124, 137, 255, .72);
+  background: rgba(7, 10, 18, .9);
+}
+
+.career-search svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: #7c87a3;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+
+.career-search input {
+  width: 100%;
+  height: 34px;
+  border: 0;
+  outline: 0;
+  color: #eef2fb;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+}
+
+.career-search input::placeholder { color: #677188; }
+.career-search input::-webkit-search-cancel-button { display: none; }
+
+.nebula-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(360px, .72fr);
+  height: auto;
+  min-height: 184px;
+  margin: 0 0 14px;
+  padding: 0;
+  gap: 14px;
+}
+.nebula-hero__intro,
+.python-entry {
+  border: 1px solid rgba(148, 163, 184, .16);
+  border-radius: 28px;
+  background: rgba(16, 20, 31, .78);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 18px 60px rgba(0,0,0,.18);
+  backdrop-filter: blur(14px);
+}
+.nebula-hero__intro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  padding: 28px 32px;
+}
+.nebula-hero__intro::after {
+  position: absolute;
+  right: -58px;
+  bottom: -98px;
+  width: 290px;
+  height: 290px;
+  border: 1px solid rgba(126, 137, 255, .26);
+  border-radius: 50%;
+  box-shadow: 0 0 0 38px rgba(106, 117, 238, .035), 0 0 0 76px rgba(106, 117, 238, .025);
+  content: '';
+}
+.nebula-hero p { color: #75809a; font-size: 10px; letter-spacing: .24em; }
+.nebula-hero h1 { margin-top: 8px; color: #f5f7ff; font-size: clamp(34px, 4vw, 58px); letter-spacing: -.06em; }
+.nebula-hero__intro > span { max-width: 560px; color: #929db2; font-size: 14px; }
+.nebula-hero__status {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  margin-top: 20px;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgba(117, 221, 185, .2);
+  border-radius: 999px;
+  background: rgba(69, 154, 126, .09);
+}
+.nebula-hero__status i { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 12px rgba(117,221,185,.72); }
+.nebula-hero__status span { margin: 0; color: #8fdabb; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+.python-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 30px 32px;
+}
+.python-entry p.python-entry__eyebrow {
+  margin: 0;
+  color: #72c7ff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .22em;
+}
+.python-entry h2.python-entry__title {
+  margin: 12px 0 0;
+  color: #f5f7ff;
+  font-size: clamp(20px, 1.7vw, 26px);
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+.python-entry p.python-entry__desc {
+  margin: 10px 0 0;
+  color: #8d98ae;
+  font-size: 13px;
+  letter-spacing: normal;
+}
+.python-entry__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  min-height: 44px;
+  margin-top: 24px;
+  padding: 0 24px;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(135deg, #606af0, #8075e8);
+  box-shadow: 0 14px 32px rgba(82, 88, 203, .34);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.python-entry__action:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #7079fa, #8e84f0);
+  box-shadow: 0 18px 38px rgba(96, 102, 224, .42);
+  transform: translateY(-1px);
+}
+.python-entry__action:focus-visible { outline: 2px solid rgba(124, 137, 255, .75); outline-offset: 3px; }
+.nebula-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.nebula-metrics article {
+  position: relative;
+  min-height: 104px;
+  overflow: hidden;
+  padding: 18px 20px;
+  border: 1px solid rgba(148,163,184,.14);
+  border-radius: 22px;
+  background: rgba(16,20,31,.78);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+}
+.nebula-metrics article::after { position: absolute; top: 18px; right: 18px; width: 8px; height: 8px; border-radius: 50%; background: var(--metric-color, var(--blue)); box-shadow: 0 0 16px var(--metric-color, var(--blue)); content: ''; }
+.nebula-metrics article:nth-child(2) { --metric-color: var(--pink); }
+.nebula-metrics article:nth-child(3) { --metric-color: var(--mint); }
+.nebula-metrics article:nth-child(4) { --metric-color: var(--yellow); }
+.nebula-metrics span,
+.nebula-metrics small { display: block; color: #778298; font-size: 10px; }
+.nebula-metrics strong { display: block; margin: 8px 0 4px; color: #f4f6ff; font-size: 27px; line-height: 1; letter-spacing: -.04em; }
+.nebula-metrics em { color: #818ba2; font-size: 13px; font-style: normal; }
+.career-layout { height: 640px; grid-template-columns: 252px minmax(0, 1fr); }
+.career-layout--selected { grid-template-columns: 236px minmax(0, 1fr) 342px; }
+.learning-layout { height: calc(100vh - 170px); min-height: 620px; }
+.side-panel,
+.map-panel,
+.learning-header { border-color: rgba(148,163,184,.16); border-radius: 26px; background: rgba(15,19,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 18px 48px rgba(0,0,0,.18); backdrop-filter: blur(12px); }
+.panel-heading { border-bottom-color: rgba(148,163,184,.12); }
+.panel-heading small { color: #626e88; }
+.panel-heading h2 { color: #edf2ff; }
+.panel-heading > span { color: #7b87a1; }
+.career-list,
+.skill-list { scrollbar-color: #454d68 transparent; }
+.career-list-item,
+.skill-list-item,
+.career-list-item:nth-child(3n + 1),
+.skill-list-item:nth-child(3n + 1),
+.career-list-item:nth-child(3n + 2),
+.skill-list-item:nth-child(3n + 2) { border-color: rgba(148,163,184,.1); color: #aab4c8; background: rgba(23,28,43,.72); }
+.career-list-item:hover,
+.career-list-item.active,
+.skill-list-item:hover,
+.skill-list-item.active { border-color: rgba(124,137,255,.5); color: #f4f6ff; background: linear-gradient(135deg, rgba(83,91,199,.32), rgba(49,44,102,.3)); box-shadow: 0 8px 22px rgba(25,26,63,.28); }
+.item-index { color: #707cf5; }
+.item-copy small { color: #6e7890; }
+.mini-nebula { border-color: rgba(114,199,255,.42); color: #cfeeff; background-image: radial-gradient(circle at 34% 28%, #5eb6dd, #304770 50%, #181c31 76%); box-shadow: 0 0 18px rgba(87,163,225,.18); }
+.map-panel { background: radial-gradient(circle at 52% 44%, rgba(52,70,115,.42), transparent 42%), linear-gradient(145deg, #0b0f1a, #0d1321); }
+.map-grid { opacity: .28; background-image: linear-gradient(rgba(119,137,187,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(119,137,187,.16) 1px, transparent 1px); background-size: 54px 54px; }
+.orbit { border-color: rgba(118,133,191,.18); }
+.node-image { border-color: rgba(122,137,255,.62); color: #eff2ff; background-image: radial-gradient(circle at 34% 28%, #9099ff 0, #4f5ab6 30%, #262d60 58%, #0d1121 78%); box-shadow: 0 0 25px rgba(100,113,239,.32), inset -10px -13px 22px rgba(0,0,0,.42); }
+.career-node:nth-of-type(3n + 1) .node-image,
+.skill-node:nth-of-type(3n + 1) .node-image { background-image: radial-gradient(circle at 34% 28%, #f1a7bb, #9b536f 44%, #251729); }
+.career-node:nth-of-type(3n + 2) .node-image,
+.skill-node:nth-of-type(3n + 2) .node-image { background-image: radial-gradient(circle at 34% 28%, #87e1c1, #397f76 44%, #10272d); }
+.career-node:hover .node-image,
+.career-node.active .node-image,
+.skill-node:hover .node-image,
+.skill-node.active .node-image { box-shadow: 0 0 34px rgba(114,126,255,.7), 0 0 0 5px rgba(107,118,246,.12); transform: scale(1.04); }
+.node-label { color: #eef2ff; text-shadow: 0 2px 10px rgba(0,0,0,.9); }
+.node-label small { color: #8d98ae; }
+.node-progress,
+.progress-track { background: rgba(141,153,186,.17); }
+.node-progress i,
+.progress-track i,
+.progress-track span { background: linear-gradient(90deg, #6d77f4, #78c8f5); box-shadow: 0 0 10px rgba(108,120,245,.34); }
+.career-detail { color: #edf2ff; background: linear-gradient(165deg, rgba(27,25,48,.94), rgba(14,18,29,.96)); }
+.career-detail h2,
+.career-detail h3,
+.detail-progress-summary strong,
+.planet-progress-item strong { color: #f1f4ff; }
+.detail-description,
+.detail-progress-summary span,
+.planet-progress-item small { color: #8893aa; }
+.detail-image,
+.progress-planet { border-color: rgba(124,137,255,.45); box-shadow: 0 0 24px rgba(83,95,217,.2); }
+.panel-close { color: #b8c2d6; border-color: rgba(148,163,184,.22); background: rgba(7,10,18,.62); }
+.enter-button,
+.center-message button,
+.modal-close-button { border-color: transparent; color: #fff; background: linear-gradient(135deg, #606af0, #8075e8); box-shadow: 0 10px 24px rgba(82,88,203,.26); }
+.enter-button:hover,
+.center-message button:hover,
+.modal-close-button:hover { border-color: transparent; color: #fff; background: linear-gradient(135deg, #7079fa, #8e84f0); }
+.career-description-popover,
+.learning-modal { border-color: rgba(148,163,184,.18); color: #edf2ff; background: rgba(14,18,29,.96); box-shadow: 0 28px 70px rgba(0,0,0,.46); backdrop-filter: blur(18px); }
+.career-description-popover h2,
+.learning-modal h2 { color: #f2f5ff; }
+.career-description-popover p,
+.content-empty { color: #8e99ad; }
+.center-message { min-height: 420px; color: #8994aa; }
+
+/* 真实数据驱动的任务卡 / 统计图 / 进度面板 */
+.nebula-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, .72fr) minmax(0, .92fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.nebula-panel {
+  padding: 18px 20px;
+  border: 1px solid rgba(148, 163, 184, .14);
+  border-radius: 24px;
+  background: rgba(16, 20, 31, .78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03), 0 18px 48px rgba(0, 0, 0, .16);
+  backdrop-filter: blur(12px);
+}
+
+.nebula-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.nebula-panel__head small { display: block; color: #626e88; font-size: 9px; letter-spacing: .18em; }
+.nebula-panel__head h2 { margin: 6px 0 0; color: #edf2ff; font-size: 16px; }
+.nebula-panel__head > span {
+  padding: 4px 10px;
+  border: 1px solid rgba(148, 163, 184, .14);
+  border-radius: 999px;
+  color: #8d98ae;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.task-list { display: grid; gap: 10px; }
+
+.task-card {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, .1);
+  border-radius: 18px;
+  color: #aab4c8;
+  background: rgba(23, 28, 43, .72);
+  text-align: left;
+  transition: border-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.task-card:hover {
+  border-color: rgba(124, 137, 255, .5);
+  color: #f4f6ff;
+  background: linear-gradient(135deg, rgba(83, 91, 199, .32), rgba(49, 44, 102, .3));
+  box-shadow: 0 8px 22px rgba(25, 26, 63, .28);
+  transform: translateY(-1px);
+}
+
+.task-planet {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(114, 199, 255, .45);
+  border-radius: 50%;
+  color: #cfeeff;
+  background: radial-gradient(circle at 34% 28%, #5eb6dd, #304770 50%, #181c31 76%);
+  background-position: center;
+  background-size: cover;
+  font-size: 10px;
+}
+
+.task-copy { min-width: 0; }
+.task-copy strong { display: block; overflow: hidden; color: inherit; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.task-copy small { display: block; margin: 3px 0 6px; color: #6e7890; font-size: 10px; }
+.task-copy .progress-track { display: block; height: 4px; }
+.task-card > em { color: #9aa5ff; font-size: 12px; font-style: normal; font-weight: 700; }
+.task-empty { margin: 0; padding: 16px 0; color: #778298; font-size: 12px; }
+
+.chapter-ring {
+  position: relative;
+  display: grid;
+  width: 132px;
+  height: 132px;
+  margin: 4px auto 12px;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(#6d77f4 0 calc(var(--value, 0) * 1%), rgba(148, 163, 184, .16) calc(var(--value, 0) * 1%) 100%);
+  box-shadow: 0 0 30px rgba(96, 110, 240, .22);
+}
+
+.chapter-ring::after {
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: rgba(9, 12, 20, .92);
+  content: '';
+}
+
+.chapter-ring span { position: relative; z-index: 1; color: #f2f5ff; font-size: 26px; font-weight: 800; letter-spacing: -.04em; }
+.chapter-ring em { color: #818ba2; font-size: 12px; font-style: normal; }
+.chapter-hint { margin: 0; color: #778298; font-size: 11px; line-height: 1.6; text-align: center; }
+
+.career-progress { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.career-progress li { display: grid; grid-template-columns: 88px minmax(0, 1fr) 38px; align-items: center; gap: 10px; }
+.career-progress__name { overflow: hidden; color: #cdd5e6; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.career-progress .progress-track { height: 5px; }
+.career-progress em { color: #858fa6; font-size: 11px; font-style: normal; text-align: right; }
+
+/* 主题里的 background 简写会重置尺寸，这里恢复节点的星球图片铺满效果 */
+.node-image,
+.mini-nebula,
+.detail-image,
+.progress-planet,
+.task-planet {
+  background-position: center;
+  background-size: cover;
+}
+
+@media (max-width: 1120px) {
+  .nebula-hero { grid-template-columns: 1fr minmax(320px, .8fr); }
+  .career-layout--selected { grid-template-columns: 210px minmax(0, 1fr) 300px; }
+  .nebula-panels { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); }
+  .nebula-panel--progress { grid-column: 1 / -1; }
+}
+@media (max-width: 860px) {
+  .nebula-shell { width: min(100% - 24px, 760px); padding-top: 74px; }
+  .nebula-hero { grid-template-columns: 1fr; min-height: 0; }
+  .nebula-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nebula-panels { grid-template-columns: 1fr; }
+  .nebula-panel--progress { grid-column: auto; }
+  .career-layout,
+  .career-layout--selected,
+  .learning-layout { height: auto; }
+}
+@media (max-width: 560px) {
+  .nebula-metrics { grid-template-columns: 1fr; }
+  .nebula-hero__intro { padding: 24px; }
 }
 </style>

@@ -2,9 +2,33 @@
   <div class="page-layout">
     <Sidebar />
     <main class="main-content">
+      <EditorialToolbar
+        v-model="dashboardSearch"
+        eyebrow="CAREER / 02"
+        placeholder="搜索真题、技术方向或面试趋势"
+      />
       <div class="content-area">
         <!-- 左侧主要内容区 -->
         <div class="main-body">
+          <section class="interview-hero">
+            <div class="interview-hero__copy">
+              <span class="interview-hero__eyebrow">AI INTERVIEW STUDIO</span>
+              <h1>智能模拟与职业准备</h1>
+              <p>从简历准备到模拟训练，再到能力反馈，在一个工作台完成每一步。</p>
+            </div>
+            <div class="interview-hero__actions">
+              <button class="hero-action hero-action--primary" type="button" @click="router.push(PATHS.AI_MOCK_INTERVIEW)">
+                <span>开始模拟面试</span>
+                <b>→</b>
+              </button>
+              <button class="hero-action hero-action--resume" type="button" @click="router.push('/ai-tools/resume')">
+                <small>RESUME</small>
+                <span>{{ resume.name || '我的简历' }}</span>
+                <b>查看与完善 →</b>
+              </button>
+            </div>
+          </section>
+
           <!-- 顶部技术栈选择器 -->
           <div class="tech-stack-header">
             <!-- 第一层：大方向 -->
@@ -364,11 +388,13 @@
 import { computed, ref, onMounted, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from '../components/Sidebar.vue'
+import EditorialToolbar from '../../../components/EditorialToolbar.vue'
 import { PATHS } from '../routes/paths'
 import { conversationApi, type ConversationItem } from '../api/conversation'
 import { authApi, type InterviewJobPositionItem } from '../api/auth'
 
 const router = useRouter()
+const dashboardSearch = ref('')
 
 // ───── 用户基本信息 ─────
 const user = ref({
@@ -506,11 +532,19 @@ const hotQuestions = ref([
 
 const questionPage = ref(0)
 const questionsPerPage = 3
-const questionPageCount = computed(() => Math.ceil(hotQuestions.value.length / questionsPerPage))
+const filteredHotQuestions = computed(() => {
+  const query = dashboardSearch.value.trim().toLowerCase()
+  if (!query) return hotQuestions.value
+  return hotQuestions.value.filter((item) => {
+    return `${item.source} ${item.title} ${item.tags.join(' ')}`.toLowerCase().includes(query)
+  })
+})
+
+const questionPageCount = computed(() => Math.max(1, Math.ceil(filteredHotQuestions.value.length / questionsPerPage)))
 
 const paginatedQuestions = computed(() => {
   const start = questionPage.value * questionsPerPage
-  return hotQuestions.value.slice(start, start + questionsPerPage)
+  return filteredHotQuestions.value.slice(start, start + questionsPerPage)
 })
 
 const nextQuestionPage = () => {
@@ -2068,5 +2102,235 @@ onMounted(async () => {
 .edit-footer .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+/* Editorial SaaS / retro pastel dashboard refresh */
+.page-layout {
+  --ink: #24231f;
+  --muted: #716d65;
+  --paper: #f3efe6;
+  --surface: #fffdf7;
+  --pink: #ead5d8;
+  --mustard: #e6cf8d;
+  --olive: #bac6a6;
+  --blue: #bdcbd2;
+  --lilac: #d9cbdc;
+  height: calc(100vh - 60px);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.main-content {
+  height: calc(100vh - 60px);
+  margin-left: clamp(248px, 22vw, 296px);
+  margin-right: 304px;
+  padding: 12px 14px 14px 0;
+  gap: 12px;
+  background: var(--paper);
+  box-sizing: border-box;
+}
+
+.main-content > .editorial-toolbar { flex: 0 0 auto; }
+
+.content-area {
+  overflow: auto;
+  gap: 14px;
+  scrollbar-color: #aaa398 transparent;
+}
+
+.main-body {
+  padding: 0;
+  gap: 14px;
+  overflow: visible;
+}
+
+.interview-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, .72fr);
+  gap: 14px;
+}
+
+.interview-hero__copy,
+.interview-hero__actions {
+  border: 1px solid var(--ink);
+  border-radius: 26px;
+}
+
+.interview-hero__copy {
+  min-height: 154px;
+  padding: 26px 28px;
+  background: var(--mustard);
+}
+
+.interview-hero__eyebrow {
+  color: #615c51;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .18em;
+}
+
+.interview-hero h1 {
+  margin: 15px 0 7px;
+  color: var(--ink);
+  font-size: clamp(28px, 2.7vw, 43px);
+  font-weight: 850;
+  line-height: 1.04;
+  letter-spacing: -.05em;
+}
+
+.interview-hero p { max-width: 600px; margin: 0; color: #5f594e; font-size: 13px; line-height: 1.65; }
+
+.interview-hero__actions {
+  display: grid;
+  grid-template-columns: .92fr 1.08fr;
+  gap: 10px;
+  padding: 10px;
+  background: var(--surface);
+}
+
+.hero-action {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px;
+  border: 1px solid var(--ink);
+  border-radius: 19px;
+  color: var(--ink);
+  text-align: left;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.hero-action:hover { border-color: var(--ink); transform: translateY(-2px); box-shadow: 4px 5px 0 rgba(36,35,31,.16); }
+.hero-action--primary { color: #fff; background: var(--ink); }
+.hero-action--resume { background: var(--pink); }
+.hero-action small { font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.hero-action span { font-size: 15px; font-weight: 750; line-height: 1.3; }
+.hero-action b { font-size: 11px; font-weight: 650; }
+
+.tech-stack-header,
+.tech-tags-section,
+.stat-card,
+.chart-card,
+.plan-section,
+.sidebar-section {
+  border: 1px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: none;
+}
+
+.tech-stack-header { padding: 16px 18px; background: var(--surface); }
+.tech-tags-section { padding: 14px 18px; background: #e7ece2; }
+.selector-label { color: var(--muted); font-weight: 700; }
+.selector-options { scrollbar-color: #a9a397 transparent; }
+.selector-btn,
+.tech-tag-item { border-color: #c7c0b4; border-radius: 999px; color: #56524b; background: #f1ece3; }
+.selector-btn:hover { border-color: var(--ink); color: var(--ink); background: #fffdf7; }
+.selector-btn.active { border-color: var(--ink); color: #fff; background: var(--ink); }
+.tech-tag { border: 1px solid var(--ink); border-radius: 999px; }
+.tech-tag.mastered { color: var(--ink); background: var(--olive); }
+.tech-tag-item.active { border-color: #898278; color: var(--ink); background: #fffdf7; }
+.tech-empty,
+.no-data { color: var(--muted); }
+
+.stats-row { gap: 14px; }
+.stat-card { min-height: 124px; padding: 20px; }
+.stat-card:nth-child(1) { background: var(--pink); }
+.stat-card:nth-child(2) { background: var(--blue); }
+.stat-card:nth-child(3) { background: var(--olive); }
+.stat-card-label,
+.stat-unit,
+.stat-subtitle { color: #645f57; }
+.stat-big { color: var(--ink); font-size: 38px; letter-spacing: -.045em; }
+.stat-trend.up { color: #46553e; font-weight: 700; }
+.progress-bar { background: rgba(36,35,31,.14); }
+.progress-fill { background: var(--ink); }
+
+.charts-row { gap: 14px; margin-bottom: 0; }
+.chart-card { margin-bottom: 0; padding: 20px; background: var(--surface); }
+.radar-card { background: #e8e4ed; }
+.chart-title,
+.plan-title,
+.plan-card-title,
+.section-title,
+.question-title { color: var(--ink); }
+.chart-header { margin-bottom: 18px; }
+.legend-item,
+.bar-label { color: var(--muted); }
+.legend-dot.blue { background: #7b8f88; }
+.legend-dot.gray { background: #c3bbb0; }
+.radar-chart polygon[stroke="#2d3a4f"],
+.radar-chart line { stroke: #90899a !important; }
+.radar-chart polygon[stroke="#3a7bc8"] { fill: rgba(125, 145, 132, .28) !important; stroke: #52645b !important; }
+.radar-chart circle { fill: #52645b !important; }
+.radar-chart text { fill: #625e68 !important; }
+.bar-bg { background: #ddd7ce; }
+.bar-fill { background: #81958a; }
+.charts-row > .chart-card:last-child::before { background: #cfc8bc; }
+
+.plan-section { margin-top: 0; background: #e5dfd1; }
+.plan-subtitle { color: var(--muted); }
+.plan-card { border-color: var(--ink); border-radius: 17px; background: var(--surface); }
+.plan-progress-text { color: #59685d; }
+.plan-progress { background: #ddd7cb; }
+.plan-progress-fill { background: #829589; }
+.plan-tasks li { color: #666158; }
+
+.right-sidebar {
+  top: 72px;
+  right: 14px;
+  width: 276px;
+  height: calc(100vh - 86px);
+  padding: 12px;
+  gap: 12px;
+  border: 1px solid var(--ink);
+  border-radius: 26px;
+  color: var(--ink);
+  background: #eee6d9;
+}
+.sidebar-section { padding: 14px; background: var(--surface); }
+.sidebar-section.hot-questions { background: #e4e9df; }
+.sidebar-section.trends { background: #e9d8da; }
+.section-icon { filter: grayscale(1) contrast(.85); }
+.question-item,
+.trend-item-wrapper { border-color: #bdb5a9; border-radius: 14px; background: rgba(255,253,247,.72); }
+.question-source { color: var(--muted); }
+.question-tags .tag { border: 1px solid #a9a094; border-radius: 999px; color: #544f48; background: #eee7dc; }
+.trend-dot,
+.trend-highlight { color: #5f6959; }
+.trend-text { color: #656059; }
+.page-dots .dot { background: #b6aea2; }
+.page-dots .dot.active { width: 20px; background: var(--ink); box-shadow: none; }
+
+.edit-overlay { background: rgba(27,26,23,.5); }
+.edit-modal { border: 1px solid var(--ink); border-radius: 24px; background: var(--surface); box-shadow: 9px 10px 0 rgba(36,35,31,.2); }
+.edit-title { color: var(--ink); }
+.edit-header,
+.edit-footer { border-color: #d2cbbf; }
+.edit-close { border: 1px solid var(--ink); color: var(--ink); background: #eee7dc; }
+.form-item label { color: #4f4b45; }
+.form-item input,
+.form-item select { height: 40px; border-color: #bdb6aa; border-radius: 12px; color: var(--ink); background: #f7f2e9; }
+.form-item input:focus,
+.form-item select:focus { border-color: var(--ink); }
+.edit-footer .btn-outline,
+.edit-footer .btn-primary { border: 1px solid var(--ink); border-radius: 999px; }
+.edit-footer .btn-outline { color: var(--ink); background: var(--surface); }
+.edit-footer .btn-primary { color: #fff; background: var(--ink); }
+
+@media (max-width: 1200px) {
+  .main-content { margin-right: 14px; }
+  .right-sidebar { display: none; }
+  .stats-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .main-content { margin-left: 88px; margin-right: 8px; padding-right: 0; }
+  .interview-hero { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .interview-hero__actions { grid-template-columns: 1fr; }
+  .plan-grid { grid-template-columns: 1fr; }
 }
 </style>

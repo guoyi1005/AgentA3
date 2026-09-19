@@ -544,6 +544,167 @@ onMounted(loadProblems)
   margin: 0 0 14px;
 }
 
+/* ── 深色未来感 Dashboard 主题（与星图探索保持一致）── */
+.py-bank-page {
+  --ink: #edf2ff;
+  --muted: #8893aa;
+  --line: rgba(148, 163, 184, .16);
+  --surface: rgba(16, 20, 31, .78);
+  --sky: #72c7ff;
+  --mint: #75ddb9;
+  --pink: #ef9eb7;
+  --sand: #ead27b;
+  min-height: 100vh;
+  padding: 74px 0 40px;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 86% 8%, rgba(104, 82, 220, .16), transparent 30%),
+    radial-gradient(circle at 8% 32%, rgba(39, 124, 184, .12), transparent 26%),
+    linear-gradient(145deg, #060810 0%, #0a0d16 48%, #070911 100%);
+}
+
+.py-bank-shell { width: min(1480px, calc(100% - 48px)); padding: 0; }
+
+.py-bank-header__intro h1 {
+  color: #f5f7ff;
+  font-size: clamp(28px, 3.2vw, 40px);
+  letter-spacing: -.05em;
+}
+
+.py-bank-header__intro p { color: #8d98ae; font-size: 13px; }
+
+.py-bank-layout { grid-template-columns: 268px minmax(0, 1fr); gap: 14px; }
+
+.py-bank-sidebar,
+.py-bank-main {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03), 0 18px 48px rgba(0, 0, 0, .16);
+  backdrop-filter: blur(12px);
+}
+
+.py-bank-progress__head strong { color: #eef2fb; }
+.py-bank-progress__head span { color: #7d879e; }
+.py-bank-progress__track { background: rgba(141, 153, 186, .17); }
+.py-bank-progress__fill {
+  background: linear-gradient(90deg, #6d77f4, #78c8f5);
+  box-shadow: 0 0 12px rgba(108, 120, 245, .42);
+}
+.py-bank-progress__note { color: #7d879e; }
+
+.py-bank-filter + .py-bank-filter { border-top-color: rgba(148, 163, 184, .12); }
+.py-bank-filter h2 { color: #626e88; }
+
+.py-bank-chip {
+  border-color: rgba(148, 163, 184, .14);
+  border-radius: 999px;
+  color: #aab4c8;
+  background: rgba(23, 28, 43, .72);
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.py-bank-chip span { color: #6e7890; }
+.py-bank-chip:hover { border-color: rgba(124, 137, 255, .42); color: #e6ebf8; }
+
+.py-bank-chip--active {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(135deg, #626bf0, #8177ed);
+  box-shadow: 0 7px 20px rgba(88, 93, 220, .32);
+}
+
+.py-bank-chip--active span { color: rgba(255, 255, 255, .72); }
+
+.py-bank-tag {
+  border-color: rgba(148, 163, 184, .12);
+  color: #8d98ae;
+  background: rgba(23, 28, 43, .6);
+}
+
+.py-bank-tag span { color: #6e7890; }
+
+.py-bank-tag--active {
+  border-color: rgba(117, 221, 185, .42);
+  color: #a8f0d3;
+  background: rgba(52, 120, 102, .24);
+}
+
+.py-bank-tag--active span { color: rgba(168, 240, 211, .7); }
+
+.py-bank-clear { border-color: rgba(148, 163, 184, .22); color: #9aa4ba; }
+.py-bank-clear:hover { border-color: rgba(124, 137, 255, .5); color: #e9edf9; }
+
+.py-bank-toolbar { border-bottom-color: rgba(148, 163, 184, .12); }
+
+.py-bank-search {
+  border-color: rgba(148, 163, 184, .16);
+  border-radius: 999px;
+  background: rgba(5, 8, 15, .66);
+}
+
+.py-bank-search:focus-within { border-color: rgba(124, 137, 255, .72); }
+.py-bank-search input { color: #eef2fb; }
+.py-bank-search input::placeholder { color: #677188; }
+.py-bank-search img { filter: invert(.78) opacity(.55); }
+.py-bank-search button { color: #9aa4ba; background: rgba(148, 163, 184, .14); }
+.py-bank-count { color: #7d879e; }
+
+.py-bank-table th {
+  border-bottom-color: rgba(148, 163, 184, .12);
+  color: #78829a;
+  background: rgba(9, 12, 20, .72);
+}
+
+.py-bank-table td { border-bottom-color: rgba(148, 163, 184, .08); }
+.py-bank-row:hover,
+.py-bank-row:focus-visible { background: rgba(83, 91, 199, .16); }
+
+.col-no,
+.col-rate { color: #8893aa; }
+
+.py-bank-status { border-color: rgba(148, 163, 184, .3); color: transparent; }
+.py-bank-status--done {
+  border-color: transparent;
+  color: #08130f;
+  background: var(--mint);
+  box-shadow: 0 0 14px rgba(117, 221, 185, .4);
+}
+
+.py-bank-title { color: #e7ecf8; }
+.py-bank-badge { color: #9aa4ba; background: rgba(148, 163, 184, .12); }
+
+.py-diff--easy { color: #9ef0c4; background: rgba(60, 140, 105, .22); }
+.py-diff--medium { color: #c3b6ff; background: rgba(92, 80, 190, .22); }
+.py-diff--hard { color: #ffb4b0; background: rgba(170, 70, 64, .2); }
+
+.py-bank-tag-inline { color: #93a0b8; background: rgba(148, 163, 184, .1); }
+
+.py-bank-go {
+  border: 1px solid rgba(124, 137, 255, .38);
+  border-radius: 999px;
+  color: #c9d2ff;
+  background: rgba(83, 91, 199, .16);
+}
+
+.py-bank-row:hover .py-bank-go,
+.py-bank-row:focus-visible .py-bank-go {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(135deg, #626bf0, #8177ed);
+}
+
+.py-bank-empty,
+.py-bank-state { color: #8893aa; }
+
+.py-bank-state .feature-button--primary,
+.py-bank-empty .feature-button--primary {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(135deg, #606af0, #8075e8);
+  box-shadow: 0 10px 24px rgba(82, 88, 203, .26);
+}
+
 @media (max-width: 960px) {
   .py-bank-header {
     flex-direction: column;

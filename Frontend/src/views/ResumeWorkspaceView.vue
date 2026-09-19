@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import AppTabBar from '../components/AppTabBar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -15,7 +16,7 @@ const handleFrameMessage = (event) => {
   if (!isTemplatesMode.value) return
   if (!data.templateId) return
   console.log('✅ 已选择模板，跳转到工作台:', data.templateId)
-  router.push('/interview/resume/workspace')
+  router.push('/ai-tools/resume/workspace')
 }
 
 // 模板列表数据 - 从 templates.json 加载
@@ -294,6 +295,8 @@ onUnmounted(() => {
 
 <template>
   <div class="two-column-layout">
+    <AppTabBar />
+
     <!-- 仅模板市场模式：整页展示模板市场（迁移前形态，不跳转） -->
     <template v-if="isTemplatesMode">
       <iframe
@@ -308,7 +311,7 @@ onUnmounted(() => {
     <!-- 工作台模式：两栏布局（左侧简历填写与预览 + 右侧模板市场） -->
     <template v-else>
       <!-- 返回简历页面按钮 -->
-      <button class="workspace-back" type="button" aria-label="返回简历页面" @click="router.push('/interview/resume')">
+      <button class="workspace-back" type="button" aria-label="返回简历页面" @click="router.push('/ai-tools/resume')">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="m15 5-7 7 7 7" />
         </svg>

@@ -486,7 +486,7 @@ function releasePreview() {
               <br />
               一键生成专属学习路径与高薪岗位适配报告。
             </p>
-            <button type="button" class="diagnosis-btn" @click="router.push('/interview/resume')">上传简历，开启诊断</button>
+            <button type="button" class="diagnosis-btn" @click="router.push('/ai-tools/resume')">上传简历，开启诊断</button>
             <button type="button" class="diagnosis-btn diagnosis-btn--ghost" @click="router.push('/jobs/hot')">
               查看岗位雷达
             </button>
@@ -630,7 +630,7 @@ function releasePreview() {
           <h4>产品与服务</h4>
           <ul>
             <li><a href="javascript:void(0)" @click="router.push('/jobs/hot')">岗位雷达</a></li>
-            <li><a href="javascript:void(0)" @click="router.push('/interview/resume')">人岗匹配诊断</a></li>
+            <li><a href="javascript:void(0)" @click="router.push('/ai-tools/resume')">人岗匹配诊断</a></li>
             <li><a href="javascript:void(0)">学习路径推荐</a></li>
           </ul>
         </div>
