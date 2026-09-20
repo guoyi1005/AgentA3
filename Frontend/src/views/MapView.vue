@@ -1200,11 +1200,12 @@ onUnmounted(() => {
 <style scoped>
 /* ═══ 页面主题变量 ═══ */
 .map-page {
-  --bg: #f0f5ff; --surface: #ffffff; --text: #1e293b; --text2: #64748b;
-  --border: #e2e8f0; --primary: #3b82f6; --primary-light: #eff6ff;
-  --canvas: #dbeafe; --canvas-text: #3b82f6; --shadow: rgba(0,0,0,.08);
+  --bg: var(--hp-bg, #f5f0e7); --surface: var(--hp-cream, #fbf8f2); --text: var(--hp-ink, #171717); --text2: #6f6a60;
+  --border: rgba(23, 23, 23, 0.16); --primary: var(--hp-ink, #171717); --primary-light: #f7f2e8;
+  --canvas: #e3ebf2; --canvas-text: var(--hp-ink, #171717); --shadow: rgba(0,0,0,0);
   position: relative; width: 100%; height: 100vh; overflow: hidden;
   background: var(--bg); color: var(--text); transition: background .3s, color .3s;
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 .map-main { position: absolute; inset: 60px 0 0 0; }
 
@@ -1841,4 +1842,65 @@ onUnmounted(() => {
   }
   .indoor-guide-stalls { flex: 0 0 auto; max-height: 230px; }
 }
+/* ===== 本站配色覆盖（奶油底 + 黑色描边 + 低饱和马卡龙色，去掉蓝色与投影） ===== */
+.search-box,
+.search-dropdown,
+.tool-btn,
+.category-rail,
+.random-modal,
+.quick-bar,
+.poi-panel,
+.canteen-panel,
+.chat-panel,
+.indoor-guide-dialog,
+.indoor-plan-viewport,
+.indoor-stall-card,
+.indoor-menu-card,
+.intro-preview-popover,
+.facility-map-marker b,
+.real-map-marker__title {
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-md);
+  background: var(--hp-cream);
+  box-shadow: none;
+}
+.tool-btn { border-radius: 50%; color: var(--hp-ink); }
+.tool-btn:hover { color: var(--hp-cream); background: var(--hp-ink); }
+.category-rail,
+.quick-bar { border-radius: 999px; }
+.category-item.active { color: var(--hp-ink); background: var(--hp-yellow); }
+.chat-fab {
+  background: var(--hp-ink);
+  box-shadow: none;
+}
+.chat-fab.expanded { background: #2f2f2f; box-shadow: none; }
+.chat-panel__head,
+.chat-panel header,
+.chat-head {
+  background: var(--hp-ink);
+  color: var(--hp-cream);
+}
+.indoor-breadcrumb strong { color: var(--hp-ink); }
+.indoor-view-tabs button.active {
+  color: var(--hp-ink);
+  background: var(--hp-yellow);
+  box-shadow: none;
+}
+.indoor-categories button.active {
+  border-color: var(--hp-ink);
+  color: var(--hp-cream);
+  background: var(--hp-ink);
+}
+.indoor-map-stage { background-color: #f7f2e8; }
+.stall-card-actions button:last-child {
+  border-radius: 999px;
+  color: var(--hp-cream);
+  background: var(--hp-ink);
+}
+.real-map-marker > i,
+.real-map-marker > b,
+.stall-marker,
+.facility-map-marker i,
+.facility-map-marker b { box-shadow: none; }
+.intro-preview-popover > button { border-radius: 50%; color: var(--hp-muted); background: rgba(23, 23, 23, 0.06); }
 </style>

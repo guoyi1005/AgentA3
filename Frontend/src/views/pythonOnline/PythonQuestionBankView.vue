@@ -216,15 +216,15 @@ onMounted(loadProblems)
   margin-bottom: 22px;
 }
 
-.py-bank-header__intro h1 {
-  margin: 0;
-  color: #17233a;
+  .py-bank-header__intro h1 {
+    margin: 0;
+    color: var(--hp-ink);
   font-size: 28px;
 }
 
-.py-bank-header__intro p {
-  margin: 7px 0 0;
-  color: #718096;
+  .py-bank-header__intro p {
+    margin: 7px 0 0;
+    color: var(--hp-muted);
   font-size: 14px;
 }
 
@@ -248,13 +248,13 @@ onMounted(loadProblems)
   margin-bottom: 10px;
 }
 
-.py-bank-progress__head strong {
-  color: #17233a;
+  .py-bank-progress__head strong {
+    color: var(--hp-ink);
   font-size: 14px;
 }
 
-.py-bank-progress__head span {
-  color: #718096;
+  .py-bank-progress__head span {
+    color: var(--hp-muted);
   font-size: 12px;
 }
 
@@ -392,10 +392,10 @@ onMounted(loadProblems)
   flex: 1;
   min-width: 0;
   height: 38px;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: #17233a;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--hp-ink);
   font-size: 14px;
 }
 
@@ -479,8 +479,8 @@ onMounted(loadProblems)
   height: 14px;
 }
 
-.py-bank-title {
-  color: #17233a;
+  .py-bank-title {
+    color: var(--hp-ink);
   font-size: 14px;
   font-weight: 600;
 }

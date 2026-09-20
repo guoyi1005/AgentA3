@@ -126,7 +126,7 @@ const {
 
 .simple-studio__config header p {
   margin: 0 0 16px;
-  color: #718096;
+  color: var(--hp-muted);
   font-size: 13px;
 }
 
@@ -134,9 +134,9 @@ const {
   display: grid;
   gap: 8px;
   margin-bottom: 14px;
-  color: #42566b;
+  color: var(--hp-ink);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .feature-textarea {
@@ -154,9 +154,9 @@ const {
 .form-grid label {
   display: grid;
   gap: 8px;
-  color: #42566b;
+  color: var(--hp-ink);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .generate-button {
@@ -169,10 +169,10 @@ const {
   gap: 6px;
   margin-top: 10px;
   padding: 12px;
-  border: 1px solid #edc9c3;
-  border-radius: 8px;
-  color: #a23f34;
-  background: #fff8f7;
+  border: 1px solid #d9b0ab;
+  border-radius: var(--hp-r-md);
+  color: #a54239;
+  background: #faf0ee;
   font-size: 12px;
 }
 
@@ -187,8 +187,10 @@ const {
 
 .answer {
   padding: 22px;
-  border: 1px solid #e0e7ed;
-  border-radius: 8px;
+  border: 1px solid rgba(23, 23, 23, 0.16);
+  border-radius: var(--hp-r-md);
+  background: #fffdf8;
+  color: var(--hp-ink);
   white-space: pre-wrap;
   line-height: 1.85;
 }
@@ -201,7 +203,8 @@ const {
 
 .image-results img {
   width: 100%;
-  border-radius: 8px;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-md);
 }
 
 .result-empty {
@@ -214,8 +217,8 @@ const {
 .result-empty i {
   width: 48px;
   height: 40px;
-  border: 2px solid #cad7e2;
-  border-radius: 8px;
+  border: 2px solid var(--hp-ink);
+  border-radius: 12px;
 }
 
 @media (max-width: 960px) {

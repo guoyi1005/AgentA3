@@ -116,118 +116,410 @@ const injectResumeBridge = () => {
   doc.head.appendChild(script)
 }
 
-// 应用 iframe 内嵌页面的样式覆盖：隐藏顶部导航栏、改为淡蓝色商务风、撑满高度
-const applyFrameStyleOverrides = () => {
-  const frame = formFrameRef.value
-  const doc = frame && frame.contentDocument
-  if (!doc || doc.getElementById('__resume_style_overrides__')) return
-  const style = doc.createElement('style')
-  style.id = '__resume_style_overrides__'
-  style.textContent = `
-    /* 隐藏顶部导航栏（简历制作/模板市场/AI深度交流/网站配置/简历模板设计） */
-    header.navbar { display: none !important; }
+/* ===== 主题：内嵌页面跟随本站奶油色系，夜间模式跟随内嵌应用右下角的切换按钮 ===== */
+// 深色状态由内嵌应用自己维护（它会 class="dark" 并写入自身 localStorage），这里只做镜像
+const isDark = ref(false)
+let themeObserver = null
+let appliedTheme = ''
+let earlyThemeTimer = null
 
-    /* 撑满 iframe 高度，左侧简历板块与右侧模板市场等高、底部不留空白 */
-    .resume[data-v-d9239fc1] { height: 100vh !important; }
+// 内嵌应用自带的变量名，这里按本站配色重写
+const FRAME_THEME_VARS = {
+  light: `
+    --bg-color: #f5f0e7 !important;
+    --bg-card-color: #fbf8f2 !important;
+    --text-color: #171717 !important;
+    --text-color2: #fbf8f2 !important;
+    --primary-color: #171717 !important;
+    --primary-color-hover: #2f2f2f !important;
+    --primary-color-active: #000000 !important;
+    --card-color: #fbf8f2 !important;
+    --color-1: #3c4750 !important;
+    --color-2: #55636e !important;
+    --color-3: #77868f !important;
+    --color-4: #9dafbb !important;
+    --color-5: #bccbd6 !important;
+    --color-6: #d7e2e9 !important;
+    --color-7: #eef3f6 !important;
+    --chat-bg: #f5f0e7 !important;
+    --chat-user-bubble: #171717 !important;
+    --chat-ai-bubble: #fbf8f2 !important;
+    --chat-bubble-shadow: rgba(23, 23, 23, 0.06) !important;
+    --chat-input-bg: #fbf8f2 !important;
+    --chat-border: rgba(23, 23, 23, 0.16) !important;
+    --chat-input-text: #171717 !important;
+    --chat-placeholder: #a8a196 !important;
+  `,
+  dark: `
+    --bg-color: #171717 !important;
+    --bg-card-color: #242424 !important;
+    --text-color: #f5f0e7 !important;
+    --text-color2: #171717 !important;
+    --primary-color: #ead574 !important;
+    --primary-color-hover: #e2cc66 !important;
+    --primary-color-active: #d6bf55 !important;
+    --card-color: #242424 !important;
+    --color-1: #e6dfd2 !important;
+    --color-2: #cfc7b8 !important;
+    --color-3: #b3ab9d !important;
+    --color-4: #8d8579 !important;
+    --color-5: #5c5c5c !important;
+    --color-6: #3d3d3d !important;
+    --color-7: #2a2a2a !important;
+    --chat-bg: #171717 !important;
+    --chat-user-bubble: #ead574 !important;
+    --chat-ai-bubble: #242424 !important;
+    --chat-bubble-shadow: rgba(0, 0, 0, 0.3) !important;
+    --chat-input-bg: #242424 !important;
+    --chat-border: rgba(245, 240, 231, 0.18) !important;
+    --chat-input-text: #f5f0e7 !important;
+    --chat-placeholder: #8d8579 !important;
+  `,
+}
 
-    /* 顶部按钮排（预览填充/清空数据/导出JSON/导入JSON）整体右移，为返回按钮留出空间 */
-    .btn-group[data-v-d9239fc1] {
-      gap: 12px !important;
-      padding-left: 130px !important;
-      justify-content: center !important;
-    }
-    .btn-group[data-v-d9239fc1] .ant-btn {
-      padding-left: 10px !important;
-      padding-right: 10px !important;
-    }
+const FRAME_BASE_CSS = `
+  /* 隐藏内嵌应用的顶部导航栏（简历制作/模板市场/AI深度交流/网站配置/简历模板设计） */
+  header.navbar { display: none !important; }
 
-    /* 淡蓝色商务风主题变量（替换原有紫色系） */
-    :root {
-      --bg-color: #f2f7fc !important;
-      --bg-card-color: #ffffff !important;
-      --text-color: #1f2937 !important;
-      --text-color2: #ffffff !important;
-      --primary-color: #2f6fed !important;
-      --primary-color-hover: #245ac2 !important;
-      --primary-color-active: #1d4f9e !important;
-      --card-color: #ffffff !important;
-      --color-1: #0e2f5e !important;
-      --color-2: #17468a !important;
-      --color-3: #2f6fed !important;
-      --color-4: #3a78c4 !important;
-      --color-5: #5b96d6 !important;
-      --color-6: #93bae3 !important;
-      --color-7: #e2edf9 !important;
-      --chat-bg: #f5f8fc !important;
-      --chat-user-bubble: var(--color-4) !important;
-      --chat-ai-bubble: var(--bg-card-color) !important;
-      --chat-bubble-shadow: rgba(15, 23, 42, 0.06) !important;
-      --chat-input-bg: var(--bg-card-color) !important;
-      --chat-border: #dbe7f4 !important;
-      --chat-input-text: var(--text-color) !important;
-      --chat-placeholder: #8aa2bd !important;
-    }
+  /* 撑满高度，底部不留空白 */
+  .resume[data-v-d9239fc1] { height: 100vh !important; }
+
+  /* 顶部按钮排右移，为左上角的返回按钮留出空间 */
+  .btn-group[data-v-d9239fc1] {
+    gap: 12px !important;
+    padding-left: 130px !important;
+    justify-content: center !important;
+  }
+  .btn-group[data-v-d9239fc1] .ant-btn {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+`
+
+const FRAME_COMPONENT_CSS = {
+  light: `
     body { background-color: var(--bg-color) !important; }
-
-    /* Ant Design 主色：按钮 / 链接 / 焦点 / 选中态统一改为蓝色 */
+    .ant-btn { border-radius: 999px !important; }
     .ant-btn-primary,
     .ant-btn-primary:not(:disabled):focus,
     .ant-btn-primary:not(:disabled):active {
-      background-color: #2f6fed !important;
-      border-color: #2f6fed !important;
+      background-color: #171717 !important;
+      border-color: #171717 !important;
+      color: #fbf8f2 !important;
     }
     .ant-btn-primary:not(:disabled):hover {
-      background-color: #245ac2 !important;
-      border-color: #245ac2 !important;
+      background-color: #2f2f2f !important;
+      border-color: #2f2f2f !important;
     }
     .ant-btn-primary.ant-btn-background-ghost {
       background: transparent !important;
-      color: #2f6fed !important;
-      border-color: #2f6fed !important;
+      color: #171717 !important;
+      border-color: #171717 !important;
     }
     .ant-btn-primary.ant-btn-background-ghost:not(:disabled):hover {
-      background: transparent !important;
-      color: #245ac2 !important;
-      border-color: #245ac2 !important;
+      color: #2f2f2f !important;
+      border-color: #2f2f2f !important;
     }
-    .ant-btn-link,
-    a { color: #2f6fed !important; }
-    .ant-input:focus,
-    .ant-input-focused,
+    .ant-btn-dangerous {
+      color: #a54239 !important;
+      border-color: #dcb6b1 !important;
+      background: transparent !important;
+    }
+    .ant-btn-link, a { color: #171717 !important; }
+    .ant-input, .ant-select-selector, .ant-picker, .ant-input-number {
+      background-color: #fbf8f2 !important;
+      color: #171717 !important;
+    }
+    .ant-input:focus, .ant-input-focused,
     .ant-select-focused .ant-select-selector,
     .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
-    .ant-picker:hover,
-    .ant-picker-focused,
-    .ant-input-number:hover,
-    .ant-input-number-focused {
-      border-color: #5b96d6 !important;
-      box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.12) !important;
+    .ant-picker:hover, .ant-picker-focused,
+    .ant-input-number:hover, .ant-input-number-focused {
+      border-color: #171717 !important;
+      box-shadow: 0 0 0 2px rgba(23, 23, 23, 0.08) !important;
     }
     .ant-checkbox-checked .ant-checkbox-inner,
     .ant-radio-checked .ant-radio-inner,
     .ant-switch-checked {
-      border-color: #2f6fed !important;
-      background-color: #2f6fed !important;
+      border-color: #171717 !important;
+      background-color: #171717 !important;
     }
-    .ant-radio-checked .ant-radio-inner::after {
-      background-color: #2f6fed !important;
-    }
+    .ant-radio-checked .ant-radio-inner::after { background-color: #171717 !important; }
     .ant-select-item-option-selected {
-      background-color: rgba(47, 111, 237, 0.1) !important;
-      color: #2f6fed !important;
+      background-color: rgba(234, 213, 116, 0.4) !important;
+      color: #171717 !important;
     }
     .ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-arrow,
-    .ant-message .anticon {
-      color: #2f6fed !important;
+    .ant-message .anticon { color: #171717 !important; }
+    .ant-typography { color: #171717 !important; }
+
+    /* 编辑器面板 / 表单控件统一为奶油色系（antd 默认灰蓝描边与文字） */
+    body, .ant-upload-wrapper, .ant-upload-text, .ant-form-item-label > label { color: #171717 !important; }
+    .ant-btn:not(.ant-btn-primary) { color: #171717 !important; }
+    .ant-alert, .ant-alert-content, .ant-collapse, .ant-collapse-item, .ant-collapse-content,
+    .ant-select, .ant-tour, .ant-upload, .ant-picker, .ant-input-number {
+      color: #171717 !important;
     }
-  `
+    .ant-input { border-color: rgba(23, 23, 23, 0.16) !important; }
+    .ant-input-wrapper, .ant-input-group { color: #171717 !important; }
+    .ant-select-selector, .ant-upload.ant-upload-select {
+      border-color: rgba(23, 23, 23, 0.16) !important;
+    }
+    .upload-area { color: #6f6a60 !important; }
+    .preview { background-color: #f7f2e8 !important; }
+    .ant-upload.ant-upload-select { background-color: transparent !important; }
+    .ant-btn-default, .ant-btn-dashed {
+      background-color: #fbf8f2 !important;
+      border-color: rgba(23, 23, 23, 0.16) !important;
+    }
+    .ant-btn-default:not(:disabled):hover {
+      background-color: #f3eee3 !important;
+      border-color: #171717 !important;
+    }
+    .ant-collapse {
+      background-color: #fbf8f2 !important;
+      border-color: rgba(23, 23, 23, 0.16) !important;
+    }
+    .ant-collapse > .ant-collapse-item { border-color: rgba(23, 23, 23, 0.12) !important; }
+    .ant-collapse > .ant-collapse-item > .ant-collapse-header {
+      background-color: #f7f2e8 !important;
+      color: #171717 !important;
+    }
+    .ant-collapse-content {
+      background-color: #fbf8f2 !important;
+      border-top-color: rgba(23, 23, 23, 0.12) !important;
+    }
+    .ant-collapse-content-box { color: #171717 !important; }
+    .ant-input-group-addon {
+      background-color: #f3eee3 !important;
+      border-color: rgba(23, 23, 23, 0.16) !important;
+      color: #6f6a60 !important;
+    }
+    .ant-alert-info {
+      background-color: #f7f2e8 !important;
+      border-color: rgba(23, 23, 23, 0.16) !important;
+    }
+    .ant-alert-info .ant-alert-message,
+    .ant-alert-info .ant-alert-description,
+    .ant-alert-info .anticon { color: #171717 !important; }
+    .ant-select-arrow, .module-drag-handle, .anticon-menu, .anticon-down,
+    .anticon-plus, .anticon-close, .anticon-close-circle { color: #a8a196 !important; }
+    .upload-area, .ant-upload.ant-upload-drag {
+      background-color: #f7f2e8 !important;
+      border-color: rgba(23, 23, 23, 0.2) !important;
+    }
+    .upload-area .anticon, .ant-upload-text, .ant-upload-hint { color: #6f6a60 !important; }
+    .setting { background-color: rgba(23, 23, 23, 0.04) !important; }
+    .ant-tour-inner {
+      border: 1px solid #222222 !important;
+      background-color: #fbf8f2 !important;
+      box-shadow: none !important;
+    }
+    .ant-tour-title, .ant-tour-description, .ant-tour-content { color: #171717 !important; }
+    .ant-tour-indicator.ant-tour-indicator-active { background-color: #171717 !important; }
+    .ant-tour-indicator { background-color: rgba(23, 23, 23, 0.15) !important; }
+    .ant-tooltip-inner, .ant-popover-inner { background-color: #fbf8f2 !important; color: #171717 !important; }
+  `,
+  dark: `
+    body { background-color: var(--bg-color) !important; color: #f5f0e7 !important; }
+    .ant-btn { border-radius: 999px !important; }
+    .ant-btn-primary,
+    .ant-btn-primary:not(:disabled):focus,
+    .ant-btn-primary:not(:disabled):active {
+      background-color: #ead574 !important;
+      border-color: #ead574 !important;
+      color: #171717 !important;
+    }
+    .ant-btn-primary:not(:disabled):hover {
+      background-color: #e2cc66 !important;
+      border-color: #e2cc66 !important;
+    }
+    .ant-btn-primary.ant-btn-background-ghost {
+      background: transparent !important;
+      color: #ead574 !important;
+      border-color: #ead574 !important;
+    }
+    .ant-btn-primary.ant-btn-background-ghost:not(:disabled):hover {
+      color: #e2cc66 !important;
+      border-color: #e2cc66 !important;
+    }
+    .ant-btn-default, .ant-btn-dashed {
+      background-color: #242424 !important;
+      border-color: rgba(245, 240, 231, 0.22) !important;
+      color: #f5f0e7 !important;
+    }
+    .ant-btn-dangerous {
+      color: #e8a9a2 !important;
+      border-color: rgba(232, 169, 162, 0.45) !important;
+      background: transparent !important;
+    }
+    .ant-btn-link, a { color: #ead574 !important; }
+    .ant-input, .ant-select-selector, .ant-picker, .ant-input-number {
+      background-color: #242424 !important;
+      color: #f5f0e7 !important;
+      border-color: rgba(245, 240, 231, 0.2) !important;
+    }
+    .ant-input:focus, .ant-input-focused,
+    .ant-select-focused .ant-select-selector,
+    .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+    .ant-picker:hover, .ant-picker-focused,
+    .ant-input-number:hover, .ant-input-number-focused {
+      border-color: #ead574 !important;
+      box-shadow: 0 0 0 2px rgba(234, 213, 116, 0.16) !important;
+    }
+    .ant-collapse, .ant-collapse-item, .ant-collapse-content {
+      background-color: transparent !important;
+      border-color: rgba(245, 240, 231, 0.14) !important;
+    }
+    .ant-collapse-content-box, .ant-collapse-header { color: #f5f0e7 !important; }
+    .ant-checkbox-inner, .ant-radio-inner {
+      background-color: #242424 !important;
+      border-color: rgba(245, 240, 231, 0.28) !important;
+    }
+    .ant-checkbox-checked .ant-checkbox-inner,
+    .ant-radio-checked .ant-radio-inner,
+    .ant-switch-checked {
+      border-color: #ead574 !important;
+      background-color: #ead574 !important;
+    }
+    .ant-select-item-option-selected {
+      background-color: rgba(234, 213, 116, 0.18) !important;
+      color: #ead574 !important;
+    }
+    .ant-card, .ant-modal-content, .ant-drawer-content, .ant-dropdown-menu,
+    .ant-select-dropdown, .ant-tour-inner, .ant-popover-inner {
+      background-color: #242424 !important;
+      color: #f5f0e7 !important;
+    }
+    .ant-tour-content, .ant-tour-title, .ant-typography { color: #f5f0e7 !important; }
+    .ant-message .anticon, .ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-arrow {
+      color: #ead574 !important;
+    }
+
+    /* 深色下的编辑器面板 / 表单控件 */
+    body, .ant-upload-wrapper, .ant-upload-text, .ant-form-item-label > label { color: #f5f0e7 !important; }
+    .ant-btn:not(.ant-btn-primary) { color: #f5f0e7 !important; }
+    .ant-alert, .ant-alert-content, .ant-collapse, .ant-collapse-item, .ant-collapse-content,
+    .ant-select, .ant-tour, .ant-upload, .ant-picker, .ant-input-number {
+      color: #f5f0e7 !important;
+    }
+    .ant-input { border-color: rgba(245, 240, 231, 0.2) !important; }
+    .ant-input-wrapper, .ant-input-group { color: #f5f0e7 !important; }
+    .ant-select-selector, .ant-upload.ant-upload-select {
+      border-color: rgba(245, 240, 231, 0.2) !important;
+    }
+    .upload-area { color: #b9b1a4 !important; }
+    .preview { background-color: #1f1f1f !important; }
+    .ant-upload.ant-upload-select { background-color: transparent !important; }
+    .ant-collapse > .ant-collapse-item > .ant-collapse-header {
+      background-color: #242424 !important;
+      color: #f5f0e7 !important;
+    }
+    .ant-collapse-content-box { color: #f5f0e7 !important; }
+    .ant-input-group-addon {
+      background-color: #2a2a2a !important;
+      border-color: rgba(245, 240, 231, 0.16) !important;
+      color: #b9b1a4 !important;
+    }
+    .ant-alert-info {
+      background-color: #242424 !important;
+      border-color: rgba(245, 240, 231, 0.16) !important;
+    }
+    .ant-alert-info .ant-alert-message,
+    .ant-alert-info .ant-alert-description,
+    .ant-alert-info .anticon { color: #f5f0e7 !important; }
+    .ant-select-arrow, .module-drag-handle, .anticon-menu, .anticon-down,
+    .anticon-plus, .anticon-close, .anticon-close-circle { color: #8d8579 !important; }
+    .upload-area, .ant-upload.ant-upload-drag {
+      background-color: #242424 !important;
+      border-color: rgba(245, 240, 231, 0.2) !important;
+    }
+    .upload-area .anticon, .ant-upload-text, .ant-upload-hint { color: #b9b1a4 !important; }
+    .setting { background-color: rgba(245, 240, 231, 0.06) !important; }
+    .ant-tour-inner {
+      border: 1px solid rgba(245, 240, 231, 0.18) !important;
+      box-shadow: none !important;
+    }
+    .ant-tour-indicator.ant-tour-indicator-active { background-color: #ead574 !important; }
+    .ant-tour-indicator { background-color: rgba(245, 240, 231, 0.2) !important; }
+  `,
+}
+
+const buildFrameStyle = (dark) => {
+  const mode = dark ? 'dark' : 'light'
+  return `${FRAME_BASE_CSS}
+    :root { ${FRAME_THEME_VARS[mode]} }
+    ${FRAME_COMPONENT_CSS[mode]}`
+}
+
+// 读取内嵌应用当前的深浅色状态
+const readFrameTheme = () => {
+  const frame = formFrameRef.value
+  const doc = frame && frame.contentDocument
+  if (!doc) return false
+  const root = doc.documentElement
+  return root.classList.contains('dark') || root.getAttribute('theme') === 'dark'
+}
+
+// 注入（或按当前深浅色重新注入）内嵌页面样式；内嵌应用切到深色时也要把本站覆盖样式换成深色版
+const applyFrameStyleOverrides = (force = false) => {
+  const frame = formFrameRef.value
+  const doc = frame && frame.contentDocument
+  if (!doc) return
+  const dark = isDark.value
+  const mode = dark ? 'dark' : 'light'
+  if (!force && appliedTheme === mode && doc.getElementById('__resume_style_overrides__')) return
+  appliedTheme = mode
+  const existed = doc.getElementById('__resume_style_overrides__')
+  if (existed) existed.remove()
+  const style = doc.createElement('style')
+  style.id = '__resume_style_overrides__'
+  style.textContent = buildFrameStyle(dark)
   doc.head.appendChild(style)
+}
+
+// 同步内嵌应用的深浅色状态到本站（页面外壳跟着一起切换）
+const syncFrameTheme = () => {
+  isDark.value = readFrameTheme()
+  applyFrameStyleOverrides(true)
+}
+
+// 监听内嵌应用切主题（右下角圆形按钮点击后会给 <html> 加 class="dark"）
+const observeFrameTheme = () => {
+  const frame = formFrameRef.value
+  const doc = frame && frame.contentDocument
+  if (!doc) return
+  themeObserver?.disconnect()
+  themeObserver = new MutationObserver(() => {
+    if (readFrameTheme() !== isDark.value) syncFrameTheme()
+  })
+  themeObserver.observe(doc.documentElement, { attributes: true, attributeFilter: ['class', 'theme'] })
+}
+
+// iframe 完全加载（含字体/图片）较慢，这里在解析早期先尝试注入，避免先闪一下应用自带主题
+const scheduleEarlyTheme = () => {
+  window.clearTimeout(earlyThemeTimer)
+  let attempts = 0
+  const tick = () => {
+    attempts += 1
+    const doc = formFrameRef.value && formFrameRef.value.contentDocument
+    if (doc && doc.head) {
+      isDark.value = readFrameTheme()
+      applyFrameStyleOverrides()
+    }
+    if (attempts < 12) earlyThemeTimer = window.setTimeout(tick, 350)
+  }
+  earlyThemeTimer = window.setTimeout(tick, 350)
 }
 
 // iframe 加载完成后注入桥接，并应用等待中的模板切换
 const onFrameLoaded = () => {
   injectResumeBridge()
-  applyFrameStyleOverrides()
+  isDark.value = readFrameTheme()
+  appliedTheme = ''
+  applyFrameStyleOverrides(true)
+  observeFrameTheme()
+  window.clearTimeout(earlyThemeTimer)
   // 同步嵌入应用当前模板到右侧选中态
   const frame = formFrameRef.value
   const bridge = frame && frame.contentWindow && frame.contentWindow.__resumeBridge
@@ -276,6 +568,7 @@ const handleImageError = (event, folderPath) => {
 // 加载模板列表
 onMounted(async () => {
   window.addEventListener('message', handleFrameMessage)
+  scheduleEarlyTheme()
   try {
     const response = await fetch('/airesume/templates.json')
     const data = await response.json()
@@ -290,12 +583,24 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('message', handleFrameMessage)
+  themeObserver?.disconnect()
+  window.clearTimeout(earlyThemeTimer)
 })
 </script>
 
 <template>
-  <div class="two-column-layout">
+  <div class="two-column-layout" :class="{ 'is-dark': isDark }">
     <AppTabBar />
+
+    <!-- 左上角返回按钮（模板市场与工作台两种模式都显示） -->
+    <div class="workspace-toolbar">
+      <button class="workspace-back" type="button" aria-label="返回简历页面" @click="router.push('/ai-tools/resume')">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m15 5-7 7 7 7" />
+        </svg>
+        <span>返回</span>
+      </button>
+    </div>
 
     <!-- 仅模板市场模式：整页展示模板市场（迁移前形态，不跳转） -->
     <template v-if="isTemplatesMode">
@@ -310,14 +615,6 @@ onUnmounted(() => {
 
     <!-- 工作台模式：两栏布局（左侧简历填写与预览 + 右侧模板市场） -->
     <template v-else>
-      <!-- 返回简历页面按钮 -->
-      <button class="workspace-back" type="button" aria-label="返回简历页面" @click="router.push('/ai-tools/resume')">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m15 5-7 7 7 7" />
-        </svg>
-        <span>返回</span>
-      </button>
-      
       <!-- 两栏布局容器：左侧表单 + 右侧模板市场 -->
       <div class="layout-container">
         <!-- 第 1 栏：简历填写与预览 -->
@@ -376,32 +673,39 @@ onUnmounted(() => {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: #f2f7fc;
+  background-color: var(--hp-bg);
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
-.workspace-back {
+.workspace-toolbar {
   position: fixed;
   top: 72px;
   left: 16px;
   z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspace-back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 36px;
   padding: 0 14px;
-  border: 1px solid #d0e3fd;
-  border-radius: 18px;
-  background: #ffffff;
-  color: #245ac2;
-  font-size: 14px;
+  border: 1px solid var(--hp-line);
+  border-radius: 999px;
+  background: var(--hp-cream);
+  color: var(--hp-ink);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .workspace-back:hover {
-  background: #eef4fb;
-  border-color: #9dc0ec;
+  background: var(--hp-ink);
+  color: var(--hp-cream);
 }
 
 .workspace-back svg {
@@ -451,7 +755,7 @@ onUnmounted(() => {
   height: calc(100vh - 60px);
   border: none;
   display: block;
-  background: #f2f7fc;
+  background: var(--hp-bg);
 }
 
 /* ===== 第 2 栏：模板市场（关闭自动拉伸）===== */
@@ -460,8 +764,8 @@ onUnmounted(() => {
   min-width: 220px;
   max-width: 250px;
   height: 100%;
-  background-color: #f2f7fc;
-  border-left: 1px solid #d0e3fd;
+  background-color: var(--hp-bg);
+  border-left: 1px solid var(--hp-line);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -470,8 +774,8 @@ onUnmounted(() => {
 
 .templates-header {
   padding: 12px 8px;
-  border-bottom: 1px solid #d0e3fd;
-  background-color: #ffffff;
+  border-bottom: 1px solid rgba(23, 23, 23, 0.12);
+  background-color: var(--hp-cream);
   flex-shrink: 0;
 }
 
@@ -479,14 +783,14 @@ onUnmounted(() => {
   margin: 0 0 4px 0;
   font-size: 15px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--hp-ink);
   text-align: center;
 }
 
 .templates-subtitle {
   margin: 0;
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--hp-muted);
   text-align: center;
 }
 
@@ -523,17 +827,24 @@ onUnmounted(() => {
 
 /* 调整卡片高度 - 增大缩略图尺寸 */
 .template-preview-box {
-  border-radius: 6px;
+  border-radius: var(--hp-r-md);
   overflow: hidden;
-  background-color: #ffffff;
-  border: 1px solid #e8f0fe;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  background-color: #fffdf8;
+  border: 1px solid rgba(23, 23, 23, 0.16);
   transition: all 0.2s ease;
   aspect-ratio: 210 / 297; /* A4 纸张比例 */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 6px;
+}
+
+.template-card:hover .template-preview-box {
+  border-color: var(--hp-ink);
+}
+
+.template-card.active .template-preview-box {
+  border-color: var(--hp-ink);
 }
 
 .template-thumbnail {
@@ -548,7 +859,7 @@ onUnmounted(() => {
   text-align: center;
   font-size: 10px; /* 适应更窄容器 */
   font-weight: 500;
-  color: #475569;
+  color: var(--hp-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -560,6 +871,57 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* ===== 夜间模式（本站外壳）===== */
+
+.two-column-layout.is-dark {
+  background-color: #171717;
+}
+
+.two-column-layout.is-dark .templates-full-frame {
+  background: #171717;
+}
+
+.two-column-layout.is-dark .workspace-back {
+  background: #242424;
+  border-color: rgba(245, 240, 231, 0.24);
+  color: #f5f0e7;
+}
+
+.two-column-layout.is-dark .workspace-back:hover {
+  background: #f5f0e7;
+  border-color: #f5f0e7;
+  color: #171717;
+}
+
+.two-column-layout.is-dark .templates-panel {
+  background-color: #171717;
+  border-left-color: rgba(245, 240, 231, 0.16);
+}
+
+.two-column-layout.is-dark .templates-header {
+  background-color: #1f1f1f;
+  border-bottom-color: rgba(245, 240, 231, 0.16);
+}
+
+.two-column-layout.is-dark .templates-title {
+  color: #f5f0e7;
+}
+
+.two-column-layout.is-dark .templates-subtitle,
+.two-column-layout.is-dark .template-name {
+  color: #b9b1a4;
+}
+
+.two-column-layout.is-dark .template-preview-box {
+  background-color: #242424;
+  border-color: rgba(245, 240, 231, 0.16);
+}
+
+.two-column-layout.is-dark .template-card:hover .template-preview-box,
+.two-column-layout.is-dark .template-card.active .template-preview-box {
+  border-color: var(--hp-yellow);
 }
 
 </style>

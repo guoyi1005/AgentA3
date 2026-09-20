@@ -441,11 +441,86 @@ const todayLabel = computed(() => {
   return `${now.getMonth() + 1} 月 ${now.getDate()} 日 · ${weekday}`
 })
 
-const focusJob = {
-  title: 'Python 开发工程师',
+/* 目标岗位：由用户从「岗位探索」已有的岗位方向里自选，选择结果记录在本地，刷新后依然生效 */
+const TARGET_JOB_STORAGE_KEY = 'home_target_job'
+const DEFAULT_TARGET_JOB = 'Python 开发工程师'
+
+const defaultTargetProfile = {
+  title: DEFAULT_TARGET_JOB,
   matchRate: 72,
   note: '距离目标岗位还差两项能力，先补齐 FastAPI 与项目实战。',
   skills: ['Python', 'MySQL', 'FastAPI', '项目实战'],
+}
+
+const targetJobTitle = ref(localStorage.getItem(TARGET_JOB_STORAGE_KEY) || DEFAULT_TARGET_JOB)
+const isJobPickerOpen = ref(false)
+const jobKeyword = ref('')
+
+// 岗位库直接复用页面里已有的行业方向数据，不额外造数据
+const jobOptions = computed(() => {
+  const seen = new Map()
+  for (const detail of Object.values(categoryDetails)) {
+    for (const group of detail.groups || []) {
+      for (const title of group.tags || []) {
+        if (!seen.has(title)) {
+          seen.set(title, { title, category: detail.title, group: group.name })
+        }
+      }
+    }
+  }
+  if (!seen.has(DEFAULT_TARGET_JOB)) {
+    seen.set(DEFAULT_TARGET_JOB, { title: DEFAULT_TARGET_JOB, category: '互联网与人工智能', group: '开发与技术' })
+  }
+  return [...seen.values()]
+})
+
+const filteredJobOptions = computed(() => {
+  const keyword = jobKeyword.value.trim().toLowerCase()
+  const list = keyword
+    ? jobOptions.value.filter(
+        (job) =>
+          job.title.toLowerCase().includes(keyword) ||
+          job.category.includes(keyword) ||
+          job.group.includes(keyword),
+      )
+    : jobOptions.value
+  return list.slice(0, 80)
+})
+
+const targetJob = computed(() => {
+  const title = targetJobTitle.value
+  const option = jobOptions.value.find((job) => job.title === title)
+  if (title === DEFAULT_TARGET_JOB) {
+    return { ...defaultTargetProfile, category: option?.category || '', group: option?.group || '' }
+  }
+  return {
+    title,
+    category: option?.category || '',
+    group: option?.group || '',
+    matchRate: null,
+    note: '完成岗位体检后，这里会显示匹配度与技能差距。',
+    skills: [],
+  }
+})
+
+function openJobPicker() {
+  jobKeyword.value = ''
+  isJobPickerOpen.value = true
+}
+
+function closeJobPicker() {
+  isJobPickerOpen.value = false
+  jobKeyword.value = ''
+}
+
+function selectTargetJob(title) {
+  targetJobTitle.value = title
+  try {
+    localStorage.setItem(TARGET_JOB_STORAGE_KEY, title)
+  } catch {
+    /* 本地存储不可用时仅本次会话生效 */
+  }
+  closeJobPicker()
 }
 
 const todayPlan = ref([
@@ -573,44 +648,96 @@ const recommendJobs = computed(() => {
         </div>
 
         <div class="hp-hero__visual">
-          <svg class="hp-hero__art" viewBox="0 0 320 300" role="img" aria-label="学习中的学生插画">
-                <circle cx="196" cy="142" r="112" fill="#EAD574" />
-                <path d="M126 244c0-44 14-70 34-70s34 26 34 70z" fill="#BED2E4" stroke="#171717" stroke-width="3" />
-                <circle cx="160" cy="140" r="30" fill="#FBF8F2" stroke="#171717" stroke-width="3" />
-              <path d="M130 136c2-20 14-30 30-30s28 10 30 30c-8-8-18-11-30-11s-22 3-30 11z" fill="#171717" />
-              <circle cx="150" cy="141" r="2.6" fill="#171717" />
-              <circle cx="170" cy="141" r="2.6" fill="#171717" />
-              <path
-                d="M152 152c4 4 12 4 16 0"
-                fill="none"
-                stroke="#171717"
-                stroke-width="2.6"
-                stroke-linecap="round"
-              />
-              <path
-                d="M112 244l16-48h64l16 48z"
-                fill="#FBF8F2"
-                stroke="#171717"
-                stroke-width="3"
-                stroke-linejoin="round"
-              />
-              <path d="M122 238l12-34h52l12 34z" fill="#BCC99C" />
-              <path d="M134 206c-10 8-16 22-18 34" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round" />
-              <path d="M186 206c10 8 16 22 18 34" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round" />
-              <path
-                d="M262 244l4-18h20l4 18z"
-                fill="#EEC3CF"
-                stroke="#171717"
-                stroke-width="3"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M276 224c0-16-8-24-18-24 0 12 8 22 18 24z"
-                fill="#BCC99C"
-                stroke="#171717"
-                stroke-width="3"
-                stroke-linejoin="round"
-              />
+          <svg class="hp-hero__art" viewBox="0 0 320 300" role="img" aria-label="坐在电脑前学习的学生插画">
+                <!-- 背景色块 -->
+                <circle cx="200" cy="150" r="112" fill="#EAD574" />
+                <circle cx="272" cy="72" r="15" fill="none" stroke="#171717" stroke-width="3" />
+
+                <!-- 桌上绿植 -->
+                <path d="M257 268l5-26h30l5 26z" fill="#EEC3CF" stroke="#171717" stroke-width="3" stroke-linejoin="round" />
+                <rect x="255" y="236" width="44" height="8" rx="4" fill="#EEC3CF" stroke="#171717" stroke-width="3" />
+                <path
+                  d="M275 236c-1-17-10-27-23-29 1 16 10 27 23 29z"
+                  fill="#BCC99C"
+                  stroke="#171717"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M278 236c3-13 12-21 22-21-1 12-10 20-22 21z"
+                  fill="#BCC99C"
+                  stroke="#171717"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+
+                <!-- 脖子 -->
+                <path d="M141 140h18v38h-18z" fill="#FBF8F2" stroke="#171717" stroke-width="3" stroke-linejoin="round" />
+
+                <!-- 卫衣 -->
+                <path
+                  d="M116 258c0-46 6-90 26-100a12 12 0 0 1 16 0c20 10 26 54 26 100z"
+                  fill="#BED2E4"
+                  stroke="#171717"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path d="M138 168c6 9 18 9 24 0" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round" />
+                <circle cx="150" cy="206" r="11" fill="#EAD574" stroke="#171717" stroke-width="3" />
+
+                <!-- 头部 -->
+                <ellipse cx="180" cy="110" rx="12" ry="13" fill="#171717" />
+                <circle cx="150" cy="116" r="28" fill="#FBF8F2" stroke="#171717" stroke-width="3" />
+                <path d="M122 118a28 28 0 0 1 56 0z" fill="#171717" />
+                <path
+                  d="M122 118c1-13 8-22 20-24 9-1 16 2 21 8-9-3-21 2-27 10-3 3-5 4-8 6z"
+                  fill="#171717"
+                />
+                <circle cx="140" cy="124" r="3" fill="#171717" />
+                <circle cx="160" cy="124" r="3" fill="#171717" />
+                <path d="M143 133c4 5 12 5 16 0" fill="none" stroke="#171717" stroke-width="2.6" stroke-linecap="round" />
+                <ellipse cx="133" cy="131" rx="6" ry="4" fill="#EEC3CF" />
+                <ellipse cx="167" cy="131" rx="6" ry="4" fill="#EEC3CF" />
+
+                <!-- 笔记本 -->
+                <path
+                  d="M120 200h60l18 46h-96z"
+                  fill="#FBF8F2"
+                  stroke="#171717"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path d="M132 208h36l10 30h-56z" fill="#BCC99C" />
+                <circle cx="148" cy="223" r="7" fill="#EAD574" stroke="#171717" stroke-width="2.6" />
+                <path d="M96 246h108l10 14H86z" fill="#FBF8F2" stroke="#171717" stroke-width="3" stroke-linejoin="round" />
+
+                <!-- 手臂与手 -->
+                <path
+                  d="M128 194c-9 10-15 26-15 40"
+                  fill="none"
+                  stroke="#BED2E4"
+                  stroke-width="14"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M172 194c9 10 15 26 15 40"
+                  fill="none"
+                  stroke="#BED2E4"
+                  stroke-width="14"
+                  stroke-linecap="round"
+                />
+                <circle cx="112" cy="244" r="8" fill="#FBF8F2" stroke="#171717" stroke-width="3" />
+                <circle cx="188" cy="244" r="8" fill="#FBF8F2" stroke="#171717" stroke-width="3" />
+
+                <!-- 马克杯 -->
+                <path
+                  d="M48 236h26v18a8 8 0 0 1-8 8H56a8 8 0 0 1-8-8z"
+                  fill="#EEC3CF"
+                  stroke="#171717"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path d="M75 242c7 0 7 10 0 10" fill="none" stroke="#171717" stroke-width="3" stroke-linecap="round" />
           </svg>
         </div>
       </section>
@@ -668,13 +795,20 @@ const recommendJobs = computed(() => {
           <article class="hp-card hp-target">
             <header class="hp-card__head">
               <h3 class="hp-card__title">我的目标岗位</h3>
-              <span class="hp-badge">{{ focusJob.matchRate }}% 匹配</span>
+              <div class="hp-target__tools">
+                <span v-if="targetJob.matchRate" class="hp-badge">{{ targetJob.matchRate }}% 匹配</span>
+                <span v-else class="hp-badge hp-badge--quiet">待体检</span>
+                <button class="hp-target__edit" type="button" @click="openJobPicker">更换</button>
+              </div>
             </header>
-            <p class="hp-target__job">{{ focusJob.title }}</p>
-            <p class="hp-target__note">{{ focusJob.note }}</p>
-            <div class="hp-tags">
-              <span v-for="skill in focusJob.skills" :key="skill" class="hp-tag">{{ skill }}</span>
+            <p class="hp-target__job">{{ targetJob.title }}</p>
+            <p class="hp-target__note">{{ targetJob.note }}</p>
+            <div v-if="targetJob.skills.length" class="hp-tags">
+              <span v-for="skill in targetJob.skills" :key="skill" class="hp-tag">{{ skill }}</span>
             </div>
+            <p v-else-if="targetJob.category" class="hp-target__meta">
+              所属方向：{{ targetJob.category }}<template v-if="targetJob.group"> · {{ targetJob.group }}</template>
+            </p>
             <button class="hp-link hp-link--start" type="button" @click="router.push('/career/nebula')">
               查看岗位星图 →
             </button>
@@ -823,6 +957,46 @@ const recommendJobs = computed(() => {
           </li>
         </ul>
       </section>
+
+      <!-- 选择目标岗位 -->
+      <Teleport to="body">
+        <div v-if="isJobPickerOpen" class="hp-modal" @click.self="closeJobPicker">
+          <div class="hp-modal__card" role="dialog" aria-label="选择目标岗位">
+            <header class="hp-modal__head">
+              <h3>选择目标岗位</h3>
+              <button class="hp-modal__close" type="button" aria-label="关闭" @click="closeJobPicker">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </header>
+            <div class="hp-modal__body">
+              <input
+                v-model="jobKeyword"
+                class="hp-modal__search"
+                type="search"
+                placeholder="搜索岗位，例如：前端、算法、产品"
+              />
+              <ul class="hp-modal__list">
+                <li v-for="job in filteredJobOptions" :key="job.title">
+                  <button
+                    class="hp-modal__item"
+                    :class="{ 'is-on': job.title === targetJob.title }"
+                    type="button"
+                    @click="selectTargetJob(job.title)"
+                  >
+                    <span class="hp-modal__job">{{ job.title }}</span>
+                    <span class="hp-modal__cat">{{ job.category }}</span>
+                  </button>
+                </li>
+                <li v-if="!filteredJobOptions.length" class="hp-modal__empty">
+                  没有找到匹配的岗位，换个关键词试试
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </Teleport>
 
       <footer class="hp-footer">
         <p>© 2026 数智诊断港 | 本平台数据仅用于学术研究与个人职业发展规划</p>
@@ -1267,6 +1441,194 @@ const recommendJobs = computed(() => {
   color: var(--hp-ink);
   font-size: 12px;
   font-weight: 600;
+}
+
+.hp-badge--quiet {
+  background: rgba(23, 23, 23, 0.08);
+  color: var(--hp-muted);
+}
+
+.hp-target__tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.hp-target__edit {
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--hp-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hp-ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.hp-target__edit:hover {
+  background: var(--hp-ink);
+  color: var(--hp-cream);
+}
+
+.hp-target__meta {
+  margin: 0;
+  color: var(--hp-muted);
+  font-size: 13px;
+}
+
+/* ---------- 目标岗位选择弹窗 ---------- */
+
+.hp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(23, 23, 23, 0.42);
+}
+
+.hp-modal__card {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: min(640px, calc(100vh - 48px));
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
+  overflow: hidden;
+}
+
+.hp-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(23, 23, 23, 0.12);
+}
+
+.hp-modal__head h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.hp-modal__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(23, 23, 23, 0.16);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hp-muted);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.hp-modal__close:hover {
+  color: var(--hp-ink);
+  background: rgba(23, 23, 23, 0.06);
+}
+
+.hp-modal__close svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.hp-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 20px 24px 24px;
+}
+
+.hp-modal__search {
+  width: 100%;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid rgba(23, 23, 23, 0.24);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hp-ink);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.18s ease;
+}
+
+.hp-modal__search:focus {
+  border-color: var(--hp-ink);
+}
+
+.hp-modal__search::placeholder {
+  color: #a8a196;
+}
+
+.hp-modal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 400px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.hp-modal__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.hp-modal__item:hover {
+  background: rgba(23, 23, 23, 0.05);
+}
+
+.hp-modal__item.is-on {
+  border-color: var(--hp-line);
+  background: var(--hp-yellow);
+}
+
+.hp-modal__job {
+  color: var(--hp-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hp-modal__cat {
+  color: var(--hp-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.hp-modal__item.is-on .hp-modal__cat {
+  color: #6a5f3a;
+}
+
+.hp-modal__empty {
+  padding: 22px 0;
+  color: var(--hp-muted);
+  font-size: 13px;
+  text-align: center;
 }
 
 .hp-target__job {

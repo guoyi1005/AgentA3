@@ -2448,42 +2448,42 @@ function handleUpload(event) {
 
 <style scoped>
 .campus-ai {
-  --primary: #1e3a5f;
-  --primary-hover: #284d78;
-  --primary-soft: #edf3f8;
-  --accent: #356c9f;
-  --bg: #f4f7fa;
-  --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --text: #172033;
-  --muted: #6b788a;
-  --subtle: #94a0af;
-  --line: #dfe6ee;
-  --line-strong: #cbd5e1;
-  --shadow: 0 10px 28px rgba(30, 58, 95, 0.08);
+  --primary: var(--hp-ink, #171717);
+  --primary-hover: #2f2f2f;
+  --primary-soft: #f7f2e8;
+  --accent: var(--hp-ink, #171717);
+  --bg: var(--hp-bg, #f5f0e7);
+  --surface: var(--hp-cream, #fbf8f2);
+  --surface-soft: #f7f2e8;
+  --text: var(--hp-ink, #171717);
+  --muted: #6f6a60;
+  --subtle: #a8a196;
+  --line: rgba(23, 23, 23, 0.16);
+  --line-strong: rgba(23, 23, 23, 0.28);
+  --shadow: 0 0 0 rgba(0, 0, 0, 0);
   min-width: 320px;
   min-height: 100vh;
   padding-top: 60px;
   color: var(--text);
   background: var(--bg);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   transition: color .25s ease, background .25s ease;
 }
 
 .campus-ai[data-theme="dark"] {
-  --primary: #8eb9e3;
-  --primary-hover: #a8cdf0;
-  --primary-soft: #1a2a3d;
-  --accent: #75a8d8;
-  --bg: #0e1621;
-  --surface: #141f2c;
-  --surface-soft: #182534;
-  --text: #edf3f9;
-  --muted: #a4b1c0;
-  --subtle: #7c8b9d;
-  --line: #29384a;
-  --line-strong: #3a4c60;
-  --shadow: 0 12px 34px rgba(0, 0, 0, .22);
+  --primary: #ead574;
+  --primary-hover: #e2cc66;
+  --primary-soft: #2a2a2a;
+  --accent: #ead574;
+  --bg: #171717;
+  --surface: #242424;
+  --surface-soft: #1f1f1f;
+  --text: #f5f0e7;
+  --muted: #b9b1a4;
+  --subtle: #8d8579;
+  --line: rgba(245, 240, 231, 0.16);
+  --line-strong: rgba(245, 240, 231, 0.28);
+  --shadow: 0 0 0 rgba(0, 0, 0, 0);
 }
 
 .campus-ai :deep(*) { box-sizing: border-box; }
@@ -3322,4 +3322,27 @@ function handleUpload(event) {
   .result-panel { border: 0; box-shadow: none; }
   .markdown-preview { max-height: none; overflow: visible; }
 }
+/* ===== 本站配色覆盖（配合上方设计变量，清掉残留的蓝色与投影） ===== */
+.file-type-icon--text,
+.file-type-icon--generic { background: var(--hp-muted); }
+.workflow-state-dot {
+  background: #7d8a5c;
+  box-shadow: none;
+}
+.workflow-state-dot.failed {
+  background: #b4544c;
+  box-shadow: none;
+}
+.workflow-state-dot.running {
+  background: var(--hp-ink);
+  box-shadow: none;
+}
+.chat-composer,
+.segmented button.active,
+.meeting-card:hover,
+.meeting-card.active,
+.surface,
+.side-nav,
+.message-list,
+.workflow-panel { box-shadow: none; }
 </style>

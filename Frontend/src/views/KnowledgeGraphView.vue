@@ -117,4 +117,41 @@ onMounted(load)
 .py-dark .evidence span{color:#8893aa}
 .py-dark .evidence strong{color:#e9eefb}
 .py-dark .detail-block p{color:#93a0b8}
+/* ===== 本站配色覆盖（奶油底 + 黑色描边 + 低饱和马卡龙色） ===== */
+.graph-header h1 { color: var(--hp-ink); }
+.graph-header p,
+.graph-description,
+.detail-block p,
+.evidence span,
+.graph-legend,
+.graph-node small { color: var(--hp-muted); }
+.stage-heads span {
+  border-color: var(--hp-line);
+  border-radius: 999px;
+  color: var(--hp-ink);
+  background: var(--hp-cream);
+}
+.graph-plane:before { background: repeating-linear-gradient(90deg, transparent 0, transparent 189px, rgba(23, 23, 23, 0.12) 190px); }
+.graph-plane line { stroke: rgba(23, 23, 23, 0.28); }
+.graph-node {
+  border-color: var(--hp-line);
+  border-radius: 14px;
+  color: var(--hp-ink);
+  background: var(--hp-cream);
+}
+.graph-node > span { background: var(--hp-muted); }
+.graph-node--mastered { border-color: var(--hp-line); background: #e7ead9; }
+.graph-node--mastered > span { background: #7d8a5c; }
+.graph-node--weak { border-color: var(--hp-line); background: #f7e2de; }
+.graph-node--weak > span { background: #b4544c; }
+.graph-node--learning,
+.graph-node--available { border-color: var(--hp-line); background: #e3ebf2; }
+.graph-node--learning > span,
+.graph-node--available > span { background: #5b7b93; }
+.graph-node.selected { box-shadow: 0 0 0 3px rgba(23, 23, 23, 0.12); }
+.graph-legend i { background: var(--hp-muted); }
+.evidence,
+.evidence div + div { border-color: rgba(23, 23, 23, 0.12); }
+.graph-detail h3,
+.detail-block h4 { color: var(--hp-ink); }
 </style>

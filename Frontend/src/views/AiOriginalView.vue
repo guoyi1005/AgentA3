@@ -106,8 +106,8 @@ const router = useRouter()
 .watermark-page {
   min-height: 100vh;
   padding-top: 60px;
-  color: #1f2937;
-  background: #f4f7fb;
+  color: var(--hp-ink);
+  background: var(--hp-bg);
 }
 
 .watermark-content {
@@ -124,9 +124,9 @@ const router = useRouter()
   margin-bottom: 20px;
 }
 
-.watermark-heading h1 {
-  margin: 0;
-  color: #17233a;
+  .watermark-heading h1 {
+    margin: 0;
+    color: var(--hp-ink);
   font-size: 24px;
   text-align: center;
 }
@@ -137,13 +137,13 @@ const router = useRouter()
   height: 40px;
   place-items: center;
   border: 0;
-  border-radius: 8px;
-  color: #334155;
+  border-radius: 999px;
+  color: var(--hp-ink);
   background: transparent;
 }
 
 .back-button:hover {
-  background: #e8eef5;
+  background: rgba(23, 23, 23, 0.06);
 }
 
 .back-button svg {
@@ -171,21 +171,19 @@ const router = useRouter()
   min-height: 300px;
   flex-direction: column;
   padding: 24px;
-  border: 1px solid #e1e7ed;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(30, 43, 76, .04);
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
 }
 
 .watermark-card--interactive {
   cursor: pointer;
-  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  transition: border-color .18s ease, transform .18s ease;
 }
 
 .watermark-card--interactive:hover,
 .watermark-card--interactive:focus-visible {
-  border-color: #aebed0;
-  box-shadow: 0 12px 28px rgba(30, 43, 76, .1);
+  border-color: var(--hp-ink);
   outline: none;
   transform: translateY(-2px);
 }
@@ -194,9 +192,9 @@ const router = useRouter()
   display: grid;
   width: 56px;
   height: 56px;
-  place-items: center;
-  border-radius: 12px;
-  color: #1f2937;
+    place-items: center;
+    border-radius: 12px;
+    color: var(--hp-ink);
   background: #f4f6f8;
 }
 
@@ -211,15 +209,15 @@ const router = useRouter()
   stroke-width: 1.8;
 }
 
-.watermark-card h2 {
-  margin: 24px 0 0;
-  color: #17233a;
+  .watermark-card h2 {
+    margin: 24px 0 0;
+    color: var(--hp-ink);
   font-size: 20px;
 }
 
-.watermark-card p {
-  margin: 10px 0 0;
-  color: #718096;
+  .watermark-card p {
+    margin: 10px 0 0;
+    color: var(--hp-muted);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -240,9 +238,9 @@ const router = useRouter()
   margin-top: 42px;
 }
 
-.common-actions > h2 {
-  margin: 0 0 18px;
-  color: #17233a;
+  .common-actions > h2 {
+    margin: 0 0 18px;
+    color: var(--hp-ink);
   font-size: 20px;
 }
 
@@ -257,30 +255,28 @@ const router = useRouter()
   align-items: center;
   justify-content: center;
   gap: 14px;
-  border: 1px solid #e1e7ed;
-  border-radius: 10px;
-  color: #334155;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(30, 43, 76, .04);
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
+  color: var(--hp-ink);
 }
 
 .common-action-card--interactive {
   cursor: pointer;
-  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  transition: border-color .18s ease, transform .18s ease;
 }
 
 .common-action-card--interactive:hover,
 .common-action-card--interactive:focus-visible {
-  border-color: #aebed0;
-  box-shadow: 0 12px 28px rgba(30, 43, 76, .1);
+  border-color: var(--hp-ink);
   outline: none;
   transform: translateY(-2px);
 }
 
 .common-action-card svg {
-  width: 30px;
-  height: 30px;
-  color: #718096;
+    width: 30px;
+    height: 30px;
+    color: var(--hp-muted);
 }
 
 .common-action-card span {

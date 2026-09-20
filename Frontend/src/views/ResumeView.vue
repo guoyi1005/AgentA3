@@ -255,21 +255,6 @@ const groupedResumes = computed(() => {
 
       <!-- AI 助手卡片 -->
       <div class="ai-assist-grid">
-        <router-link to="/ai-tools/resume/wizard/edit" class="ai-card">
-          <div class="ai-card-inner">
-            <div class="ai-icon-wrap blue">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 16a1 1 0 1 1 1-1 1 1 0 0 1-1 1Zm0-6a1 1 0 1 1 1-1 1 1 0 0 1-1 1Z"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            </div>
-            <div class="ai-content">
-              <h3>AI 一键改简历</h3>
-              <p>上传现有简历，AI 自动优化内容与布局，智能适配目标岗位</p>
-            </div>
-            <div class="ai-arrow">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </div>
-          </div>
-        </router-link>
-
         <router-link to="/ai-tools/resume/wizard" class="ai-card">
           <div class="ai-card-inner">
             <div class="ai-icon-wrap green">
@@ -446,7 +431,7 @@ const groupedResumes = computed(() => {
 /* ===== AI 助手区域 ===== */
 .ai-assist-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
 }
@@ -928,12 +913,6 @@ const groupedResumes = computed(() => {
 }
 
 /* ===== 响应式 ===== */
-
-@media (max-width: 860px) {
-  .ai-assist-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
 
 @media (max-width: 560px) {
   .container {

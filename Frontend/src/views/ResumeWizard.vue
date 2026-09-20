@@ -170,10 +170,6 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
           <div class="input-actions">
             <span class="input-hint" v-if="finished">已完成全部问题</span>
             <span class="input-hint" v-else>{{ questionCount }}/{{ totalQuestions }} 个问题</span>
-            <div class="input-btns">
-              <button class="btn-ghost-sm">跳过</button>
-              <button class="btn-ghost-sm">返回</button>
-            </div>
           </div>
         </div>
       </div>
@@ -215,15 +211,19 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
 .wizard {
   min-height: 100vh;
   padding-top: 62px;
-  background: #f8fafc;
+  color: var(--hp-ink);
+  background: var(--hp-bg);
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .wizard-layout {
   display: grid;
-  grid-template-columns: 1fr 420px;
+  grid-template-columns: minmax(0, 1fr) 420px;
   grid-template-rows: minmax(0, 1fr);
   height: calc(100vh - 62px);
-  max-width: 1400px;
+  width: min(1440px, calc(100% - 48px));
+  padding: 20px 0 24px;
+  gap: 20px;
   margin: 0 auto;
 }
 
@@ -232,8 +232,10 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: 1px solid #e2e8f0;
-  background: #ffffff;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
+  overflow: hidden;
 }
 
 .chat-header {
@@ -241,47 +243,49 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
   align-items: center;
   gap: 16px;
   padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(23, 23, 23, 0.12);
 }
 
 .back-link {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #64748b;
+  color: var(--hp-muted);
   text-decoration: none;
   font-size: 13px;
   font-weight: 600;
 }
 
 .back-link:hover {
-  color: #0f172a;
+  color: var(--hp-ink);
 }
 
 .chat-header h1 {
   flex: 1;
   margin: 0;
-  color: #0f172a;
-  font-size: 18px;
+  color: var(--hp-ink);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .progress-badge {
   padding: 4px 12px;
   border-radius: 999px;
-  color: #2563eb;
-  background: #eff6ff;
-  font-size: 13px;
-  font-weight: 700;
+  color: var(--hp-ink);
+  background: var(--hp-yellow);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .progress-bar-wrap {
   height: 3px;
-  background: #e2e8f0;
+  background: rgba(23, 23, 23, 0.08);
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2563eb, #0891b2);
+  background: var(--hp-ink);
   transition: width 0.4s ease;
 }
 
@@ -312,35 +316,36 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
   place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  color: #ffffff;
-  background: #2563eb;
+  border: 1px solid var(--hp-line);
+  border-radius: 10px;
+  color: var(--hp-ink);
+  background: var(--hp-blue);
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
 }
 
-.user-avatar { background: #0f766e; }
+.user-avatar { background: var(--hp-green); }
 
 .chat-text {
   margin: 0;
   padding: 12px 16px;
-  border-radius: 12px;
-  color: #1f2937;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  color: var(--hp-ink);
+  background: #f3eee3;
+  border: 1px solid rgba(23, 23, 23, 0.12);
   font-size: 14px;
   line-height: 1.7;
 }
 
 .chat-user .chat-text {
-  color: #ffffff;
-  background: #2563eb;
+  color: var(--hp-cream);
+  background: var(--hp-ink);
   border: 0;
 }
 
 .chat-time {
-  color: #94a3b8;
+  color: var(--hp-muted);
   font-size: 11px;
   padding: 0 4px;
   margin-top: 4px;
@@ -359,7 +364,7 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #94a3b8;
+  background: #a8a196;
   animation: dotBounce 1.4s ease-in-out infinite;
 }
 
@@ -374,8 +379,7 @@ watch(messages, () => nextTick(() => scrollToBottom()), { deep: true })
 /* ===== 输入栏 ===== */
 .input-bar {
   padding: 16px 24px;
-  border-top: 1px solid #e2e8f0;
-  background: #ffffff;
+  border-top: 1px solid rgba(23, 23, 23, 0.12);
 }
 
 .input-row {
@@ -388,19 +392,24 @@ textarea {
   min-height: 48px;
   max-height: 100px;
   padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
+  border: 1px solid rgba(23, 23, 23, 0.24);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--hp-ink);
   font-size: 14px;
   line-height: 1.5;
   resize: none;
   outline: none;
   font-family: inherit;
+  transition: border-color 0.18s ease;
 }
 
 textarea:focus {
-  border-color: #2563eb;
-  background: #ffffff;
+  border-color: var(--hp-ink);
+}
+
+textarea::placeholder {
+  color: #a8a196;
 }
 
 .send-btn {
@@ -408,48 +417,25 @@ textarea:focus {
   place-items: center;
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 50%;
   border: 0;
-  color: #ffffff;
-  background: #2563eb;
+  color: var(--hp-cream);
+  background: var(--hp-ink);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.2s;
 }
 
-.send-btn:hover { background: #1d4ed8; }
-.send-btn:disabled { background: #93c5fd; cursor: not-allowed; }
+.send-btn:hover { background: #2f2f2f; }
+.send-btn:disabled { background: #d8d1c4; cursor: not-allowed; }
 
 .input-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-top: 10px;
 }
 
 .input-hint {
-  color: #94a3b8;
-  font-size: 13px;
-}
-
-.input-btns {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-ghost-sm {
-  padding: 5px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  color: #64748b;
-  background: #ffffff;
+  color: var(--hp-muted);
   font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-ghost-sm:hover {
-  background: #f8fafc;
 }
 
 /* ===== 右侧预览 ===== */
@@ -457,19 +443,22 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: #f8fafc;
-  overflow-y: auto;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
+  overflow: hidden;
 }
 
 .preview-header {
   padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(23, 23, 23, 0.12);
 }
 
 .preview-header h2 {
   margin: 0;
-  color: #0f172a;
+  color: var(--hp-ink);
   font-size: 16px;
+  font-weight: 600;
 }
 
 .preview-content {
@@ -480,11 +469,10 @@ textarea:focus {
 }
 
 .preview-card {
-  padding: 28px 24px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  padding: 26px 22px;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-md);
+  background: #fffdf8;
   font-size: 13px;
   line-height: 1.7;
 }
@@ -501,37 +489,22 @@ textarea:focus {
 
 .preview-empty p {
   margin: 0;
-  color: #94a3b8;
+  color: var(--hp-muted);
   font-size: 14px;
   line-height: 1.6;
 }
 
-.preview-name {
-  color: #0f172a;
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-
-.preview-title {
-  color: #64748b;
-  font-size: 14px;
-  margin-bottom: 8px;
+.preview-empty svg {
+  stroke: #c9c3b8;
 }
 
 .preview-target {
   margin: 0 0 18px;
   padding-bottom: 14px;
-  border-bottom: 1px solid #e2e8f0;
-  color: #0f172a;
+  border-bottom: 1px solid rgba(23, 23, 23, 0.12);
+  color: var(--hp-ink);
   font-size: 15px;
-  font-weight: 700;
-}
-
-.preview-contact {
-  color: #94a3b8;
-  font-size: 12px;
-  margin-bottom: 20px;
+  font-weight: 600;
 }
 
 .preview-section {
@@ -543,53 +516,25 @@ textarea:focus {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
-  color: #0f172a;
+  color: var(--hp-ink);
   font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
 .preview-bar {
   width: 3px;
   height: 14px;
   border-radius: 2px;
-  background: #2563eb;
+  background: var(--hp-ink);
 }
 
 .preview-text {
   margin: 0;
   padding-left: 11px;
-  color: #475569;
+  color: #55504a;
   font-size: 13px;
   line-height: 1.6;
-}
-
-.preview-item {
-  display: flex;
-  gap: 8px;
-  padding-left: 3px;
-}
-
-.preview-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #2563eb;
-  margin-top: 7px;
-  flex-shrink: 0;
-  opacity: 0.5;
-}
-
-.preview-item-title {
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.preview-item-sub {
-  color: #94a3b8;
-  font-size: 12px;
 }
 
 .preview-tags {
@@ -602,9 +547,45 @@ textarea:focus {
 .preview-tag {
   padding: 3px 10px;
   border-radius: 999px;
-  color: #2563eb;
-  background: #eff6ff;
+  color: #4c473f;
+  background: rgba(23, 23, 23, 0.06);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
+}
+
+/* ===== 响应式 ===== */
+
+@media (max-width: 1080px) {
+  .wizard-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 72vh auto;
+    height: auto;
+    gap: 18px;
+    padding-bottom: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .wizard-layout {
+    width: calc(100% - 32px);
+  }
+
+  .chat-header,
+  .preview-header {
+    padding: 16px 18px;
+  }
+
+  .chat-area,
+  .preview-content {
+    padding: 18px;
+  }
+
+  .input-bar {
+    padding: 14px 18px;
+  }
+
+  .chat-bubble {
+    max-width: 88%;
+  }
 }
 </style>
