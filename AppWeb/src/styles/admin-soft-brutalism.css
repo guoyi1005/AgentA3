@@ -1,0 +1,362 @@
+/*
+ * 后台 Soft Brutalism 视觉层
+ * 目标：与前台用户端统一——奶油底、黑色细描边、大圆角、低饱和马卡龙点缀；
+ * 不使用渐变、玻璃拟态、发光和明显阴影，层级由描边与留白表达。
+ * 说明：由 main.jsx 在 index.css 之后引入，集中覆盖 Ant Design 默认观感，
+ * 页面自身的业务样式仍然生效，只调整容器、描边、圆角与配色。
+ */
+
+body {
+  background: var(--hp-bg);
+  color: var(--hp-ink);
+}
+
+/* ---------- 卡片 / 面板 ---------- */
+.ant-card {
+  /* 2px 描边：奶油底上 1px 细线几乎不可见，加粗后才能形成卡片层级 */
+  border: 2px solid var(--hp-line) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--hp-cream) !important;
+  box-shadow: none !important;
+}
+
+.ant-card-bordered,
+.ant-card .ant-card-head {
+  border-bottom-color: var(--hp-line-soft) !important;
+}
+
+.ant-card .ant-card-head {
+  border-bottom: 1px solid var(--hp-line-soft);
+}
+
+.ant-card .ant-card-head-title {
+  color: var(--hp-ink);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* 嵌套在卡片内部的次级容器不要重复描边，避免"卡片套卡片"的噪音 */
+.ant-card .ant-card {
+  border-width: 1px !important;
+  border-color: var(--hp-line-soft) !important;
+}
+
+/* ---------- 按钮：黑底白字胶囊 + 奶油白次级胶囊 ---------- */
+.ant-btn {
+  border-radius: var(--radius-pill) !important;
+  box-shadow: none !important;
+}
+
+.ant-btn-primary:not(:disabled) {
+  background: var(--hp-ink) !important;
+  border-color: var(--hp-ink) !important;
+  color: var(--hp-cream) !important;
+}
+
+.ant-btn-primary:not(:disabled):hover {
+  background: #35322c !important;
+  border-color: #35322c !important;
+  color: var(--hp-cream) !important;
+}
+
+.ant-btn-default:not(:disabled) {
+  background: var(--hp-cream) !important;
+  border-color: var(--hp-line) !important;
+  color: var(--hp-ink) !important;
+}
+
+.ant-btn-default:not(:disabled):hover {
+  background: #f1ebdf !important;
+  border-color: var(--hp-line) !important;
+  color: var(--hp-ink) !important;
+}
+
+.ant-btn-text,
+.ant-btn-link {
+  border-radius: var(--radius-sm) !important;
+}
+
+.ant-btn-link {
+  color: var(--hp-ink) !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- 输入类控件：奶白底 + 深色描边 ---------- */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-picker,
+.ant-select .ant-select-selector,
+.ant-input-search .ant-input-group-addon,
+textarea.ant-input {
+  background: var(--hp-cream) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: none !important;
+}
+
+.ant-input-affix-wrapper,
+.ant-input,
+.ant-input-number,
+.ant-picker,
+.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+  border-color: var(--hp-line-soft) !important;
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-picker:hover,
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+  border-color: var(--hp-line) !important;
+}
+
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-picker-focused,
+.ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
+  border-color: var(--hp-ink) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- 浮层：下拉、气泡、弹窗、抽屉 ---------- */
+.ant-select-dropdown,
+.ant-dropdown .ant-dropdown-menu,
+.ant-picker-dropdown .ant-picker-panel-container,
+.ant-popover .ant-popover-inner,
+.ant-modal .ant-modal-content,
+.ant-drawer .ant-drawer-content,
+.ant-tooltip .ant-tooltip-inner {
+  border: 1.5px solid var(--hp-line) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--hp-cream) !important;
+  box-shadow: none !important;
+}
+
+.ant-tooltip .ant-tooltip-inner {
+  border-color: var(--hp-line);
+  background: var(--hp-ink) !important;
+  color: var(--hp-cream);
+}
+
+.ant-tooltip .ant-tooltip-arrow::before {
+  background: var(--hp-ink) !important;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: var(--hp-yellow) !important;
+  color: var(--hp-ink) !important;
+  font-weight: 600;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled),
+.ant-dropdown-menu-item-active,
+.ant-dropdown-menu-item:hover {
+  background: #f1ebdf !important;
+}
+
+/* ---------- 表格 ---------- */
+.ant-table-wrapper .ant-table {
+  background: transparent !important;
+  color: var(--hp-ink);
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th {
+  background: #f1ebdf !important;
+  color: #4a453c !important;
+  font-weight: 600;
+  border-bottom: 1px solid var(--hp-line-soft) !important;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th::before {
+  background: transparent !important;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--hp-line-soft) !important;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr:hover > td {
+  background: #f7f2e8 !important;
+}
+
+.ant-table-wrapper .ant-table-cell-fix-left,
+.ant-table-wrapper .ant-table-cell-fix-right {
+  background: var(--hp-cream);
+}
+
+/* ---------- 分页 / 标签 / 分段控件 ---------- */
+.ant-pagination .ant-pagination-item {
+  border-radius: var(--radius-sm) !important;
+  border-color: var(--hp-line-soft) !important;
+  background: var(--hp-cream);
+}
+
+.ant-pagination .ant-pagination-item-active {
+  border-color: var(--hp-ink) !important;
+  background: var(--hp-ink) !important;
+}
+
+.ant-pagination .ant-pagination-item-active a {
+  color: var(--hp-cream) !important;
+}
+
+.ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination .ant-pagination-next .ant-pagination-item-link {
+  border-radius: var(--radius-sm) !important;
+  border-color: var(--hp-line-soft) !important;
+  background: var(--hp-cream);
+}
+
+.ant-tag {
+  border-radius: var(--radius-pill) !important;
+  border: 1px solid var(--hp-line);
+  background: var(--hp-cream);
+  color: var(--hp-ink);
+  padding-inline: 10px;
+}
+
+.ant-segmented,
+.ant-segmented .ant-segmented-item,
+.ant-radio-button-wrapper {
+  border-radius: var(--radius-pill) !important;
+  box-shadow: none !important;
+}
+
+.ant-segmented {
+  background: #f1ebdf !important;
+  border: 1px solid var(--hp-line-soft);
+  padding: 3px;
+}
+
+.ant-segmented .ant-segmented-item-selected {
+  background: var(--hp-cream) !important;
+  color: var(--hp-ink) !important;
+  border: 1px solid var(--hp-line);
+}
+
+/* ---------- 其它容器 ---------- */
+.ant-empty-description {
+  color: var(--hp-muted);
+}
+
+.ant-divider {
+  border-color: var(--hp-line-soft) !important;
+}
+
+.ant-alert {
+  border-radius: var(--radius-md);
+  border-color: var(--hp-line-soft);
+}
+
+.ant-descriptions .ant-descriptions-item-label {
+  color: var(--hp-muted);
+}
+
+/* ---------- 通用工具类：页面可用于放置低饱和色块 ---------- */
+.sb-card {
+  border: 1.5px solid var(--hp-line);
+  border-radius: var(--radius-lg);
+  background: var(--hp-cream);
+  padding: 22px 24px;
+}
+
+.sb-card--pink {
+  background: var(--hp-pink);
+}
+
+.sb-card--yellow {
+  background: var(--hp-yellow);
+}
+
+.sb-card--green {
+  background: var(--hp-green);
+}
+
+.sb-card--blue {
+  background: var(--hp-blue);
+}
+
+.sb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--radius-pill);
+  background: var(--hp-cream);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--hp-ink);
+}
+
+/* 旧版页面里写死的浅蓝灰底色统一收敛到奶油色系，避免与新主题冲突 */
+:is(.pm-header, .tm-header, .cm-header, .rm-header),
+:is(.pm-search-card, .tm-search-card, .cm-search-card, .rm-search-card),
+.rm-overview-bar {
+  border-color: var(--hp-line-soft) !important;
+  background: #f7f2e8 !important;
+  backdrop-filter: none !important;
+}
+
+:is(.pm-table-card, .tm-table-card, .cm-table-card, .rm-table-card).ant-card {
+  border-color: var(--hp-line) !important;
+}
+
+:is(.pm-table-card, .tm-table-card, .cm-table-card, .rm-table-card) .ant-table,
+:is(.pm-table-card, .tm-table-card, .cm-table-card, .rm-table-card) .ant-table-tbody > tr {
+  background: transparent !important;
+  color: var(--hp-ink) !important;
+}
+
+:is(.pm-table-card, .tm-table-card, .cm-table-card, .rm-table-card) .ant-table-thead > tr > th {
+  background: #f1ebdf !important;
+  color: #4a453c !important;
+  border-bottom-color: var(--hp-line-soft) !important;
+}
+
+:is(.pm-table-card, .tm-table-card, .cm-table-card, .rm-table-card) .ant-table-tbody > tr:hover > td {
+  background: #f7f2e8 !important;
+}
+
+:is(.pm-table-card, .tm-table-card, .cm-table-card, .rm-table-card) .ant-table-tbody > tr > td {
+  border-bottom-color: var(--hp-line-soft) !important;
+  color: var(--hp-ink) !important;
+}
+
+/* ---------- 旧版页头与徽标：把蓝紫渐变收敛为奶油底 + 黑色描边 ---------- */
+.manage-header,
+.statistics-header {
+  background: var(--hp-cream) !important;
+  border-bottom: 1.5px solid var(--hp-line) !important;
+  box-shadow: none !important;
+}
+
+.manage-header h1,
+.manage-header .user-name,
+.manage-header .header-right,
+.statistics-header h1,
+.statistics-header h2,
+.statistics-header span,
+.statistics-header p {
+  color: var(--hp-ink) !important;
+  text-shadow: none !important;
+}
+
+.ai-model-config-status-icon,
+.code-canvas-logo,
+.reg-avatar,
+.stat-icon-circle {
+  background: var(--hp-yellow) !important;
+  color: var(--hp-ink) !important;
+  border: 1px solid var(--hp-line);
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+.workspace-progress-track span {
+  background: var(--hp-green) !important;
+}
+
+.discount-header-left h2::before {
+  background: var(--hp-pink) !important;
+}

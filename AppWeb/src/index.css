@@ -7,24 +7,40 @@
 }
 
 :root {
-  /* ===== MASTER.md Design Tokens ===== */
+  /* ===== Soft Brutalism 设计令牌（与前台用户端保持一致） ===== */
   /* 色彩 */
-  --color-primary: #4a7fad;
-  --color-on-primary: #ffffff;
-  --color-secondary: #7fa8cc;
-  --color-accent: #6fa9d6;
-  --color-background: #f2f7fc;
-  --color-foreground: #0f172a;
-  --color-muted: #eef4fa;
-  --color-border: #e2ecf6;
-  --color-destructive: #dc2626;
-  --color-ring: #4a7fad;
+  --color-primary: #171717;
+  --color-on-primary: #fbf8f2;
+  --color-secondary: #6f6a60;
+  --color-accent: #ead574;
+  --color-background: #f5f0e7;
+  --color-foreground: #171717;
+  --color-muted: #fbf8f2;
+  --color-border: #ddd6c7;
+  --color-destructive: #c2503f;
+  --color-ring: #171717;
+
+  /* 低饱和马卡龙辅助色 */
+  --hp-bg: #f5f0e7;
+  --hp-cream: #fbf8f2;
+  --hp-ink: #171717;
+  --hp-line: #1a1a1a;
+  --hp-line-strong: #111111;
+  --hp-line-soft: #e6e0d3;
+  /* 内容面板与页面同色：靠 2px 描边界定区域，避免出现"上下深浅突变" */
+  --hp-panel: #f5f0e7;
+  --hp-inset: #f1ebdf;
+  --hp-muted: #6f6a60;
+  --hp-pink: #eec3cf;
+  --hp-yellow: #ead574;
+  --hp-green: #bcc99c;
+  --hp-blue: #bed2e4;
 
   /* 文字层级 */
-  --text-primary: #0f172a;
-  --text-secondary: #4b5563;
-  --text-muted: #6b7280;
-  --text-faint: #9ca3af;
+  --text-primary: #171717;
+  --text-secondary: #4a453c;
+  --text-muted: #6f6a60;
+  --text-faint: #9a9384;
 
   /* 字体 */
   --font-family: 'Plus Jakarta Sans', 'Avenir Next', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -39,16 +55,17 @@
   --space-3xl: 64px;
 
   /* 圆角 */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
 
-  /* 阴影 */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  /* 阴影：该风格不使用明显阴影，层级由描边与留白表达 */
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
 
   /* 过渡 */
   --transition-fast: 150ms ease;
@@ -56,9 +73,9 @@
 
   /* 兼容旧变量名（迁移期 alias，指向新 token） */
   --brand: var(--color-primary);
-  --brand-deep: #33618f;
-  --surface: #ffffff;
-  --surface-soft: var(--color-muted);
+  --brand-deep: #171717;
+  --surface: #fbf8f2;
+  --surface-soft: #f1ebdf;
   --text-soft: var(--text-muted);
 
   font-family: var(--font-family);

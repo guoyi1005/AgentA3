@@ -3,36 +3,17 @@
   top: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  height: 100vh;
-  padding: 24px 18px;
-  background:
-    radial-gradient(ellipse 85% 60% at 15% 5%, rgba(255, 255, 255, 0.85), transparent 58%),
-    radial-gradient(ellipse 65% 50% at 90% 22%, rgba(91, 135, 184, 0.14), transparent 64%),
-    radial-gradient(ellipse 75% 55% at 30% 100%, rgba(111, 169, 214, 0.12), transparent 66%),
-    linear-gradient(180deg, #f4f9fe 0%, #e7f1fb 100%);
-  background-size: 100% 100%, 170% 170%, 160% 160%, 100% 100%;
-  animation: navbar-flow 28s ease-in-out infinite alternate;
-  color: var(--text-secondary);
-  border-right: 1px solid var(--color-border);
+  gap: 18px;
+  height: calc(100vh - 32px);
+  margin: 16px 0 16px 16px;
+  padding: 22px 16px;
+  /* 与前台一致：整块纯黑大圆角侧栏，无渐变、无玻璃拟态、无阴影 */
+  background: #171717;
+  border: 0;
+  border-radius: 22px;
+  color: rgba(251, 248, 242, 0.72);
   overflow: hidden;
   z-index: 10;
-}
-
-/* 多层光晕缓慢漂移：像淡淡的云雾在侧栏内流动（尊重系统减少动态效果设置） */
-@keyframes navbar-flow {
-  0% {
-    background-position: 0 0, 0% 0%, 0% 0%, 0 0;
-  }
-  100% {
-    background-position: 0 0, 14% 10%, -12% 8%, 0 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .navbar {
-    animation: none;
-  }
 }
 
 .navbar-brand {
@@ -40,18 +21,16 @@
   align-items: center;
   gap: 14px;
   padding: 12px;
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(74, 127, 173, 0.14);
+  background: rgba(251, 248, 242, 0.06);
+  border: 1px solid rgba(251, 248, 242, 0.16);
   flex-shrink: 0;
   transition: background var(--transition-base);
 }
 
 .navbar-brand:hover {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(251, 248, 242, 0.12);
 }
 
 .navbar-brand-mark {
@@ -59,32 +38,32 @@
   height: 46px;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #8db4da, #5c85b2);
-  color: #ffffff;
+  border-radius: 14px;
+  background: #fbf8f2;
+  color: #171717;
   font-weight: 800;
   letter-spacing: 0.08em;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .navbar-brand strong,
 .navbar-user-details strong {
   display: block;
   font-size: 18px;
-  color: var(--text-primary);
+  color: #fbf8f2;
 }
 
 .navbar-brand span,
 .navbar-user-details span,
 .navbar-section h4 {
-  color: var(--text-muted);
+  color: rgba(251, 248, 242, 0.55);
 }
 
 .navbar-user {
   position: relative;
   flex-shrink: 0;
   padding-top: 14px;
-  border-top: 1px solid rgba(74, 127, 173, 0.14);
+  border-top: 1px solid rgba(251, 248, 242, 0.14);
 }
 
 .navbar-user-trigger {
@@ -94,9 +73,9 @@
   gap: 12px;
   padding: 10px 12px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: 14px;
   background: transparent;
-  color: var(--text-secondary);
+  color: rgba(251, 248, 242, 0.72);
   cursor: pointer;
   text-align: left;
   transition: background var(--transition-base);
@@ -104,7 +83,7 @@
 
 .navbar-user-trigger:hover,
 .navbar-user-trigger[aria-expanded='true'] {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(251, 248, 242, 0.1);
 }
 
 .navbar-user-avatar {
@@ -112,9 +91,9 @@
   height: 42px;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-sm);
-  background: rgba(74, 127, 173, 0.14);
-  color: var(--color-primary);
+  border-radius: 14px;
+  background: #ead574;
+  color: #171717;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -134,19 +113,19 @@
 .navbar-user-details strong {
   font-size: 15px;
   line-height: 1.4;
-  color: var(--text-primary);
+  color: #fbf8f2;
 }
 
 .navbar-user-details span {
   display: block;
   margin-top: 2px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: rgba(251, 248, 242, 0.55);
 }
 
 .navbar-user-more {
   flex-shrink: 0;
-  color: var(--text-faint);
+  color: rgba(251, 248, 242, 0.45);
 }
 
 .navbar-user-menu {
@@ -155,12 +134,10 @@
   right: 0;
   bottom: calc(100% + 10px);
   padding: 6px;
-  border: 1px solid rgba(74, 127, 173, 0.18);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-lg);
+  border: 1.5px solid var(--hp-line);
+  border-radius: 16px;
+  background: var(--hp-cream);
+  box-shadow: none;
 }
 
 .navbar-logout {
@@ -172,9 +149,9 @@
   height: 38px;
   padding: 0 12px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--hp-ink);
   cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
@@ -187,12 +164,13 @@
 .navbar-nav {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(74, 127, 173, 0.35) transparent;
+  scrollbar-color: rgba(251, 248, 242, 0.28) transparent;
+  padding-right: 2px;
 }
 
 .navbar-nav::-webkit-scrollbar {
@@ -201,7 +179,7 @@
 
 .navbar-nav::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(74, 127, 173, 0.35);
+  background: rgba(251, 248, 242, 0.28);
 }
 
 .navbar-section h4 {
@@ -220,13 +198,13 @@
   margin-bottom: 8px;
   border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: rgba(251, 248, 242, 0.55);
   cursor: pointer;
   transition: color var(--transition-fast);
 }
 
 .navbar-section-toggle:hover h4 {
-  color: var(--text-secondary);
+  color: rgba(251, 248, 242, 0.85);
 }
 
 .navbar-section-direct {
@@ -237,7 +215,7 @@
   padding: 4px 12px 10px;
   border: 0;
   background: transparent;
-  color: var(--text-muted);
+  color: rgba(251, 248, 242, 0.55);
   cursor: pointer;
   text-align: left;
 }
@@ -250,7 +228,7 @@
 .navbar-section-direct.active,
 .navbar-section-direct:hover h4,
 .navbar-section-direct.active h4 {
-  color: #3a6a94;
+  color: #fbf8f2;
 }
 
 .navbar-links {
@@ -279,9 +257,9 @@
   width: 100%;
   padding: 10px 14px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--text-secondary);
+  color: rgba(251, 248, 242, 0.74);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -290,15 +268,16 @@
 }
 
 .navbar-link:hover {
-  background: rgba(255, 255, 255, 0.75);
-  color: var(--text-primary);
+  background: rgba(251, 248, 242, 0.1);
+  color: #fbf8f2;
 }
 
 .navbar-link.active {
-  background: rgba(74, 127, 173, 0.14);
-  color: #3a6a94;
+  /* 选中态用奶白色块，而不是高饱和蓝 */
+  background: #fbf8f2;
+  color: #171717;
   font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(74, 127, 173, 0.12);
+  box-shadow: none;
 }
 
 .navbar-link-icon {
@@ -314,8 +293,11 @@
     top: 0;
     transform: translateX(-100%);
     width: min(320px, calc(100vw - 48px));
+    height: 100vh;
+    margin: 0;
+    border-radius: 0 22px 22px 0;
     transition: transform 0.24s ease;
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
   }
 
   .navbar.open {

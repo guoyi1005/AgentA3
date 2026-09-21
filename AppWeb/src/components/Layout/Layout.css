@@ -1,15 +1,14 @@
 .layout {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 308px minmax(0, 1fr);
-  background:
-    radial-gradient(circle at top left, rgba(74, 127, 173, 0.1), transparent 30%),
-    linear-gradient(180deg, #f2f7fc, #eaf2fa 45%, #f2f7fc 100%);
+  grid-template-columns: 296px minmax(0, 1fr);
+  /* 奶油底：不再使用渐变与光晕，层级交给描边和留白 */
+  background: var(--hp-bg);
 }
 
 .layout-body {
   min-width: 0;
-  padding: 22px 24px 28px;
+  padding: 22px 26px 30px;
 }
 
 .layout-topbar {
@@ -37,13 +36,14 @@
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  background: var(--hp-cream);
+  border: 1.5px solid var(--hp-line);
+  box-shadow: none;
 }
 
 .layout-kicker {
   display: inline-flex;
-  color: var(--color-primary);
+  color: var(--hp-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -51,8 +51,10 @@
 }
 
 .layout-topbar h2 {
-  margin: 6px 0 0;
-  font-size: 28px;
+  margin: 8px 0 0;
+  font-size: 30px;
+  letter-spacing: -0.01em;
+  color: var(--hp-ink);
 }
 
 .layout-topbar-meta {
@@ -114,7 +116,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.32);
+    background: rgba(23, 23, 23, 0.34);
     border: none;
     z-index: 9;
   }

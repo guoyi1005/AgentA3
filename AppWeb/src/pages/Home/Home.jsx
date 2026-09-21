@@ -41,7 +41,8 @@ const formatTrendLabel = (item, index) => {
   return String(raw).length > 10 ? String(raw).slice(5) : raw
 }
 
-const CHART_COLORS = ['#4a7fad', '#5b8f72', '#c07a45', '#8b7bb8', '#c45c5c', '#6b8cae']
+// 图表配色与 Soft Brutalism 主题一致：以深墨色起手，其余用低饱和马卡龙色
+const CHART_COLORS = ['#171717', '#bcc99c', '#ead574', '#eec3cf', '#bed2e4', '#6f6a60']
 
 function EChart({ option, height = 280 }) {
   const chartRef = useRef(null)
