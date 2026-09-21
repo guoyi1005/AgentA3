@@ -1,5 +1,4 @@
 <script setup>
-import loginBg from '@/assets/login-bg.jpg'
 
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -123,29 +122,15 @@ async function handleRegister() {
 </script>
 
 <template>
-  <main
-    class="login-page"
-    :style="{ backgroundImage: `url(${loginBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }"
-  >
+  <main class="login-page">
     <div class="login-card">
-      <div class="card-border-glow"></div>
-
-      <div class="card-particles">
-        <span class="particle p1"></span>
-        <span class="particle p2"></span>
-        <span class="particle p3"></span>
-        <span class="particle p4"></span>
-        <span class="particle p5"></span>
-      </div>
-
       <div class="brand-area">
         <div class="brand-logo">
-          <div class="logo-ring"></div>
           <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
             <text class="logo-text" x="50%" y="50%" dominant-baseline="central" text-anchor="middle"
                   font-family="'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif"
-                  font-size="26" font-weight="900" fill="white"
-                  stroke="white" stroke-width="2"
+                  font-size="26" font-weight="900" fill="#171717"
+                  stroke="#171717" stroke-width="2"
                   style="paint-order: stroke fill;"
                   letter-spacing="1.5">A3</text>
           </svg>
@@ -307,15 +292,18 @@ async function handleRegister() {
   padding: 20px;
   position: relative;
   overflow: hidden;
+  color: var(--hp-ink);
+  background: var(--hp-bg);
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
-  background: #ffffff;
-  border-radius: 24px;
+  background: var(--hp-cream);
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
   padding: 44px 40px 36px;
-  box-shadow: 0 25px 60px rgba(37, 99, 235, 0.12), 0 8px 24px rgba(37, 99, 235, 0.06);
   position: relative;
   z-index: 1;
   overflow: hidden;
@@ -330,83 +318,6 @@ async function handleRegister() {
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
-  }
-}
-
-.card-border-glow {
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  padding: 1.5px;
-  background: linear-gradient(
-    135deg,
-    transparent 0%,
-    rgba(59, 130, 246, 0.15) 15%,
-    rgba(59, 130, 246, 0.4) 30%,
-    rgba(37, 99, 235, 0.2) 50%,
-    rgba(59, 130, 246, 0.4) 70%,
-    rgba(59, 130, 246, 0.15) 85%,
-    transparent 100%
-  );
-  background-size: 300% 300%;
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: border-flow 8s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes border-flow {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-.card-particles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  border-radius: 24px;
-}
-
-.particle {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  background: #3b82f6;
-  border-radius: 50%;
-  opacity: 0;
-  animation: particle-float 6s ease-in-out infinite;
-}
-
-.p1 { top: 12%; left: 15%; animation-delay: 0s; }
-.p2 { top: 25%; right: 18%; animation-delay: 1.2s; }
-.p3 { bottom: 30%; left: 20%; animation-delay: 2.4s; width: 2px; height: 2px; }
-.p4 { top: 50%; right: 12%; animation-delay: 3.6s; width: 4px; height: 4px; }
-.p5 { bottom: 15%; right: 25%; animation-delay: 4.8s; }
-
-@keyframes particle-float {
-  0% {
-    opacity: 0;
-    transform: translateY(0) scale(0.5);
-  }
-  20% {
-    opacity: 0.6;
-    transform: translateY(-8px) scale(1);
-  }
-  80% {
-    opacity: 0.3;
-    transform: translateY(-16px) scale(0.8);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-24px) scale(0.5);
   }
 }
 
@@ -434,111 +345,22 @@ async function handleRegister() {
   justify-content: center;
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
-  background-size: 200% 200%;
+  background: var(--hp-yellow);
+  border: 1px solid var(--hp-line);
   border-radius: 16px;
-  color: #ffffff;
+  color: var(--hp-ink);
   margin-bottom: 16px;
-  box-shadow:
-    0 8px 24px rgba(37, 99, 235, 0.3),
-    0 0 0 0 rgba(59, 130, 246, 0.4);
-  animation:
-    logo-appear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both,
-    logo-gradient 4s ease infinite 1s,
-    logo-float 3s ease-in-out infinite 1s;
-}
-
-.brand-logo .logo-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  border: 2px solid rgba(59, 130, 246, 0.4);
-  border-radius: 16px;
-  transform: translate(-50%, -50%) scale(1);
-  opacity: 0;
-  animation: logo-ring 2s ease-out infinite 1s;
+  animation: logo-appear 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
 }
 
 .brand-logo svg {
   width: 34px;
   height: 34px;
-  animation: logo-rotate 8s linear infinite 1s;
-}
-
-.brand-logo .logo-text {
-  animation: logo-text-pulse 2s ease-in-out infinite 1s;
 }
 
 @keyframes logo-appear {
-  0% {
-    opacity: 0;
-    transform: scale(0.3) rotate(-15deg);
-  }
-  60% {
-    transform: scale(1.1) rotate(3deg);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) rotate(0);
-  }
-}
-
-@keyframes logo-gradient {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes logo-float {
-  0%, 100% {
-    transform: translateY(0);
-    box-shadow:
-      0 8px 24px rgba(37, 99, 235, 0.3),
-      0 0 0 0 rgba(59, 130, 246, 0.4);
-  }
-  50% {
-    transform: translateY(-3px);
-    box-shadow:
-      0 12px 30px rgba(37, 99, 235, 0.4),
-      0 0 0 0 rgba(59, 130, 246, 0.3);
-  }
-}
-
-@keyframes logo-ring {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0.6;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.6);
-    opacity: 0;
-  }
-}
-
-@keyframes logo-rotate {
-  0%, 100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(-2deg);
-  }
-  75% {
-    transform: rotate(2deg);
-  }
-}
-
-@keyframes logo-text-pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.85;
-  }
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .brand-text-group {
@@ -550,9 +372,9 @@ async function handleRegister() {
 .brand-title {
   font-size: 34px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--hp-ink);
   margin: 0;
-  letter-spacing: 1px;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
@@ -585,29 +407,26 @@ async function handleRegister() {
 
 .form-label {
   font-size: 13px;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: var(--hp-ink);
 }
 
 .input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  background: #f8fafc;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(23, 23, 23, 0.24);
+  border-radius: 999px;
+  background: transparent;
+  transition: border-color 0.2s ease;
 }
 
 .input-wrapper:hover {
-  border-color: #bfdbfe;
-  background: #ffffff;
+  border-color: rgba(23, 23, 23, 0.4);
 }
 
 .input-wrapper:focus-within {
-  border-color: #3b82f6;
-  background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+  border-color: var(--hp-ink);
 }
 
 .form-input {
@@ -618,13 +437,12 @@ async function handleRegister() {
   outline: none;
   background: transparent;
   font-size: 14px;
-  color: #111827;
+  color: var(--hp-ink);
   font-family: inherit;
-  transition: all 0.2s ease;
 }
 
 .form-input::placeholder {
-  color: #9ca3af;
+  color: #a8a196;
 }
 
 .toggle-password {
@@ -635,17 +453,17 @@ async function handleRegister() {
   margin-right: 6px;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--hp-muted);
   font-size: 12px;
-  font-weight: 500;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  transition: color 0.18s ease, background 0.18s ease;
 }
 
 .toggle-password:hover {
-  color: #1d4ed8;
-  background: rgba(59, 130, 246, 0.1);
+  color: var(--hp-ink);
+  background: rgba(23, 23, 23, 0.06);
 }
 
 .toggle-password:active {
@@ -665,10 +483,10 @@ async function handleRegister() {
 .form-error {
   margin: 0;
   padding: 10px 14px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 10px;
-  color: #dc2626;
+  background: #faf0ee;
+  border: 1px solid #d9b0ab;
+  border-radius: var(--hp-r-md);
+  color: #a54239;
   font-size: 13px;
   animation: error-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
@@ -676,10 +494,10 @@ async function handleRegister() {
 .form-success {
   margin: 0;
   padding: 10px 14px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 10px;
-  color: #16a34a;
+  background: #e7ead9;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-md);
+  color: var(--hp-ink);
   font-size: 13px;
 }
 
@@ -701,62 +519,45 @@ async function handleRegister() {
 
 .submit-btn {
   height: 48px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #ffffff;
+  border: 1px solid var(--hp-ink);
+  border-radius: 999px;
+  background: var(--hp-ink);
+  color: var(--hp-cream);
   font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.5px;
   cursor: pointer;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3),
-              0 1px 2px rgba(37, 99, 235, 0.2);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  transition: background 0.2s ease;
 }
 
 .submit-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
+  content: none;
 }
 
 .submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4),
-              0 2px 4px rgba(37, 99, 235, 0.3);
-}
-
-.submit-btn:hover:not(:disabled)::before {
-  left: 100%;
+  background: #2f2f2f;
 }
 
 .submit-btn:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  transform: scale(0.99);
 }
 
 .submit-btn:disabled {
-  background: #bfdbfe;
+  background: #d8d1c4;
+  border-color: #d8d1c4;
+  color: #fbf8f2;
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 .btn-loading {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #ffffff;
+  border: 2px solid rgba(251, 248, 242, 0.35);
+  border-top-color: #fbf8f2;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -772,43 +573,27 @@ async function handleRegister() {
 
 .register-btn {
   height: 44px;
-  border: 1.5px solid #3b82f6;
-  border-radius: 12px;
+  border: 1px solid var(--hp-line);
+  border-radius: 999px;
   background: transparent;
-  color: #2563eb;
+  color: var(--hp-ink);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.2s ease, color 0.2s ease;
   position: relative;
-  overflow: hidden;
 }
 
 .register-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.12) 100%);
-  opacity: 0;
-  transition: opacity 0.25s ease;
+  content: none;
 }
 
 .register-btn:hover {
-  background: transparent;
-  border-color: #2563eb;
-  color: #1d4ed8;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-}
-
-.register-btn:hover::before {
-  opacity: 1;
+  color: var(--hp-cream);
+  background: var(--hp-ink);
 }
 
 .register-btn:active {
-  transform: translateY(0) scale(0.98);
+  transform: scale(0.99);
 }
 </style>
