@@ -40,7 +40,6 @@ public class CareerExplorationService {
         this.attemptRepository = attemptRepository; this.objectMapper = objectMapper;
     }
 
-    @Transactional(readOnly = true)
     public Map<String, Object> career(String careerId, Long userId) {
         Map<String, Object> map = nebulaService.getMap();
         Map<String, Object> career = findNode(map.get("careers"), careerId, "岗位不存在");

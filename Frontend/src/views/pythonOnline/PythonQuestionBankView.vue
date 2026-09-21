@@ -1,8 +1,6 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import AppTabBar from '../../components/AppTabBar.vue'
-import PythonLearningNav from '../../components/pythonOnline/PythonLearningNav.vue'
 import { usePythonProblemBank } from '../../composables/usePythonProblemBank'
 
 const router = useRouter()
@@ -38,14 +36,16 @@ onMounted(loadProblems)
 
 <template>
   <div class="feature-page py-bank-page">
-    <AppTabBar />
     <main class="py-bank-shell">
       <header class="py-bank-header">
         <div class="py-bank-header__intro">
+          <RouterLink class="py-bank-back" to="/career/nebula">
+            <span class="py-bank-back__arrow" aria-hidden="true">←</span>
+            <span>返回星途探索</span>
+          </RouterLink>
           <h1>Python 题库</h1>
           <p>在线刷题与编程练习，支持运行、提交与 AI 辅助</p>
         </div>
-        <PythonLearningNav />
       </header>
 
       <div v-if="loading && totalCount === 0" class="py-bank-state">正在加载题库…</div>
@@ -563,6 +563,58 @@ onMounted(loadProblems)
     linear-gradient(145deg, #060810 0%, #0a0d16 48%, #070911 100%);
 }
 
+.py-bank-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: max-content;
+  min-height: 34px;
+  margin-bottom: 14px;
+  padding: 7px 13px 7px 11px;
+  border: 1px solid rgba(80, 180, 255, .35);
+  border-radius: 10px;
+  color: #c8ddf2;
+  background: rgba(10, 20, 40, .75);
+  box-shadow: 0 5px 16px rgba(10, 28, 58, .24), 0 0 12px rgba(99, 102, 241, .06);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform .18s ease, color .18s ease, border-color .18s ease,
+    background-color .18s ease, box-shadow .18s ease;
+}
+
+.py-bank-back__arrow {
+  display: inline-block;
+  color: #83c7ff;
+  font-size: 15px;
+  line-height: 1;
+  transition: transform .18s ease;
+}
+
+.py-bank-back:hover {
+  transform: translateY(-1px);
+  border-color: rgba(103, 196, 255, .62);
+  color: #dcecff;
+  background: rgba(20, 36, 65, .88);
+  box-shadow: 0 7px 18px rgba(10, 28, 58, .3), 0 0 15px rgba(88, 134, 255, .16);
+}
+
+.py-bank-back:hover .py-bank-back__arrow { transform: translateX(-2px); }
+
+.py-bank-back:active {
+  transform: translateY(0);
+  background: rgba(8, 17, 34, .88);
+  box-shadow: 0 2px 8px rgba(10, 28, 58, .2);
+}
+
+.py-bank-back:focus-visible {
+  outline: 2px solid rgba(105, 190, 255, .72);
+  outline-offset: 3px;
+  border-color: rgba(103, 196, 255, .58);
+}
+
 .py-bank-shell { width: min(1480px, calc(100% - 48px)); padding: 0; }
 
 .py-bank-header__intro h1 {
@@ -724,6 +776,13 @@ onMounted(loadProblems)
 
   .col-tags {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .py-bank-back,
+  .py-bank-back__arrow {
+    transition: none;
   }
 }
 </style>

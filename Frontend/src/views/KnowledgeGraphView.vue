@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import AppTabBar from '../components/AppTabBar.vue'
 import { getPythonKnowledgeGraph } from '../api/learning'
 
 const router = useRouter()
@@ -43,10 +42,12 @@ onMounted(load)
 
 <template>
   <div class="feature-page py-dark">
-    <AppTabBar />
     <main class="graph-page">
       <header class="graph-header">
-        <div><h1>Python 知识图谱</h1><p>基于真实答题与学习路径动态更新</p></div>
+        <div>
+          <RouterLink class="py-back" to="/career/nebula">星图探索</RouterLink>
+          <h1>Python 知识图谱</h1><p>基于真实答题与学习路径动态更新</p>
+        </div>
         <input v-model="keyword" class="feature-input" placeholder="搜索知识点" />
         <div class="feature-chip-row">
           <button v-for="[value,label] in filters" :key="value" class="feature-chip" :class="{ 'feature-chip--active':status===value }" @click="status=value">{{ label }}</button>

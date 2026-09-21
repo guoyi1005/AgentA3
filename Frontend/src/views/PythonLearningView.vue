@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import AppTabBar from '../components/AppTabBar.vue'
 import {
   completePathItem,
   getPythonHome,
@@ -50,10 +49,15 @@ onMounted(load)
 
 <template>
   <div class="feature-page py-dark">
-    <AppTabBar />
     <main class="feature-container">
       <header class="feature-heading">
-        <div><h1>Python 个性化学习</h1><p>根据真实答题和学习记录规划下一步</p></div>
+        <div>
+          <RouterLink class="py-back py-back--nebula" to="/career/nebula">
+            <span class="py-back__arrow" aria-hidden="true">←</span>
+            <span>返回星途探索</span>
+          </RouterLink>
+          <h1>Python 个性化学习</h1><p>根据真实答题和学习记录规划下一步</p>
+        </div>
         <div class="feature-actions">
           <button class="feature-button" :disabled="busy === 'replan'" @click="replan">重新规划路径</button>
           <button class="feature-button feature-button--primary" @click="router.push('/career/nebula/python/resources')">生成专项资源</button>
@@ -126,4 +130,64 @@ onMounted(load)
 .py-dark .recommendation{border-color:rgba(148,163,184,.14);border-radius:16px;color:#e7ecf8;background:rgba(23,28,43,.72)}
 .py-dark .recommendation:hover{border-color:rgba(124,137,255,.45);background:rgba(52,59,94,.6)}
 .py-dark .recommendation small{color:#8893aa}
+
+.py-dark .py-back--nebula {
+  min-height: 34px;
+  margin-bottom: 14px;
+  padding: 7px 13px 7px 11px;
+  border: 1px solid rgba(80, 180, 255, 0.35);
+  border-radius: 10px;
+  color: #c8ddf2;
+  background: rgba(10, 20, 40, 0.75);
+  box-shadow: 0 5px 16px rgba(10, 28, 58, 0.24), 0 0 12px rgba(99, 102, 241, 0.06);
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+  transition: transform 0.18s ease, color 0.18s ease, border-color 0.18s ease,
+    background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.py-dark .py-back--nebula::before {
+  content: none;
+}
+
+.py-back__arrow {
+  display: inline-block;
+  margin-right: 7px;
+  color: #83c7ff;
+  font-size: 15px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.py-dark .py-back--nebula:hover {
+  transform: translateY(-1px);
+  border-color: rgba(103, 196, 255, 0.62);
+  color: #dcecff;
+  background: rgba(20, 36, 65, 0.88);
+  box-shadow: 0 7px 18px rgba(10, 28, 58, 0.3), 0 0 15px rgba(88, 134, 255, 0.16);
+}
+
+.py-back--nebula:hover .py-back__arrow {
+  transform: translateX(-2px);
+}
+
+.py-dark .py-back--nebula:active {
+  transform: translateY(0);
+  background: rgba(8, 17, 34, 0.88);
+  box-shadow: 0 2px 8px rgba(10, 28, 58, 0.2);
+}
+
+.py-dark .py-back--nebula:focus-visible {
+  outline: 2px solid rgba(105, 190, 255, 0.72);
+  outline-offset: 3px;
+  border-color: rgba(103, 196, 255, 0.58);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .py-dark .py-back--nebula,
+  .py-back__arrow {
+    transition: none;
+  }
+}
 </style>

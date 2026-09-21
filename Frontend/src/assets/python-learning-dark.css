@@ -188,3 +188,38 @@
 
 .py-dark .feature-link,
 .py-dark .feature-section__head a { color: var(--py-sky); }
+
+/* 从 Python 学习子页面返回星图探索的入口 */
+.py-dark .py-back {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  margin-bottom: 14px;
+  padding: 6px 14px 6px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
+  color: #9aa4ba;
+  background: rgba(23, 28, 43, 0.6);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.py-dark .py-back::before {
+  margin-right: 6px;
+  content: '‹';
+  font-size: 14px;
+  line-height: 1;
+}
+
+.py-dark .py-back:hover {
+  border-color: rgba(124, 137, 255, 0.5);
+  color: #ffffff;
+  background: rgba(52, 59, 94, 0.6);
+}
+
+.py-dark .py-back:focus-visible {
+  outline: 2px solid rgba(124, 137, 255, 0.75);
+  outline-offset: 2px;
+}

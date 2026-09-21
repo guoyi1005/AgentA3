@@ -45,7 +45,8 @@ function isActive(link) {
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
-  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .py-learning-nav__link:hover {
@@ -57,5 +58,9 @@ function isActive(link) {
   color: #ffffff;
   background: linear-gradient(135deg, #626bf0, #8177ed);
   box-shadow: 0 7px 22px rgba(88, 93, 220, 0.3);
+}
+
+.py-learning-nav__link:active {
+  transform: translateY(1px);
 }
 </style>

@@ -143,9 +143,18 @@ async function openTaskSkill(skill) {
   router.push({ name: 'career-nebula', params: { careerId } })
 }
 
+/**
+ * 学习星系 → 岗位星图的通用返回逻辑。
+ * - 复用同一个路由记录（career-nebula），组件实例不会重建，因此搜索关键词、
+ *   筛选条件、星图节点布局都会原样保留；这里额外恢复“进入学习星系前的岗位选中态”。
+ * - 不写死任何岗位，任何 careerId 都走同一套逻辑。
+ */
 function returnToCareerMap() {
+  const careerId = String(route.params.careerId || '')
   selectedSkill.value = null
-  selectedCareerId.value = ''
+  if (careerId && careers.value.some((career) => career.id === careerId)) {
+    selectedCareerId.value = careerId
+  }
   router.push({ name: 'career-nebula' })
 }
 
@@ -257,7 +266,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="nebula-page">
-    <AppTabBar />
+    <AppTabBar variant="product" />
 
     <main class="nebula-shell">
       <header v-if="!isLearningGalaxy" class="nebula-hero">
@@ -521,7 +530,8 @@ onBeforeUnmount(() => {
       <template v-else-if="activeCareer">
         <header class="learning-header">
           <h1>{{ activeCareer.name }} · 学习星系</h1>
-          <button type="button" @click="returnToCareerMap">
+          <!-- 未配置学习星球时只保留中央空状态里的返回按钮，避免重复入口 -->
+          <button v-if="activeCareerSkills.length" type="button" @click="returnToCareerMap">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
             返回岗位星图
           </button>
@@ -824,6 +834,7 @@ onBeforeUnmount(() => {
 .map-grid {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   opacity: 0.28;
   background-image:
     linear-gradient(rgba(37, 115, 165, 0.22) 1px, transparent 1px),
@@ -1364,7 +1375,6 @@ onBeforeUnmount(() => {
   padding: 0;
   gap: 14px;
 }
-.nebula-hero__intro,
 .python-entry {
   border: 1px solid rgba(148, 163, 184, .16);
   border-radius: 28px;
@@ -1373,23 +1383,10 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(14px);
 }
 .nebula-hero__intro {
-  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow: hidden;
-  padding: 28px 32px;
-}
-.nebula-hero__intro::after {
-  position: absolute;
-  right: -58px;
-  bottom: -98px;
-  width: 290px;
-  height: 290px;
-  border: 1px solid rgba(126, 137, 255, .26);
-  border-radius: 50%;
-  box-shadow: 0 0 0 38px rgba(106, 117, 238, .035), 0 0 0 76px rgba(106, 117, 238, .025);
-  content: '';
+  padding: 4px 8px 4px 2px;
 }
 .nebula-hero p { color: #75809a; font-size: 10px; letter-spacing: .24em; }
 .nebula-hero h1 { margin-top: 8px; color: #f5f7ff; font-size: clamp(34px, 4vw, 58px); letter-spacing: -.06em; }
@@ -1538,6 +1535,16 @@ onBeforeUnmount(() => {
 .enter-button:hover,
 .center-message button:hover,
 .modal-close-button:hover { border-color: transparent; color: #fff; background: linear-gradient(135deg, #7079fa, #8e84f0); }
+.center-message button {
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+}
+.center-message button:hover { box-shadow: 0 14px 30px rgba(96, 102, 224, .38); transform: translateY(-1px); }
+.center-message button:active {
+  transform: translateY(1px) scale(.99);
+  box-shadow: 0 4px 14px rgba(82, 88, 203, .3);
+}
+.center-message button:focus-visible { outline: 2px solid rgba(124, 137, 255, .75); outline-offset: 3px; }
 .career-description-popover,
 .learning-modal { border-color: rgba(148,163,184,.18); color: #edf2ff; background: rgba(14,18,29,.96); box-shadow: 0 28px 70px rgba(0,0,0,.46); backdrop-filter: blur(18px); }
 .career-description-popover h2,
@@ -1545,6 +1552,8 @@ onBeforeUnmount(() => {
 .career-description-popover p,
 .content-empty { color: #8e99ad; }
 .center-message { min-height: 420px; color: #8994aa; }
+/* 空状态学习星系里的返回按钮要盖在装饰网格之上，保证可点击 */
+.map-panel > .center-message { position: relative; z-index: 2; }
 
 /* 真实数据驱动的任务卡 / 统计图 / 进度面板 */
 .nebula-panels {

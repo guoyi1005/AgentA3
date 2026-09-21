@@ -8,6 +8,7 @@ import LoginView from '../views/LoginView.vue'
 import MapView from '../views/MapView.vue'
 import MessageCenterView from '../views/MessageCenterView.vue'
 import PythonLearningView from '../views/PythonLearningView.vue'
+import PythonLearningShell from '../views/pythonOnline/PythonLearningShell.vue'
 import PythonQuestionBankView from '../views/pythonOnline/PythonQuestionBankView.vue'
 import PythonPracticeView from '../views/pythonOnline/PythonPracticeView.vue'
 import KnowledgeGraphView from '../views/KnowledgeGraphView.vue'
@@ -122,10 +123,16 @@ const routes = [
     redirect: (to) => (AI_STUDIO_TOOL_IDS.includes(String(to.params.tool || '')) ? `/ai-studio/${to.params.tool}` : '/ai-tools'),
   },
   { path: '/profile-radar', name: 'profile-radar', component: ProfileRadarView },
-  { path: '/career/nebula/python', name: 'career-python-bank', component: PythonQuestionBankView },
-  { path: '/career/nebula/python/plan', name: 'career-python-plan', component: PythonLearningView },
+  {
+    path: '/career/nebula/python',
+    component: PythonLearningShell,
+    children: [
+      { path: '', name: 'career-python-bank', component: PythonQuestionBankView },
+      { path: 'plan', name: 'career-python-plan', component: PythonLearningView },
+      { path: 'knowledge-graph', name: 'career-python-knowledge-graph', component: KnowledgeGraphView },
+    ],
+  },
   { path: '/career/nebula/python/practice/:id', name: 'career-python-practice', component: PythonPracticeView },
-  { path: '/career/nebula/python/knowledge-graph', name: 'career-python-knowledge-graph', component: KnowledgeGraphView },
   { path: '/career/nebula/python/resources', name: 'career-python-resources', component: LearningResourceView },
   { path: '/learning', redirect: '/career/nebula/python' },
   { path: '/learning/plan', redirect: '/career/nebula/python/plan' },

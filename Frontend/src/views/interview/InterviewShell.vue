@@ -33,7 +33,7 @@ onMounted(() => {
 
 <template>
   <div class="interview-shell">
-    <AppTabBar />
+    <AppTabBar variant="product" />
     <div class="interview-shell__content">
       <RouterView />
     </div>
@@ -52,25 +52,4 @@ onMounted(() => {
   background: #f3efe6;
 }
 
-:deep(.app-site-header) {
-  border-bottom-color: #0d0d0c;
-  background: #171715;
-  box-shadow: none;
-}
-
-:deep(.app-site-header__brand span) { color: #d6c28a; }
-
-:deep(.app-site-header__nav a.router-link-active),
-:deep(.app-site-header__nav a.app-site-header__nav-link--active) {
-  color: #1d1c19;
-  background: #f2e8d7;
-  box-shadow: none;
-}
-
-@media (max-width: 760px) {
-  :deep(.app-site-header__inner) { width: calc(100% - 16px); gap: 8px; }
-  :deep(.app-site-header__brand) { display: none; }
-  :deep(.app-site-header__nav) { justify-content: flex-start; }
-  :deep(.app-site-header__nav a) { min-height: 34px; padding: 0 10px; font-size: 12px; }
-}
 </style>

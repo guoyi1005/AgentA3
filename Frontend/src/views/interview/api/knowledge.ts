@@ -17,8 +17,22 @@ export interface KnowledgeItem {
   keywords?: string
   suitable_level?: string
   remark?: string
+  total_attempts?: number
+  wrong_attempts?: number
+  latest_score?: number | null
+  best_score?: number | null
+  avg_score?: number | null
+  is_wrong_book?: number
+  last_attempt_at?: string | null
   created_at: string
   updated_at: string
+}
+
+export interface KnowledgePracticeSummary {
+  solved_questions: number
+  total_questions: number
+  total_attempts: number
+  correct_rate: number | null
 }
 
 export interface KnowledgeListResponse {
@@ -26,6 +40,7 @@ export interface KnowledgeListResponse {
   page: number
   page_size: number
   items: KnowledgeItem[]
+  summary?: KnowledgePracticeSummary
 }
 
 export interface KnowledgeListParams {

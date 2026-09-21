@@ -8,5 +8,7 @@ import java.util.Optional;
 
 public interface UserQuestionStatRepository extends JpaRepository<UserQuestionStat, Long> {
     Optional<UserQuestionStat> findByUserIdAndKnowledgeId(Long userId, Long knowledgeId);
+    List<UserQuestionStat> findByUserId(Long userId);
+    List<UserQuestionStat> findByUserIdAndKnowledgeIdIn(Long userId, List<Long> knowledgeIds);
     List<UserQuestionStat> findByUserIdAndIsWrongBookOrderByUpdatedAtDesc(Long userId, Integer isWrongBook);
 }

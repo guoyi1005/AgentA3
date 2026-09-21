@@ -9,6 +9,10 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  variant: {
+    type: String,
+    default: 'default',
+  },
 })
 
 const router = useRouter()
@@ -53,7 +57,13 @@ const shortcutItems = [
 </script>
 
 <template>
-  <header class="app-site-header" :class="{ 'app-site-header--embedded': embedded }">
+  <header
+    class="app-site-header"
+    :class="{
+      'app-site-header--embedded': embedded,
+      'app-site-header--product': variant === 'product',
+    }"
+  >
     <div class="app-site-header__inner">
       <RouterLink class="app-site-header__brand" to="/home">
         数智<span>诊断</span>港
@@ -207,6 +217,24 @@ const shortcutItems = [
   box-shadow: none;
 }
 
+/* AI 面试与星图探索共同使用的同一套产品导航。 */
+.app-site-header--product {
+  border-bottom-color: #0d0d0c;
+  background: #171715;
+  box-shadow: none;
+}
+
+.app-site-header--product .app-site-header__brand span {
+  color: #d6c28a;
+}
+
+.app-site-header--product .app-site-header__nav a.router-link-active,
+.app-site-header--product .app-site-header__nav a.app-site-header__nav-link--active {
+  color: #1d1c19;
+  background: #f2e8d7;
+  box-shadow: none;
+}
+
 @media (max-width: 680px) {
   .app-site-header__inner {
     width: min(100%, calc(100% - 24px));
@@ -216,5 +244,13 @@ const shortcutItems = [
   .app-site-header__brand {
     font-size: 16px;
   }
+
+}
+
+@media (max-width: 760px) {
+  .app-site-header--product .app-site-header__inner { width: calc(100% - 16px); gap: 8px; }
+  .app-site-header--product .app-site-header__brand { display: none; }
+  .app-site-header--product .app-site-header__nav { justify-content: flex-start; }
+  .app-site-header--product .app-site-header__nav a { min-height: 34px; padding: 0 10px; font-size: 12px; }
 }
 </style>

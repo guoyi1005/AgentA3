@@ -49,15 +49,15 @@
           <div class="stat-card">
             <div class="stat-label">正确率</div>
             <div class="stat-value">
-              <span class="number green">{{ progress.correctRate }}%</span>
+              <span class="number green">{{ progress.correctRate === null ? '—' : `${progress.correctRate}%` }}</span>
             </div>
             <div class="stat-icon"><img src="@/assets/interview/Chart.png" alt="正确率" /></div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">连续打卡</div>
+            <div class="stat-label">累计作答</div>
             <div class="stat-value">
-              <span class="number orange">{{ progress.streakDays }}</span>
-              <span class="unit">Days</span>
+              <span class="number orange">{{ progress.totalAttempts }}</span>
+              <span class="unit">次</span>
             </div>
             <div class="stat-icon"><img src="@/assets/interview/Fire.png" alt="连续打卡" /></div>
           </div>
@@ -68,7 +68,7 @@
           <div class="section-card question-list-card">
             <div class="section-header">
               <h3>题目列表</h3>
-              <span class="view-all">共 {{ filteredQuestions.length }} 题</span>
+              <span class="view-all">共 {{ questionTotal }} 题</span>
             </div>
 
             <div class="exam-list" v-if="paginatedQuestions.length > 0">
@@ -78,23 +78,29 @@
                 class="exam-item"
                 @click="openQuestionDetail(q)"
               >
-                <div class="exam-icon" :style="{ background: q.isSolved ? '#1f4f89' : '#3a3f4b' }">题</div>
+                <div class="exam-icon" :style="{ background: q.isSolved ? '#1f4f89' : '#3a3f4b' }">#{{ q.id }}</div>
                 <div class="exam-info">
                   <div class="exam-title">{{ q.title }}</div>
                   <div class="exam-meta">
                     <span class="tag">{{ q.position }}</span>
                     <span class="tag">{{ q.type }}</span>
                     <span class="difficulty" :class="`diff-${q.difficulty}`">{{ getDifficultyLabel(q.difficulty) }}</span>
-                    <span class="count">{{ q.knowledgePoint }}</span>
+                    <span v-for="tag in q.tags" :key="tag" class="count">{{ tag }}</span>
+                    <span class="completion" :class="{ completed: q.isSolved }">
+                      {{ q.isSolved ? `已完成 · 最近 ${q.latestScore ?? 0} 分` : '未作答' }}
+                    </span>
                   </div>
                 </div>
                 <div class="exam-arrow">›</div>
               </div>
             </div>
 
-            <div class="empty-result" v-else>
-              {{ listLoading ? '题目加载中...' : '当前筛选条件下暂无题目' }}
+            <div class="empty-result" v-else-if="listLoading">题目加载中...</div>
+            <div class="empty-result empty-result--error" v-else-if="listError">
+              <span>{{ listError }}</span>
+              <button type="button" class="retry-button" @click="loadQuestionList">重新加载</button>
             </div>
+            <div class="empty-result" v-else>暂无可用题目</div>
 
             <div class="pagination" v-if="totalPages > 1">
               <button class="page-btn" :disabled="currentPage <= 1" @click="currentPage -= 1">上一页</button>
@@ -289,7 +295,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router';
 import Sidebar from '../components/Sidebar.vue';
 import { knowledgeApi, type KnowledgeItem } from '../api/knowledge';
@@ -311,6 +317,10 @@ interface Question {
   isSolved: boolean;
   isWrong: boolean;
   isFavorite: boolean;
+  tags: string[];
+  totalAttempts: number;
+  latestScore?: number;
+  averageScore?: number;
   standardAnswer?: string;
   solution?: string;
   pitfalls?: string;
@@ -344,6 +354,8 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const currentTab = ref('');
 const listLoading = ref(false);
+const listError = ref('');
+const questionTotal = ref(0);
 
 const selectedFilters = ref<{
   position: string;
@@ -376,98 +388,15 @@ const gradingLoading = ref(false);
 
 // 进度数据
 const progress = ref({
-  totalSolved: 1284,
-  totalQuestions: 5000,
-  todaySolved: 12,
-  correctRate: 85.4,
-  streakDays: 12
+  totalSolved: 0,
+  totalQuestions: 0,
+  totalAttempts: 0,
+  correctRate: null as number | null,
 });
 
 // 分类标签
 const categoryTabs = ref<{ label: string; value: string }[]>([
   { label: '全部岗位', value: '' }
-]);
-
-// 专项练习数据
-const practiceItems = ref([
-  {
-    id: 1,
-    name: 'MySQL 深度调优',
-    description: '索引、事务、高可用',
-    icon: '📊',
-    iconBg: '#1e3a5f',
-    progress: 68,
-    progressColor: '#3a7bc8',
-    solved: 142,
-    total: 220
-  },
-  {
-    id: 2,
-    name: 'Redis 应用实战',
-    description: '缓存策略、持久化、集群',
-    icon: '⚡',
-    iconBg: '#5c3a1e',
-    progress: 30,
-    progressColor: '#faad14',
-    solved: 45,
-    total: 150
-  },
-  {
-    id: 3,
-    name: 'Spring Boot 进阶',
-    description: 'IOC/AOP 原理，自动装配',
-    icon: '🍃',
-    iconBg: '#3d5c3a',
-    progress: 88,
-    progressColor: '#52c41a',
-    solved: 264,
-    total: 300
-  },
-  {
-    id: 4,
-    name: '云原生架构 (K8s)',
-    description: 'Pod、Service、Ingress',
-    icon: '☸️',
-    iconBg: '#3a5c5c',
-    progress: 0,
-    progressColor: '#3a7bc8',
-    solved: 0,
-    total: 180
-  }
-]);
-
-// 高频真题集
-const examList = ref([
-  {
-    id: 1,
-    title: '字节跳动 2024 秋招后端笔试真题',
-    icon: '字',
-    iconBg: '#3a7bc8',
-    tag: '25题',
-    difficulty: 'hard',
-    difficultyText: '困难',
-    count: '1.2w'
-  },
-  {
-    id: 2,
-    title: '阿里巴巴 P7 级 Java 核心面试题集',
-    icon: '阿',
-    iconBg: '#fa8c16',
-    tag: '40题',
-    difficulty: 'medium',
-    difficultyText: '中等',
-    count: '8.5k'
-  },
-  {
-    id: 3,
-    title: '腾讯 2024 架构师岗高并发系统设计',
-    icon: '腾',
-    iconBg: '#52c41a',
-    tag: '12题',
-    difficulty: 'hard',
-    difficultyText: '专家',
-    count: '5.3k'
-  }
 ]);
 
 // 我的收藏（最近3条）
@@ -577,162 +506,8 @@ const currentBatchModeInfo = computed(() =>
   batchModes.find(m => m.id === currentBatchMode.value)
 );
 
-// ==================== 模拟题目数据 ====================
-const questions = ref<Question[]>([
-  {
-    id: 1,
-    title: '请简述HashMap的工作原理及线程安全问题',
-    content: 'HashMap是Java中最常用的集合类之一，请详细说明其底层数据结构、put/get操作的流程，以及为什么它不是线程安全的？',
-    position: 'Java开发',
-    type: '简答题',
-    difficulty: 3,
-    knowledgePoint: '集合框架',
-    interviewRound: '一面基础',
-    isSolved: true,
-    isWrong: false,
-    isFavorite: true,
-    standardAnswer: 'HashMap基于数组+链表/红黑树实现。put时计算key的hash值，定位到数组下标...',
-    solution: '1. 说明底层结构 2. 解释hash计算 3. 说明扩容机制 4. 解释线程不安全原因',
-    pitfalls: '容易忽略红黑树转换条件、扩容时的rehash过程',
-    keyPoints: '考察对集合框架底层原理的理解',
-    hint: '从数据结构、hash算法、冲突解决、扩容机制几个角度思考',
-    notes: []
-  },
-  {
-    id: 2,
-    title: 'JVM内存模型及垃圾回收机制',
-    content: '请描述JVM的内存区域划分，以及常见的垃圾回收算法和收集器。',
-    position: 'Java开发',
-    type: '简答题',
-    difficulty: 4,
-    knowledgePoint: 'JVM',
-    interviewRound: '二面综合',
-    isSolved: false,
-    isWrong: true,
-    isFavorite: false,
-    standardAnswer: 'JVM内存分为堆、栈、方法区、程序计数器等区域...',
-    solution: '1. 内存区域划分 2. 各区域作用 3. GC算法 4. 垃圾收集器对比',
-    pitfalls: '混淆JVM内存模型和JMM（Java内存模型）',
-    keyPoints: '考察JVM调优基础和内存管理能力',
-    hint: '先画内存结构图，再分别说明每个区域的作用',
-    notes: []
-  },
-  {
-    id: 3,
-    title: 'Spring Boot自动配置原理',
-    content: 'Spring Boot是如何实现自动配置的？请从@SpringBootApplication注解开始分析。',
-    position: 'Java开发',
-    type: '简答题',
-    difficulty: 4,
-    knowledgePoint: 'Spring',
-    interviewRound: '二面综合',
-    isSolved: false,
-    isWrong: false,
-    isFavorite: true,
-    standardAnswer: '@SpringBootApplication包含@Configuration、@EnableAutoConfiguration、@ComponentScan...',
-    solution: '1. 分析注解组成 2. 讲解@EnableAutoConfiguration 3. 说明spring.factories 4. 条件注解',
-    pitfalls: '只说自动配置，不解释具体实现机制',
-    keyPoints: '考察对Spring Boot核心原理的理解',
-    hint: '从@SpringBootApplication的元注解入手',
-    notes: []
-  },
-  {
-    id: 4,
-    title: 'Redis缓存穿透、击穿、雪崩及解决方案',
-    content: '请解释Redis使用中的三个常见问题及其应对措施。',
-    position: 'Java开发',
-    type: '简答题',
-    difficulty: 3,
-    knowledgePoint: 'Redis',
-    interviewRound: '一面基础',
-    isSolved: true,
-    isWrong: false,
-    isFavorite: false,
-    standardAnswer: '缓存穿透：查询不存在数据，解决方案布隆过滤器...',
-    solution: '分别解释三个概念，给出对应解决方案',
-    pitfalls: '混淆三个概念的区别',
-    keyPoints: '考察Redis实战经验和问题解决能力',
-    hint: '先明确三个问题的定义和区别',
-    notes: []
-  },
-  {
-    id: 5,
-    title: '线程池的核心参数及执行流程',
-    content: 'ThreadPoolExecutor有哪些核心参数？提交任务后的执行流程是怎样的？',
-    position: 'Java开发',
-    type: '简答题',
-    difficulty: 3,
-    knowledgePoint: '并发编程',
-    interviewRound: '一面基础',
-    isSolved: false,
-    isWrong: false,
-    isFavorite: false,
-    standardAnswer: '核心参数：corePoolSize、maximumPoolSize、keepAliveTime、workQueue...',
-    solution: '1. 七个参数说明 2. 任务提交流程 3. 拒绝策略',
-    pitfalls: '说不清楚任务进入队列的时机',
-    keyPoints: '考察并发编程基础',
-    hint: '结合execute方法的源码流程图',
-    notes: []
-  },
-  {
-    id: 6,
-    title: 'MySQL索引优化实战',
-    content: '如何分析和优化慢查询？explain命令的关键字段有哪些？',
-    position: 'Java开发',
-    type: '简答题',
-    difficulty: 4,
-    knowledgePoint: '数据库',
-    interviewRound: '二面综合',
-    isSolved: false,
-    isWrong: true,
-    isFavorite: true,
-    standardAnswer: '使用explain分析执行计划，关注type、key、rows、Extra等字段...',
-    solution: '1. 慢查询定位 2. explain分析 3. 索引优化策略',
-    pitfalls: '只看是否用到索引，不关注索引选择性',
-    keyPoints: '考察SQL优化能力',
-    hint: '从慢查询日志到explain分析完整流程',
-    notes: []
-  },
-  {
-    id: 7,
-    title: '消息队列如何保证消息不丢失',
-    content: '在使用Kafka/RabbitMQ等消息队列时，如何保证消息的可靠传输？',
-    position: 'Java开发',
-    type: '简答题',
-    difficulty: 4,
-    knowledgePoint: '消息队列',
-    interviewRound: '二面综合',
-    isSolved: true,
-    isWrong: false,
-    isFavorite: false,
-    standardAnswer: '生产者确认、消息持久化、消费者确认三个层面保证...',
-    solution: '分别从生产者、MQ、消费者三个角度分析',
-    pitfalls: '只考虑单一环节，不全面考虑整个链路',
-    keyPoints: '考察分布式系统消息可靠性设计',
-    hint: '画出消息流转的完整链路',
-    notes: []
-  },
-  {
-    id: 8,
-    title: '单例模式的双重检查锁定',
-    content: '手写线程安全的单例模式，并解释为什么需要双重检查？',
-    position: 'Java开发',
-    type: '编程题',
-    difficulty: 3,
-    knowledgePoint: '设计模式',
-    interviewRound: '一面基础',
-    isSolved: true,
-    isWrong: false,
-    isFavorite: true,
-    standardAnswer: 'public class Singleton { private volatile static Singleton instance; ... }',
-    solution: '1. 私有构造器 2. volatile关键字 3. 双重检查逻辑',
-    pitfalls: '忘记volatile关键字，导致指令重排序问题',
-    keyPoints: '考察设计模式与并发基础',
-    hint: '考虑指令重排序对单例的影响',
-    notes: []
-  }
-]);
-
+// 题目只来自后端题库；接口无数据时保持真实空状态。
+const questions = ref<Question[]>([]);
 // ==================== 计算属性 ====================
 const hasActiveFilters = computed(() => {
   return Object.values(selectedFilters.value).some(v => v !== '');
@@ -763,54 +538,9 @@ const activeFilterTags = computed(() => {
   return tags;
 });
 
-const filteredQuestions = computed(() => {
-  let result = questions.value;
-
-  // 搜索过滤
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    result = result.filter(q => 
-      q.title.toLowerCase().includes(query) || 
-      q.content.toLowerCase().includes(query) ||
-      q.knowledgePoint.toLowerCase().includes(query)
-    );
-  }
-
-  // 筛选过滤
-  if (selectedFilters.value.position) {
-    result = result.filter(q => q.position.toLowerCase().includes(selectedFilters.value.position.toLowerCase()));
-  }
-  if (selectedFilters.value.questionType) {
-    result = result.filter(q => q.type.toLowerCase().includes(selectedFilters.value.questionType.toLowerCase()));
-  }
-  if (selectedFilters.value.difficulty !== null) {
-    result = result.filter(q => q.difficulty === selectedFilters.value.difficulty);
-  }
-  if (selectedFilters.value.knowledgePoint) {
-    result = result.filter(q => q.knowledgePoint.toLowerCase().includes(selectedFilters.value.knowledgePoint.toLowerCase()));
-  }
-  if (selectedFilters.value.interviewRound) {
-    result = result.filter(q => q.interviewRound.toLowerCase().includes(selectedFilters.value.interviewRound.toLowerCase()));
-  }
-
-  // 排序
-  if (sortBy.value === 'difficulty-asc') {
-    result = [...result].sort((a, b) => a.difficulty - b.difficulty);
-  } else if (sortBy.value === 'difficulty-desc') {
-    result = [...result].sort((a, b) => b.difficulty - a.difficulty);
-  } else if (sortBy.value === 'newest') {
-    result = [...result].sort((a, b) => b.id - a.id);
-  }
-
-  return result;
-});
-
-const totalPages = computed(() => Math.ceil(filteredQuestions.value.length / pageSize.value));
-
-const paginatedQuestions = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  return filteredQuestions.value.slice(start, start + pageSize.value);
-});
+const filteredQuestions = computed(() => questions.value);
+const totalPages = computed(() => Math.ceil(questionTotal.value / pageSize.value));
+const paginatedQuestions = computed(() => questions.value);
 
 const batchQuestions = computed(() => {
   if (currentBatchMode.value === 'daily') {
@@ -863,15 +593,22 @@ const clearAllFilters = () => {
   currentPage.value = 1;
 };
 
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+let latestListRequest = 0;
+
 const handleSearch = () => {
-  currentPage.value = 1;
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    if (currentPage.value !== 1) currentPage.value = 1;
+    else void loadQuestionList();
+  }, 300);
 };
 
 const mapKnowledgeToQuestion = (item: KnowledgeItem): Question => {
-  const firstKeyword = String(item.keywords || '')
-    .split(',')
+  const tags = String(item.keywords || '')
+    .split(/[,，]/)
     .map((x) => x.trim())
-    .filter(Boolean)[0] || '通用';
+    .filter(Boolean);
 
   return {
     id: item.id,
@@ -880,14 +617,18 @@ const mapKnowledgeToQuestion = (item: KnowledgeItem): Question => {
     position: item.job_position,
     type: item.question_type,
     difficulty: Number(item.difficulty || 3),
-    knowledgePoint: firstKeyword,
-    interviewRound: '一面基础',
-    isSolved: false,
-    isWrong: false,
+    knowledgePoint: tags[0] || '',
+    interviewRound: item.suitable_level || '',
+    isSolved: Number(item.total_attempts || 0) > 0,
+    isWrong: Number(item.is_wrong_book || 0) === 1,
     isFavorite: false,
+    tags,
+    totalAttempts: Number(item.total_attempts || 0),
+    latestScore: item.latest_score == null ? undefined : Number(item.latest_score),
+    averageScore: item.avg_score == null ? undefined : Number(item.avg_score),
     standardAnswer: item.excellent_answer || '',
     solution: item.answer_points || '',
-    pitfalls: item.remark || '',
+    pitfalls: '',
     keyPoints: item.question_intent || '',
     hint: item.answer_points || '',
     notes: []
@@ -895,23 +636,40 @@ const mapKnowledgeToQuestion = (item: KnowledgeItem): Question => {
 };
 
 const loadQuestionList = async () => {
+  const requestId = ++latestListRequest;
   listLoading.value = true;
+  listError.value = '';
+  questions.value = [];
   try {
-    const params: { page: number; page_size: number; status: number; job_position?: string } = {
-      page: 1,
-      page_size: 500,
+    const params: { page: number; page_size: number; status: number; job_position?: string; q?: string } = {
+      page: currentPage.value,
+      page_size: pageSize.value,
       status: 1
     };
     if (selectedFilters.value.position) {
       params.job_position = selectedFilters.value.position;
     }
+    const query = searchQuery.value.trim();
+    if (query) params.q = query;
     const res = await knowledgeApi.list(params);
+    if (requestId !== latestListRequest) return;
     questions.value = (res.items || []).map(mapKnowledgeToQuestion);
+    questionTotal.value = Number(res.total || 0);
+    const summary = res.summary;
+    progress.value = {
+      totalSolved: Number(summary?.solved_questions || 0),
+      totalQuestions: Number(summary?.total_questions || 0),
+      totalAttempts: Number(summary?.total_attempts || 0),
+      correctRate: summary?.correct_rate == null ? null : Number(summary.correct_rate),
+    };
   } catch (e) {
+    if (requestId !== latestListRequest) return;
     console.error('[QuestionBank] load questions failed', e);
     questions.value = [];
+    questionTotal.value = 0;
+    listError.value = (e as Error)?.message || '题库加载失败，请稍后重试';
   } finally {
-    listLoading.value = false;
+    if (requestId === latestListRequest) listLoading.value = false;
   }
 };
 
@@ -919,8 +677,8 @@ const handleCategoryChange = (val: string) => {
   currentTab.value = val;
   selectedFilters.value.position = val;
   selectedFilters.value.questionType = '';
-  currentPage.value = 1;
-  void loadQuestionList();
+  if (currentPage.value !== 1) currentPage.value = 1;
+  else void loadQuestionList();
 };
 
 const selectBatchMode = (modeId: string) => {
@@ -1018,6 +776,7 @@ const submitAnswer = async () => {
     q.isSolved = true;
     q.isWrong = Number(res.is_wrong_book || 0) === 1;
     showAnalysis.value = true;
+    void loadQuestionList();
   } catch (e) {
     console.error('[QuestionBank] grade answer failed', e);
     const err = e as any;
@@ -1116,6 +875,14 @@ onMounted(() => {
 
   void loadQuestionList();
   void loadFavoriteList();
+});
+
+watch(currentPage, () => {
+  void loadQuestionList();
+});
+
+onBeforeUnmount(() => {
+  if (searchTimer) clearTimeout(searchTimer);
 });
 </script>
 
@@ -1345,6 +1112,26 @@ onMounted(() => {
   background: #1b2431;
 }
 
+.empty-result--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #d7a9a9;
+}
+
+.retry-button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid #466486;
+  border-radius: 8px;
+  color: #d7e6f8;
+  background: #20344a;
+  cursor: pointer;
+}
+
+.retry-button:hover { background: #29445f; }
+
 .pagination {
   display: flex;
   justify-content: flex-end;
@@ -1542,6 +1329,7 @@ onMounted(() => {
 .exam-meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 12px;
 }
@@ -1568,6 +1356,14 @@ onMounted(() => {
 
 .exam-meta .count {
   color: #5a6a7d;
+}
+
+.exam-meta .completion {
+  color: #8492a6;
+}
+
+.exam-meta .completion.completed {
+  color: #78b995;
 }
 
 .exam-arrow {

@@ -135,12 +135,50 @@ public class InterviewKnowledgeService {
         }
         Page<InterviewKnowledge> result = knowledgeRepository.search(
                 jobPosition, questionType, effectiveStatus, q, PageRequest.of(p - 1, ps));
-        List<Map<String, Object>> items = result.getContent().stream().map(InterviewMaps::knowledgeItem).toList();
+        List<Long> knowledgeIds = result.getContent().stream().map(InterviewKnowledge::getId).toList();
+        Map<Long, UserQuestionStat> pageStats = jwtUserId == null || knowledgeIds.isEmpty()
+                ? Map.of()
+                : statRepository.findByUserIdAndKnowledgeIdIn(jwtUserId, knowledgeIds).stream()
+                        .collect(java.util.stream.Collectors.toMap(UserQuestionStat::getKnowledgeId, stat -> stat));
+        List<Map<String, Object>> items = result.getContent().stream().map(knowledge -> {
+            Map<String, Object> item = InterviewMaps.knowledgeItem(knowledge);
+            UserQuestionStat stat = pageStats.get(knowledge.getId());
+            item.put("total_attempts", stat == null ? 0 : Optional.ofNullable(stat.getTotalAttempts()).orElse(0));
+            item.put("wrong_attempts", stat == null ? 0 : Optional.ofNullable(stat.getWrongAttempts()).orElse(0));
+            item.put("latest_score", stat == null ? null : stat.getLatestScore());
+            item.put("best_score", stat == null ? null : stat.getBestScore());
+            item.put("avg_score", stat == null ? null : stat.getAvgScore());
+            item.put("is_wrong_book", stat == null ? 0 : Optional.ofNullable(stat.getIsWrongBook()).orElse(0));
+            item.put("last_attempt_at", stat == null ? null : InterviewMaps.iso(stat.getLastAttemptAt()));
+            return item;
+        }).toList();
+
+        List<UserQuestionStat> allStats = jwtUserId == null ? List.of() : statRepository.findByUserId(jwtUserId);
+        int solvedQuestions = (int) allStats.stream()
+                .filter(stat -> Optional.ofNullable(stat.getTotalAttempts()).orElse(0) > 0)
+                .count();
+        int totalAttempts = allStats.stream()
+                .mapToInt(stat -> Optional.ofNullable(stat.getTotalAttempts()).orElse(0))
+                .sum();
+        int wrongAttempts = allStats.stream()
+                .mapToInt(stat -> Optional.ofNullable(stat.getWrongAttempts()).orElse(0))
+                .sum();
+        long allAvailableQuestions = knowledgeRepository.search(
+                null, null, effectiveStatus, null, PageRequest.of(0, 1)).getTotalElements();
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("solved_questions", solvedQuestions);
+        summary.put("total_questions", allAvailableQuestions);
+        summary.put("total_attempts", totalAttempts);
+        summary.put("correct_rate", totalAttempts == 0
+                ? null
+                : BigDecimal.valueOf((totalAttempts - wrongAttempts) * 100.0 / totalAttempts)
+                        .setScale(1, RoundingMode.HALF_UP));
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("total", result.getTotalElements());
         resp.put("page", p);
         resp.put("page_size", ps);
         resp.put("items", items);
+        resp.put("summary", summary);
         return resp;
     }
 
