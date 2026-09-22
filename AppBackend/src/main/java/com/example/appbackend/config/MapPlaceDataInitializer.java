@@ -2,7 +2,9 @@ package com.example.appbackend.config;
 
 import com.example.appbackend.entity.MapPlace;
 import com.example.appbackend.entity.MapPlaceFence;
+import com.example.appbackend.entity.MapPlaceImage;
 import com.example.appbackend.repository.MapPlaceFenceRepository;
+import com.example.appbackend.repository.MapPlaceImageRepository;
 import com.example.appbackend.repository.MapPlaceRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -11,11 +13,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
 public class MapPlaceDataInitializer implements ApplicationRunner {
+
+    private static final List<CanteenImageSeed> CANTEEN_IMAGES = List.of(
+            new CanteenImageSeed("\u8299\u84c9\u98df\u5802", "/media/canteens/furong-canteen.jpg"),
+            new CanteenImageSeed("\u94f6\u674f\u9910\u5385", "/media/canteens/yinxing-canteen.jpg"),
+            new CanteenImageSeed("\u73d9\u6850\u56ed\u98df\u5802", "/media/canteens/gongtong-canteen.png"),
+            new CanteenImageSeed("\u9999\u6a1f\u98df\u5802", "/media/canteens/xiangzhang-canteen.png")
+    );
 
     private static final String CAMPUS_BOUNDARY_GEOJSON = """
             {"type":"Polygon","coordinates":[[
@@ -39,13 +50,16 @@ public class MapPlaceDataInitializer implements ApplicationRunner {
 
     private final MapPlaceRepository mapPlaceRepository;
     private final MapPlaceFenceRepository fenceRepository;
+    private final MapPlaceImageRepository imageRepository;
 
     public MapPlaceDataInitializer(
             MapPlaceRepository mapPlaceRepository,
-            MapPlaceFenceRepository fenceRepository
+            MapPlaceFenceRepository fenceRepository,
+            MapPlaceImageRepository imageRepository
     ) {
         this.mapPlaceRepository = mapPlaceRepository;
         this.fenceRepository = fenceRepository;
+        this.imageRepository = imageRepository;
     }
 
     @Override
@@ -138,6 +152,8 @@ public class MapPlaceDataInitializer implements ApplicationRunner {
                 .filter(place -> !existingNames.contains(place.getName()))
                 .forEach(mapPlaceRepository::save);
 
+        seedCanteenImages();
+
         MapPlace campusBoundary = mapPlaceRepository.findBySceneTypeOrderBySortOrderAscIdAsc("OTHER")
                 .stream()
                 .filter(place -> "CAMPUS_BOUNDARY".equals(place.getPlaceType()))
@@ -150,6 +166,29 @@ public class MapPlaceDataInitializer implements ApplicationRunner {
             fence.setGeometryType("POLYGON");
             fence.setGeometryData(CAMPUS_BOUNDARY_GEOJSON.trim());
             fenceRepository.save(fence);
+        }
+    }
+
+    private void seedCanteenImages() {
+        Map<String, MapPlace> canteensByName = mapPlaceRepository
+                .findBySceneTypeOrderBySortOrderAscIdAsc("CANTEEN")
+                .stream()
+                .filter(place -> "CANTEEN".equals(place.getPlaceType()))
+                .collect(Collectors.toMap(MapPlace::getName, Function.identity(), (left, right) -> left));
+
+        for (CanteenImageSeed seed : CANTEEN_IMAGES) {
+            MapPlace canteen = canteensByName.get(seed.placeName());
+            if (canteen == null || !imageRepository.findByPlaceIdOrderBySortOrderAscIdAsc(canteen.getId()).isEmpty()) {
+                continue;
+            }
+
+            MapPlaceImage image = new MapPlaceImage();
+            image.setPlaceId(canteen.getId());
+            image.setImageUrl(seed.imageUrl());
+            image.setSortOrder(0);
+            image.setFocusX(50);
+            image.setFocusY(50);
+            imageRepository.save(image);
         }
     }
 
@@ -175,5 +214,8 @@ public class MapPlaceDataInitializer implements ApplicationRunner {
         place.setMapVisible(true);
         place.setSortOrder(sortOrder);
         return place;
+    }
+
+    private record CanteenImageSeed(String placeName, String imageUrl) {
     }
 }
