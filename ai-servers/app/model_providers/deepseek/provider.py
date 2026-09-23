@@ -5,7 +5,11 @@ from typing import Any, Dict, Iterator, List, Optional
 from fastapi import HTTPException
 
 from app.model_providers.base import ChatModelProvider, extract_response_text
-from app.model_providers.multimodal import build_explicit_multimodal_content, extract_image_references
+from app.model_providers.multimodal import (
+    build_explicit_multimodal_content,
+    build_multimodal_human_content,
+    extract_image_references,
+)
 from app.model_providers.runtime_config import (
     LlmRuntimeConfig,
     get_active_llm_timeout_seconds,
