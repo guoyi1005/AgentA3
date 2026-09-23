@@ -178,11 +178,16 @@ public class MapPlaceDataInitializer implements ApplicationRunner {
 
         for (CanteenImageSeed seed : CANTEEN_IMAGES) {
             MapPlace canteen = canteensByName.get(seed.placeName());
-            if (canteen == null || !imageRepository.findByPlaceIdOrderBySortOrderAscIdAsc(canteen.getId()).isEmpty()) {
+            if (canteen == null) {
                 continue;
             }
 
-            MapPlaceImage image = new MapPlaceImage();
+            List<MapPlaceImage> images = imageRepository.findByPlaceIdOrderBySortOrderAscIdAsc(canteen.getId());
+            MapPlaceImage image = images.isEmpty() ? new MapPlaceImage() : images.get(0);
+            if (seed.imageUrl().equals(image.getImageUrl())) {
+                continue;
+            }
+
             image.setPlaceId(canteen.getId());
             image.setImageUrl(seed.imageUrl());
             image.setSortOrder(0);

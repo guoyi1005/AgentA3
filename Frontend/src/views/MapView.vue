@@ -29,6 +29,17 @@ const MAP_ZOOM = 17
 const mapPlaces = ref([])
 const placeLoading = ref(false)
 
+function fitCampusView() {
+  if (!mapInstance) return
+  const boundary = mapPlaces.value.find(isCampusBoundary)
+  const boundaryOverlay = boundary ? fenceMap[boundary.id] : null
+  if (boundaryOverlay) {
+    mapInstance.setFitView([boundaryOverlay], false, [80, 80, 100, 80], 18)
+    return
+  }
+  mapInstance.setZoomAndCenter(MAP_ZOOM, MAP_CENTER)
+}
+
 const SCENE_META = {
   CANTEEN: { label: '食堂', color: '#f97316', icon: markerCanteen },
   SPORTS: { label: '运动场', color: '#10b981', icon: markerSports },
@@ -175,8 +186,7 @@ function applyCategoryFilters() {
     fenceMap[place.id]?.[visible ? 'show' : 'hide']()
   })
   if (activePoi.value && !visibleIds.has(String(activePoi.value.id))) closeActivePoi()
-  const overlays = visiblePlaces.flatMap(place => [markerMap[place.id], fenceMap[place.id]]).filter(Boolean)
-  if (mapInstance && overlays.length) mapInstance.setFitView(overlays, false, [90, 90, 90, 190], 18)
+  fitCampusView()
 }
 
 function selectCategory(item) {
@@ -673,11 +683,14 @@ async function initMap() {
     const AMap = window.AMap
     if (!AMap) throw new Error('AMap 未定义')
 
-    const firstPlace = mapPlaces.value[0]
+    const campusBoundary = mapPlaces.value.find(isCampusBoundary)
     mapInstance = new AMap.Map('container', {
       zoom: MAP_ZOOM,
-      center: firstPlace ? [firstPlace.lng, firstPlace.lat] : MAP_CENTER,
+      center: campusBoundary ? [campusBoundary.lng, campusBoundary.lat] : MAP_CENTER,
       viewMode: '2D',
+      dragEnable: false,
+      rotateEnable: false,
+      pitchEnable: false,
       resizeEnable: true,
     })
     mapInstance.on('mapmove', updateActivePoiScreen)
@@ -759,8 +772,7 @@ async function initMap() {
     })
 
     mapReady.value = true
-    const visibleOverlays = [...mapOverlays, ...Object.values(markerMap)]
-    if (visibleOverlays.length > 1) mapInstance.setFitView(visibleOverlays, false, [80, 80, 100, 80], 18)
+    fitCampusView()
   } catch (err) {
     mapError.value = err.message || '地图初始化失败'
     console.error('[MapInit]', err)
@@ -884,18 +896,44 @@ function onMapContainerClick(e) {
   closeActivePoi()
 }
 
+function setMapDragEnabled(enabled) {
+  mapInstance?.setStatus({ dragEnable: enabled })
+}
+
+function onMapPointerDown(event) {
+  if (event.button === 0) setMapDragEnabled(true)
+}
+
+function onMapPointerMove(event) {
+  if (event.buttons === 0) setMapDragEnabled(false)
+}
+
+function stopMapDrag() {
+  setMapDragEnabled(false)
+}
+
 onMounted(async () => {
   document.documentElement.classList.remove('dark')
   localStorage.removeItem('campus-dark')
   document.addEventListener('click', onDocClick)
-  document.getElementById('container')?.addEventListener('click', onMapContainerClick)
+  const mapContainer = document.getElementById('container')
+  mapContainer?.addEventListener('click', onMapContainerClick)
+  mapContainer?.addEventListener('pointerdown', onMapPointerDown, true)
+  mapContainer?.addEventListener('pointermove', onMapPointerMove, true)
+  window.addEventListener('pointerup', stopMapDrag)
+  window.addEventListener('pointercancel', stopMapDrag)
   await loadMapPlaces()
   await nextTick()
   initMap()
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocClick)
-  document.getElementById('container')?.removeEventListener('click', onMapContainerClick)
+  const mapContainer = document.getElementById('container')
+  mapContainer?.removeEventListener('click', onMapContainerClick)
+  mapContainer?.removeEventListener('pointerdown', onMapPointerDown, true)
+  mapContainer?.removeEventListener('pointermove', onMapPointerMove, true)
+  window.removeEventListener('pointerup', stopMapDrag)
+  window.removeEventListener('pointercancel', stopMapDrag)
   stopIndoorDrag()
   mapOverlays.splice(0, mapOverlays.length)
   if (mapInstance) { mapInstance.destroy(); mapInstance = null }
@@ -1001,7 +1039,16 @@ onUnmounted(() => {
           class="poi-panel canteen-panel"
           :style="{ left: `${activePoiScreen.panelX}px`, top: `${activePoiScreen.panelY}px` }"
         >
-          <div class="canteen-photo-slot">
+          <div
+            class="canteen-photo-slot canteen-photo-slot--interactive"
+            role="button"
+            tabindex="0"
+            aria-label="收起餐厅外表图"
+            title="点击收起餐厅外表图"
+            @click.stop="closeActivePoi"
+            @keydown.enter.prevent="closeActivePoi"
+            @keydown.space.prevent="closeActivePoi"
+          >
             <img
               v-if="activePoi.images?.[0]?.imageUrl"
               class="canteen-photo"
@@ -1414,6 +1461,11 @@ onUnmounted(() => {
 .canteen-photo-slot {
   width: 100%; aspect-ratio: 4 / 3; overflow: hidden;
   border-radius: 8px; background: #edf1f5;
+}
+.canteen-photo-slot--interactive { cursor: zoom-out; }
+.canteen-photo-slot--interactive:focus-visible {
+  outline: 2px solid var(--hp-ink);
+  outline-offset: 2px;
 }
 .canteen-photo { width: 100%; height: 100%; display: block; object-fit: cover; }
 .canteen-photo-placeholder {
