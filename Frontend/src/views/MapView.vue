@@ -209,10 +209,24 @@ function selectAllCategories() {
    ═══════════════════════════════════════ */
 const searchQuery = ref('')
 const searchFocused = ref(false)
+const normalizeSearchText = (value) => String(value || '')
+  .trim()
+  .toLowerCase()
+  .replace(/\s+/g, '')
+  .replace(/餐厅|饭堂/g, '食堂')
+  .replace(/宿舍楼|寝室|公寓/g, '宿舍')
 const filteredPois = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const q = normalizeSearchText(searchQuery.value)
   if (!q) return []
-  return mapPlaces.value.filter(p => p.name.includes(q) || p.desc.toLowerCase().includes(q))
+  return mapPlaces.value.filter((poi) => {
+    const searchText = normalizeSearchText([
+      poi.name,
+      poi.desc,
+      poi.locationDesc,
+      sceneMeta(poi.sceneType).label,
+    ].join(' '))
+    return searchText.includes(q)
+  })
 })
 function selectSearchResult(poi) {
   searchQuery.value = poi.name
@@ -221,7 +235,22 @@ function selectSearchResult(poi) {
   flyToPoi(poi) /* 地图自动移动到目标地点 */
   setTimeout(() => { selectedNotice.value = '' }, 4000)
 }
-function clearSearch() { searchQuery.value = '' }
+function handleLocationSearch() {
+  const poi = filteredPois.value[0]
+  searchFocused.value = false
+  if (!poi) {
+    selectedNotice.value = searchQuery.value.trim()
+      ? `未找到「${searchQuery.value.trim()}」，请尝试搜索食堂、餐厅、宿舍或教学楼。`
+      : '请输入要搜索的校园地点。'
+    setTimeout(() => { selectedNotice.value = '' }, 4000)
+    return
+  }
+  selectSearchResult(poi)
+}
+function clearSearch() {
+  searchQuery.value = ''
+  selectedNotice.value = ''
+}
 
 /* ═══════════════════════════════════════
    ⑩ 高德地图加载与初始化
@@ -798,39 +827,7 @@ function flyTo(poi) {
 }
 
 /* ═══════════════════════════════════════
-   ④ 聊天助手
-   ═══════════════════════════════════════ */
-const chatExpanded = ref(false)
-const chatTab = ref('chat') /* chat | lostfound */
-const chatInput = ref('')
-const chatMessages = reactive([
-  { role: 'assistant', text: '你好！我是校园助手，可以查询地点信息、失物招领等。试试问我吧！' },
-])
-const chatBodyRef = ref(null)
-
-function toggleChat() { chatExpanded.value = !chatExpanded.value; if (chatExpanded.value) nextTick(scrollChat) }
-function newChat() {
-  chatMessages.splice(0, chatMessages.length, { role: 'assistant', text: '新会话已开始，有什么可以帮你？' })
-  chatInput.value = ''
-}
-function sendChat() {
-  const t = chatInput.value.trim(); if (!t) return
-  chatMessages.push({ role: 'user', text: t }); chatInput.value = ''; nextTick(scrollChat)
-  setTimeout(() => { chatMessages.push({ role: 'assistant', text: genReply(t) }); nextTick(scrollChat) }, 400)
-}
-function genReply(s) {
-  const l = s.toLowerCase()
-  for (const p of mapPlaces.value) if (l.includes(p.name.toLowerCase())) return `${p.name}：${p.desc}。点击下方快捷按钮可快速定位。`
-  if (/路线|怎么走|在哪|位置/.test(l)) return '在搜索框输入地点名，或点击底部快捷按钮即可定位。'
-  if (/打卡/.test(l)) return '点击底部快捷按钮选中地点，在弹出的地点面板中点击"打卡"按钮即可。'
-  if (/失物|丢|捡/.test(l)) return '请点击右下角助手面板，切换到"失物招领"标签页查看或发布信息。'
-  if (/你好|嗨|hello|hi/.test(l)) return '你好！可以问我教学楼、食堂、运动场、快递站、图书馆、校医院的信息。'
-  return '你可以问我校园地点相关信息，也可以查询失物招领或进行校园打卡哦！'
-}
-function scrollChat() { if (chatBodyRef.value) chatBodyRef.value.scrollTop = chatBodyRef.value.scrollHeight }
-
-/* ═══════════════════════════════════════
-   ⑤ 校园打卡系统
+   ④ 校园打卡系统
    ═══════════════════════════════════════ */
 const checkins = reactive(JSON.parse(localStorage.getItem('campus-checkins') || '{}'))
 function doCheckin(poi) {
@@ -968,9 +965,10 @@ onUnmounted(() => {
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           <input v-model="searchQuery" class="search-input" placeholder="搜索校区、食堂、宿舍楼..."
-            @input="searchFocused = true" @focus="searchFocused = true"/>
+            @input="searchFocused = true" @focus="searchFocused = true"
+            @keyup.enter="handleLocationSearch"/>
           <button v-if="searchQuery" class="search-clear" @click="clearSearch">✕</button>
-          <button class="search-submit" @click="filteredPois[0] && selectSearchResult(filteredPois[0])">搜索</button>
+          <button class="search-submit" @click="handleLocationSearch">搜索</button>
         </div>
         <div v-if="searchFocused && filteredPois.length" class="search-dropdown">
           <div v-for="p in filteredPois" :key="p.id" class="search-item" @click="selectSearchResult(p)">
@@ -1170,77 +1168,6 @@ onUnmounted(() => {
       </Transition>
     </div>
 
-    <!-- ═══ 聊天助手 FAB ═══ -->
-    <button class="chat-fab" :class="{ expanded: chatExpanded }" @click="toggleChat">
-      <svg v-if="!chatExpanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-      <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-        <path d="M18 6 6 18M6 6l12 12"/>
-      </svg>
-    </button>
-
-    <!-- ═══ 聊天/失物招领面板 ═══ -->
-    <Transition name="chat-slide">
-      <div v-if="chatExpanded" class="chat-panel">
-        <div class="chat-header">
-          <span class="chat-title">校园助手</span>
-          <div class="chat-tabs">
-            <button :class="{ active: chatTab === 'chat' }" @click="chatTab = 'chat'">对话</button>
-            <button :class="{ active: chatTab === 'lostfound' }" @click="chatTab = 'lostfound'">失物招领</button>
-          </div>
-          <div class="chat-header-actions">
-            <button v-if="chatTab === 'chat'" class="chat-btn" @click="newChat" title="新会话">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
-            <button class="chat-btn" @click="toggleChat" title="收起">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- 对话标签页 -->
-        <template v-if="chatTab === 'chat'">
-          <div ref="chatBodyRef" class="chat-body">
-            <div v-for="(m, i) in chatMessages" :key="i" class="chat-msg" :class="m.role">
-              <div class="chat-bubble">{{ m.text }}</div>
-            </div>
-          </div>
-          <div class="chat-footer">
-            <input v-model="chatInput" class="chat-input" placeholder="输入你的问题..." @keydown.enter="sendChat"/>
-            <button class="chat-send" @click="sendChat">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m22 2-7 20-4-9-9-4z"/><path d="m22 2-11 11"/></svg>
-            </button>
-          </div>
-        </template>
-
-        <!-- 失物招领标签页 -->
-        <template v-if="chatTab === 'lostfound'">
-          <div class="lost-body">
-            <button class="lost-new-btn" @click="showLostForm = !showLostForm">
-              {{ showLostForm ? '取消' : '+ 发布信息' }}
-            </button>
-            <div v-if="showLostForm" class="lost-form">
-              <select v-model="lostForm.type">
-                <option value="lost">我丢失了</option>
-                <option value="found">我捡到了</option>
-              </select>
-              <input v-model="lostForm.title" placeholder="物品名称" />
-              <input v-model="lostForm.desc" placeholder="详细描述" />
-              <input v-model="lostForm.contact" placeholder="联系方式" />
-              <button class="lost-submit" @click="postLost">发布</button>
-            </div>
-            <div v-if="!lostItems.length" class="lost-empty">暂无失物招领信息</div>
-            <div v-for="(item, i) in lostItems" :key="i" class="lost-card">
-              <span class="lost-tag" :class="item.type">{{ item.type === 'lost' ? '寻物' : '招领' }}</span>
-              <div class="lost-title">{{ item.title }}</div>
-              <div v-if="item.desc" class="lost-desc">{{ item.desc }}</div>
-              <div class="lost-meta">{{ item.contact || '无联系方式' }} · {{ fmtTime(item.time) }}</div>
-            </div>
-          </div>
-        </template>
-      </div>
-    </Transition>
   </div>
 </template>
 
@@ -1526,79 +1453,6 @@ onUnmounted(() => {
   background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 
-/* ═══ 聊天 FAB ═══ */
-.chat-fab {
-  position: fixed; bottom: 24px; right: 24px;
-  width: 52px; height: 52px; display: grid; place-items: center;
-  border-radius: 50%; border: none;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  box-shadow: 0 6px 20px rgba(37,99,235,.4); cursor: pointer; z-index: 50;
-  transition: transform .2s;
-}
-.chat-fab:hover { transform: scale(1.08); }
-.chat-fab.expanded { background: #64748b; box-shadow: 0 4px 12px var(--shadow); }
-
-/* ═══ 聊天面板 ═══ */
-.chat-panel {
-  position: fixed; bottom: 86px; right: 24px;
-  width: 370px; max-height: 520px; display: flex; flex-direction: column;
-  background: var(--surface); border-radius: 16px;
-  box-shadow: 0 12px 40px var(--shadow); z-index: 50; overflow: hidden;
-}
-.chat-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 14px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff;
-}
-.chat-title { font-size: 15px; font-weight: 700; white-space: nowrap; }
-.chat-tabs { display: flex; gap: 4px; flex: 1; }
-.chat-tabs button {
-  padding: 3px 10px; border-radius: 10px; border: none;
-  background: rgba(255,255,255,.15); color: rgba(255,255,255,.7);
-  font-size: 12px; font-weight: 600; cursor: pointer; transition: all .12s;
-}
-.chat-tabs button.active { background: rgba(255,255,255,.3); color: #fff; }
-.chat-header-actions { display: flex; gap: 4px; }
-.chat-btn {
-  width: 28px; height: 28px; display: grid; place-items: center;
-  border-radius: 8px; border: none;
-  background: rgba(255,255,255,.2); color: #fff; cursor: pointer;
-}
-.chat-btn:hover { background: rgba(255,255,255,.35); }
-.chat-body {
-  flex: 1; overflow-y: auto; padding: 14px;
-  display: flex; flex-direction: column; gap: 10px;
-  min-height: 180px; max-height: 320px; background: var(--bg);
-}
-.chat-msg { display: flex; }
-.chat-msg.user { justify-content: flex-end; }
-.chat-bubble {
-  max-width: 80%; padding: 10px 14px; border-radius: 14px;
-  font-size: 13px; line-height: 1.55;
-}
-.chat-msg.user .chat-bubble {
-  background: var(--primary); color: #fff; border-bottom-right-radius: 4px;
-}
-.chat-msg.assistant .chat-bubble {
-  background: var(--surface); color: var(--text);
-  border: 1px solid var(--border); border-bottom-left-radius: 4px;
-}
-.chat-footer {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 14px; border-top: 1px solid var(--border); background: var(--surface);
-}
-.chat-input {
-  flex: 1; height: 38px; padding: 0 12px;
-  border: 1px solid var(--border); border-radius: 19px;
-  outline: none; font-size: 13px; color: var(--text);
-  background: var(--bg); transition: border-color .15s;
-}
-.chat-input:focus { border-color: var(--primary); }
-.chat-input::placeholder { color: var(--text2); }
-.chat-send {
-  width: 38px; height: 38px; display: grid; place-items: center;
-  border-radius: 50%; border: none; background: var(--primary); color: #fff; cursor: pointer;
-}
-
 /* ═══ 失物招领 ═══ */
 .lost-body { flex: 1; overflow-y: auto; padding: 12px; max-height: 400px; background: var(--bg); }
 .lost-new-btn {
@@ -1631,8 +1485,6 @@ onUnmounted(() => {
 .lost-meta { font-size: 11px; color: var(--text2); margin-top: 4px; }
 
 /* ═══ 动画 ═══ */
-.chat-slide-enter-active, .chat-slide-leave-active { transition: all .25s ease; }
-.chat-slide-enter-from, .chat-slide-leave-to { opacity: 0; transform: translateY(20px) scale(.95); }
 .slide-up-enter-active, .slide-up-leave-active { transition: all .25s ease; }
 .slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translateY(20px); }
 .fade-enter-active, .fade-leave-active { transition: opacity .2s; }
@@ -1869,8 +1721,6 @@ onUnmounted(() => {
 
 /* ═══ 响应式 ═══ */
 @media (max-width: 480px) {
-  .chat-panel { right: 8px; left: 8px; width: auto; bottom: 80px; }
-  .chat-fab { right: 12px; bottom: 16px; width: 46px; height: 46px; }
   .quick-bar { bottom: 10px; gap: 4px; padding: 6px 8px; }
   .quick-btn { padding: 6px 8px; min-width: 50px; }
   .quick-icon { font-size: 18px; } .quick-label { font-size: 10px; }
@@ -1902,8 +1752,7 @@ onUnmounted(() => {
 .random-modal,
 .quick-bar,
 .poi-panel,
-.canteen-panel,
-.chat-panel,
+  .canteen-panel,
 .indoor-guide-dialog,
 .indoor-plan-viewport,
 .indoor-stall-card,
@@ -1921,17 +1770,6 @@ onUnmounted(() => {
 .category-rail,
 .quick-bar { border-radius: 999px; }
 .category-item.active { color: var(--hp-ink); background: var(--hp-yellow); }
-.chat-fab {
-  background: var(--hp-ink);
-  box-shadow: none;
-}
-.chat-fab.expanded { background: #2f2f2f; box-shadow: none; }
-.chat-panel__head,
-.chat-panel header,
-.chat-head {
-  background: var(--hp-ink);
-  color: var(--hp-cream);
-}
 .indoor-breadcrumb strong { color: var(--hp-ink); }
 .indoor-view-tabs button.active {
   color: var(--hp-ink);
