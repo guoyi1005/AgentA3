@@ -51,6 +51,15 @@ def internal_chat(
         user_id,
         len(request.input or ""),
     )
+    # 临时诊断日志：抓取简历润色请求的真实内容，便于定位前端传入了什么。
+    if (request.agentName or "").strip() == "resume_polish_expand_agent":
+        raw_input = request.input or ""
+        logger.info(
+            "polish input dump len=%s head=%r tail=%r",
+            len(raw_input),
+            raw_input[:220],
+            raw_input[-140:],
+        )
     token = set_active_llm_config(build_llm_runtime_config(
         provider=x_ai_provider,
         base_url=x_ai_base_url,

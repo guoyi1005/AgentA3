@@ -8,6 +8,36 @@
   <title>Vite + Vue + TS</title>
   <script type="module" crossorigin src="/airesume/assets/index-suKtN1OS.js"></script>
   <link rel="stylesheet" crossorigin href="/airesume/assets/index-DBz1DA_F.css">
+  <style>
+    /*
+     * AI 润色兜底样式：
+     * 内嵌简历应用在润色结果返回后不会复位它自己的加载动画（结果已渲染但转圈不停），
+     * 这里在“结果区已出现”时隐藏该加载动画，避免一直转圈的观感。
+     */
+    .ant-popover .ai-content:has(.ai-editor) .ant-spin {
+      display: none !important;
+    }
+  </style>
+  <script>
+    /*
+     * 记录最近获得焦点的输入框/文本域：
+     * AI 润色点“应用”时用于把润色结果直接写回正在编辑的那个字段，
+     * 避免出现"数据已更新但编辑框没变"的观感。
+     */
+    (function () {
+      window.__lastAiField = null;
+      document.addEventListener(
+        'focusin',
+        function (event) {
+          var el = event.target;
+          if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+            window.__lastAiField = el;
+          }
+        },
+        true,
+      );
+    })();
+  </script>
 </head>
 
 <body>
