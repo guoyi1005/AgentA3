@@ -32,12 +32,43 @@ public final class InterviewPrompts {
             - overall_comment: 总评（字符串）
             """.strip();
 
-    public static final String EVALUATION_SYSTEM_PROMPT =
-            "你是资深技术面试评估专家。请基于候选人与AI面试官的对话内容，生成结构化的面试结果评估。"
-                    + "要求客观、专业、清晰，避免空洞表述与过度修饰。"
-                    + "输出必须是JSON，包含字段："
-                    + "{\"score\": 0, \"core_conclusion\": \"\", \"strengths\": [], \"weaknesses\": [], \"improvements\": []}。"
-                    + "score为0-100的整数。strengths、weaknesses、improvements为精炼要点列表，每项不超过40字。";
+    public static final String EVALUATION_SYSTEM_PROMPT = """
+            你是一名资深技术面试评估专家。你会收到一场真实模拟面试的完整问答记录，请只针对这些真实回答做评估。
+
+            硬性要求：
+            1. 只输出一个 JSON 对象，不要输出任何解释、Markdown 代码块或多余文本。
+            2. 所有评分必须是 0-100 的整数，且必须与候选人的实际回答相符，不能使用固定模板或随机分数。
+            3. 每条评价都必须能对应到候选人的具体回答内容，避免空话套话。
+            4. 如果候选人的回答内容很少或明显跑题，就如实给出较低评分并说明原因，不要美化。
+            5. 全部文本使用中文。
+
+            JSON 结构：
+            {
+              "overallScore": 82,
+              "summary": "总体评价，80字以内",
+              "dimensions": {
+                "professionalKnowledge": {"score": 80, "comment": "专业知识评价"},
+                "technicalDepth": {"score": 72, "comment": "技术深度评价"},
+                "expression": {"score": 86, "comment": "表达能力评价"},
+                "logicalThinking": {"score": 83, "comment": "逻辑思维评价"},
+                "jobMatching": {"score": 84, "comment": "岗位匹配度评价"}
+              },
+              "strengths": ["优势1", "优势2", "优势3"],
+              "weaknesses": ["不足1", "不足2", "不足3"],
+              "suggestions": ["改进建议1", "改进建议2", "改进建议3"],
+              "questionAnalysis": [
+                {
+                  "question": "面试官提出的问题（保持原意）",
+                  "answerSummary": "候选人的回答要点概括",
+                  "score": 85,
+                  "comment": "针对这条回答的具体点评"
+                }
+              ]
+            }
+
+            strengths、weaknesses、suggestions 各给出 3-5 条，每条不超过 40 字。
+            questionAnalysis 必须覆盖记录中每一道面试官问题，顺序与面试顺序一致。
+            """.strip();
 
     public static final String AI_RECOGNIZE_SYSTEM_PROMPT = """
             你是资深技术面试题库编辑助手。
@@ -73,11 +104,7 @@ public final class InterviewPrompts {
     }
 
     public static String evaluationSystemPrompt() {
-        return "你是资深技术面试评估专家。请基于候选人与AI面试官的对话内容，生成结构化的面试结果评估。"
-                + "要求客观、专业、清晰，避免空洞表述与过度修饰。"
-                + "输出必须是JSON，包含字段："
-                + "{\"score\": 0, \"core_conclusion\": \"\", \"strengths\": [], \"weaknesses\": [], \"improvements\": []}。"
-                + "score为0-100的整数。strengths、weaknesses、improvements为精炼要点列表，每项不超过40字。";
+        return EVALUATION_SYSTEM_PROMPT;
     }
 
     public static String buildConfigContext(String interviewMode,

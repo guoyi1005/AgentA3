@@ -1,4 +1,4 @@
-﻿<template>
+<template>
 	<div class="page-layout">
 		<Sidebar />
 		<main class="main-content">
@@ -6,29 +6,58 @@
 				<header class="report-header">
 					<div class="report-title-wrap">
 						<span class="title-icon">▣</span>
-						<h1>AI 面试评估报告</h1>
+						<div class="title-block">
+							<h1>AI 面试评估报告</h1>
+							<p class="report-meta" v-if="report">
+								<span>岗位：{{ report.job_role || '未填写' }}</span>
+								<span>面试时间：{{ interviewTime }}</span>
+								<span>面试时长：{{ durationText }}</span>
+							</p>
+						</div>
 					</div>
 					<button class="ghost-btn" @click="goBack">返回历史</button>
 				</header>
 
 				<section class="report-card" v-if="loading">
-					<div class="state-text">报告加载中...</div>
+					<div class="state-text">{{ loadingText }}</div>
+					<p class="state-hint" v-if="loadingHint">{{ loadingHint }}</p>
 				</section>
 
 				<section class="report-card" v-else-if="errorText">
-					<div class="state-text error">{{ errorText }}</div>
-					<button class="action-btn" @click="loadReport">重新加载</button>
+					<div class="state-text error">{{ errorTitle }}</div>
+					<p class="state-hint">{{ errorText }}</p>
+					<div class="state-actions">
+						<button class="action-btn" v-if="canRegenerate" @click="generateReport">重新生成评估报告</button>
+						<button class="ghost-btn" v-else-if="canReload" @click="loadReport">重新加载</button>
+						<button class="ghost-btn" @click="goBack">返回历史</button>
+					</div>
 				</section>
 
 				<template v-else-if="report">
 					<section class="score-zone">
 						<div class="score-value">{{ report.score }}</div>
-						<div class="score-sub">综合面试评分 · 极具潜力</div>
+						<div class="score-sub">综合面试评分 · {{ report.job_role || '通用岗位' }}</div>
+					</section>
+
+					<section class="report-card" v-if="dimensionCards.length">
+						<h2 class="card-title">维度评分</h2>
+						<div class="dimension-grid">
+							<article class="dimension-card" v-for="dim in dimensionCards" :key="dim.key">
+								<div class="dimension-head">
+									<span class="dimension-name">{{ dim.label }}</span>
+									<span class="dimension-score">{{ dim.score }}</span>
+								</div>
+								<div class="dimension-bar">
+									<span :style="{ width: `${dim.score}%` }"></span>
+								</div>
+								<p class="dimension-comment">{{ dim.comment || '暂无点评' }}</p>
+							</article>
+						</div>
 					</section>
 
 					<section class="report-card">
-						<h2 class="card-title">核心结论</h2>
-						<p class="conclusion">{{ report.core_conclusion || '暂无核心结论' }}</p>
+						<h2 class="card-title">总体评价</h2>
+						<p class="conclusion">{{ report.core_conclusion || '暂无总体评价' }}</p>
 					</section>
 
 					<section class="dual-grid">
@@ -40,7 +69,7 @@
 						</article>
 
 						<article class="report-card report-card-warning">
-							<h3 class="card-title">评估不足</h3>
+							<h3 class="card-title">待提升</h3>
 							<div class="tag-list">
 								<span class="tag warn" v-for="(item, idx) in weaknessesList" :key="`w-${idx}`">{{ item }}</span>
 							</div>
@@ -48,7 +77,7 @@
 					</section>
 
 					<section class="report-card">
-						<h3 class="card-title">改进建议</h3>
+						<h3 class="card-title">AI 改进建议</h3>
 						<ol class="improve-list">
 							<li v-for="(item, idx) in improvementsList" :key="`i-${idx}`">
 								<span class="order">{{ idx + 1 }}</span>
@@ -57,8 +86,30 @@
 						</ol>
 					</section>
 
+					<section class="report-card">
+						<h3 class="card-title">面试问答分析</h3>
+						<div class="qa-list" v-if="questionList.length">
+							<article class="qa-card" v-for="(item, idx) in questionList" :key="`q-${idx}`">
+								<div class="qa-head">
+									<span class="qa-index">第 {{ idx + 1 }} 题</span>
+									<span class="qa-score">{{ item.score }} / 100</span>
+								</div>
+								<p class="qa-question">{{ item.question }}</p>
+								<div class="qa-block">
+									<span class="qa-label">我的回答</span>
+									<p class="qa-answer">{{ item.answer || '（本题没有作答记录）' }}</p>
+								</div>
+								<div class="qa-block">
+									<span class="qa-label">AI 点评</span>
+									<p class="qa-comment">{{ item.comment || item.answer_summary || '暂无点评' }}</p>
+								</div>
+							</article>
+						</div>
+						<p class="state-hint" v-else>本次面试没有可用于逐题分析的问答记录</p>
+					</section>
+
 					<section class="report-footer">
-						<button class="action-btn" @click="goBack">前往深度复盘</button>
+						<button class="action-btn" @click="goBack">返回历史</button>
 					</section>
 				</template>
 			</div>
@@ -75,7 +126,22 @@ import { PATHS } from '../routes/paths';
 
 const router = useRouter()
 
+const DIMENSION_LABELS: Record<string, string> = {
+	professionalKnowledge: '专业知识',
+	technicalDepth: '技术深度',
+	expression: '表达能力',
+	logicalThinking: '逻辑思维',
+	jobMatching: '岗位匹配度',
+};
+const DIMENSION_ORDER = ['professionalKnowledge', 'technicalDepth', 'expression', 'logicalThinking', 'jobMatching'];
+
+/** 这些错误可以通过“重新生成评估报告”重试，其余情况只提供重新加载或返回。 */
+const REGENERABLE_CODES = ['AI_REPORT_GENERATION_FAILED', 'AI_NOT_CONFIGURED', 'AI_REPORT_FORMAT_ERROR'];
+
 const loading = ref(false);
+const loadingText = ref('报告加载中...');
+const loadingHint = ref('');
+const errorCode = ref('');
 const errorText = ref('');
 const report = ref<InterviewSummaryReport | null>(null);
 
@@ -84,38 +150,131 @@ const conversationId = computed(() => {
 	return (q.get('conversation_id') || q.get('cid') || localStorage.getItem('conversation_id') || '').trim();
 });
 
-function splitTextToList(value: string | null | undefined): string[] {
+function splitTextToList(value: string | null | undefined, max = 5): string[] {
 	const raw = String(value || '').trim();
-	if (!raw) return ['暂无数据'];
+	if (!raw) return [];
 	const lines = raw
 		.replace(/\r\n/g, '\n')
-		.split(/\n|；|;|。/)
+		.split(/\n|；|;/)
 		.map((x) => x.trim())
 		.filter(Boolean);
-	if (lines.length === 0) return ['暂无数据'];
-	return lines.slice(0, 8);
+	return lines.slice(0, max);
 }
 
 const strengthsList = computed(() => splitTextToList(report.value?.strengths));
 const weaknessesList = computed(() => splitTextToList(report.value?.weaknesses));
 const improvementsList = computed(() => splitTextToList(report.value?.improvements));
 
+const dimensionCards = computed(() => {
+	const dimensions = report.value?.dimensions || {};
+	return DIMENSION_ORDER
+		.filter((key) => Boolean(dimensions[key]))
+		.map((key) => ({
+			key,
+			label: DIMENSION_LABELS[key] || key,
+			score: Number(dimensions[key]?.score ?? 0),
+			comment: dimensions[key]?.comment || '',
+		}));
+});
+
+const questionList = computed(() => report.value?.question_analysis || []);
+
+function formatDateTime(value?: string | null): string {
+	if (!value) return '--';
+	const parsed = new Date(value);
+	if (Number.isNaN(parsed.getTime())) return value;
+	const pad = (n: number) => String(n).padStart(2, '0');
+	return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())} ${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+}
+
+const interviewTime = computed(() => formatDateTime(report.value?.started_at || report.value?.created_at));
+
+const durationText = computed(() => {
+	const seconds = report.value?.duration_seconds;
+	if (seconds === null || seconds === undefined) return '--';
+	const total = Math.max(0, Math.round(Number(seconds)));
+	const minutes = Math.floor(total / 60);
+	const rest = total % 60;
+	return minutes > 0 ? `${minutes} 分 ${rest} 秒` : `${rest} 秒`;
+});
+
+const errorTitle = computed(() => {
+	if (errorCode.value === 'CONVERSATION_NOT_FOUND') return '未找到本次面试记录';
+	if (REGENERABLE_CODES.includes(errorCode.value)) return '评估报告生成失败';
+	return '报告加载失败';
+});
+
+const canRegenerate = computed(() => REGENERABLE_CODES.includes(errorCode.value));
+const canReload = computed(() => !canRegenerate.value && errorCode.value === 'REQUEST_FAILED');
+
+function setError(code: string, message: string) {
+	errorCode.value = code;
+	errorText.value = message;
+}
+
+function applyResponse(res: any) {
+	if (res?.success && res.report) {
+		report.value = res.report as InterviewSummaryReport;
+		return;
+	}
+	const code = String(res?.code || 'UNKNOWN');
+	if (code === 'REPORT_NOT_GENERATED') {
+		// 面试记录存在但报告还没生成：自动触发一次生成，并显示生成中状态。
+		void generateReport();
+		return;
+	}
+	if (code === 'CONVERSATION_NOT_FOUND' || code === 'MISSING_CONVERSATION_ID') {
+		setError('CONVERSATION_NOT_FOUND', '未找到本次面试记录');
+		return;
+	}
+	setError(code, String(res?.message || 'AI 评估报告生成失败，请稍后重试'));
+}
+
 async function loadReport() {
+	errorCode.value = '';
 	errorText.value = '';
 	report.value = null;
 	const convId = conversationId.value;
 	if (!convId) {
-		errorText.value = '缺少会话ID，无法加载AI报告';
+		setError('CONVERSATION_NOT_FOUND', '未找到本次面试记录');
 		return;
 	}
 	loading.value = true;
+	loadingText.value = '报告加载中...';
+	loadingHint.value = '';
 	try {
-		const res = await conversationApi.summarizeInterview({ conversation_id: convId });
-		report.value = res;
+		applyResponse(await conversationApi.getEvaluationReport(convId));
 	} catch (e: any) {
-		errorText.value = e?.message || '加载报告失败';
+		setError('REQUEST_FAILED', e?.message || '报告加载失败，请稍后重试');
 	} finally {
 		loading.value = false;
+	}
+}
+
+async function generateReport() {
+	const convId = conversationId.value;
+	if (!convId) {
+		setError('CONVERSATION_NOT_FOUND', '未找到本次面试记录');
+		return;
+	}
+	errorCode.value = '';
+	errorText.value = '';
+	report.value = null;
+	loading.value = true;
+	loadingText.value = 'AI 正在生成面试评估报告……';
+	loadingHint.value = '正在依据本次面试的真实问答记录生成评估结果';
+	try {
+		const res = await conversationApi.summarizeInterview({ conversation_id: convId });
+		if (res?.success && res.report) {
+			report.value = res.report as InterviewSummaryReport;
+		} else {
+			applyResponse(res);
+		}
+	} catch (e: any) {
+		setError('REQUEST_FAILED', e?.message || '评估报告生成失败，请稍后重试');
+	} finally {
+		loading.value = false;
+		loadingHint.value = '';
 	}
 }
 
@@ -152,7 +311,8 @@ onMounted(() => {
 	margin: 0 auto;
 	color: #d8ecff;
 	height: 100%;
-	overflow: hidden;
+	overflow-y: auto;
+	padding-right: 6px;
 }
 
 .report-header {
@@ -186,6 +346,15 @@ onMounted(() => {
 	font-size: clamp(20px, 2.4vw, 30px);
 	letter-spacing: 0.6px;
 	color: #e8f7ff;
+}
+
+.report-meta {
+	margin: 6px 0 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	font-size: 13px;
+	color: rgba(163, 205, 240, 0.85);
 }
 
 .ghost-btn,
@@ -242,6 +411,60 @@ onMounted(() => {
 	margin: 0;
 	color: rgba(214, 234, 255, 0.9);
 	line-height: 1.7;
+}
+
+.dimension-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 12px;
+}
+
+.dimension-card {
+	border: 1px solid rgba(81, 132, 198, 0.24);
+	border-radius: 14px;
+	padding: 12px;
+	background: rgba(5, 18, 44, 0.56);
+}
+
+.dimension-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.dimension-name {
+	color: #d9ecff;
+	font-size: 14px;
+}
+
+.dimension-score {
+	font-size: 22px;
+	font-weight: 700;
+	color: #0fe8f4;
+	text-shadow: 0 0 16px rgba(15, 232, 244, 0.4);
+}
+
+.dimension-bar {
+	margin: 8px 0 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: rgba(37, 74, 128, 0.5);
+	overflow: hidden;
+}
+
+.dimension-bar span {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background: linear-gradient(90deg, #06d7e6, #3d89ff);
+}
+
+.dimension-comment {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.6;
+	color: rgba(190, 219, 245, 0.85);
 }
 
 .dual-grid {
@@ -322,10 +545,73 @@ onMounted(() => {
 	color: rgba(214, 234, 255, 0.9);
 }
 
+.qa-list {
+	display: grid;
+	gap: 12px;
+}
+
+.qa-card {
+	border: 1px solid rgba(81, 132, 198, 0.24);
+	border-radius: 14px;
+	padding: 12px;
+	background: rgba(5, 18, 44, 0.56);
+}
+
+.qa-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 8px;
+}
+
+.qa-index {
+	font-size: 13px;
+	color: #7bc4ff;
+	letter-spacing: 0.4px;
+}
+
+.qa-score {
+	font-size: 14px;
+	font-weight: 600;
+	color: #0fe8f4;
+}
+
+.qa-question {
+	margin: 0 0 10px;
+	line-height: 1.65;
+	color: #e4f5ff;
+}
+
+.qa-block {
+	margin-top: 8px;
+}
+
+.qa-label {
+	display: inline-block;
+	margin-bottom: 4px;
+	font-size: 12px;
+	letter-spacing: 0.4px;
+	color: rgba(148, 196, 235, 0.9);
+}
+
+.qa-answer,
+.qa-comment {
+	margin: 0;
+	line-height: 1.7;
+	color: rgba(214, 234, 255, 0.9);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.qa-comment {
+	color: rgba(198, 226, 250, 0.92);
+}
+
 .report-footer {
 	display: flex;
 	justify-content: center;
-	padding: 8px 0 6px;
+	padding: 8px 0 18px;
 }
 
 .action-btn {
@@ -338,7 +624,7 @@ onMounted(() => {
 }
 
 .state-text {
-	padding: 18px 8px;
+	padding: 18px 8px 6px;
 	text-align: center;
 	color: #bddfff;
 }
@@ -347,13 +633,29 @@ onMounted(() => {
 	color: #ffb0b0;
 }
 
+.state-hint {
+	margin: 0 0 12px;
+	text-align: center;
+	font-size: 13px;
+	color: rgba(178, 212, 240, 0.85);
+}
+
+.state-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+	padding-bottom: 6px;
+}
+
 @media (max-width: 980px) {
 	.main-content {
 		margin-left: 0;
 		overflow: auto;
 	}
 
-	.dual-grid {
+	.dual-grid,
+	.improve-list {
 		grid-template-columns: 1fr;
 	}
 
@@ -361,10 +663,6 @@ onMounted(() => {
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 12px;
-	}
-
-	.improve-list {
-		grid-template-columns: 1fr;
 	}
 }
 </style>

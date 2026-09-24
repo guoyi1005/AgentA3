@@ -64,6 +64,19 @@ export interface MessageItem {
   created_at: string;
 }
 
+export interface EvaluationDimensionScore {
+  score: number;
+  comment: string;
+}
+
+export interface InterviewQuestionAnalysis {
+  question: string;
+  answer: string;
+  answer_summary: string;
+  score: number;
+  comment: string;
+}
+
 export interface InterviewSummaryReport {
   id: number;
   conversation_id: string;
@@ -76,6 +89,23 @@ export interface InterviewSummaryReport {
   improvements: string;
   created_at: string;
   updated_at: string;
+  /** 生成报告的模型名称 */
+  model?: string;
+  /** 五个维度的评分与点评 */
+  dimensions?: Record<string, EvaluationDimensionScore>;
+  /** 逐题分析（含学生真实回答） */
+  question_analysis?: InterviewQuestionAnalysis[];
+  started_at?: string | null;
+  ended_at?: string | null;
+  duration_seconds?: number | null;
+}
+
+export interface EvaluationReportResponse {
+  success: boolean;
+  code: string;
+  message?: string;
+  report?: InterviewSummaryReport;
+  conversation_id?: string;
 }
 
 // 面部数据记录相关类型
@@ -263,8 +293,15 @@ export const conversationApi = {
       voice_type: options?.voice_type,
     }),
 
+  /** 只读取数据库中已生成的报告，不触发 AI 生成。 */
+  getEvaluationReport: (conversationId: string) =>
+    api.get<EvaluationReportResponse>("/interview/evaluation/report", {
+      query: { conversation_id: conversationId },
+    }),
+
+  /** 生成报告；已生成过则直接返回数据库结果。 */
   summarizeInterview: (data: { conversation_id: string }) =>
-    api.post<InterviewSummaryReport>("/interview/evaluation/summarize", data),
+    api.post<EvaluationReportResponse>("/interview/evaluation/summarize", data),
 
   // 面部数据录制 API
   faceRecordStart: (data?: {

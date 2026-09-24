@@ -37,6 +37,18 @@ public class InterviewEvaluation {
     @Column(columnDefinition = "TEXT")
     private String improvements;
 
+    /** 五个评估维度的 JSON（专业知识/技术深度/表达能力/逻辑思维/岗位匹配度）。 */
+    @Column(name = "dimensions_json", columnDefinition = "TEXT")
+    private String dimensionsJson;
+
+    /** 逐题分析的 JSON 数组，包含题目、学生真实回答、AI 点评与得分。 */
+    @Column(name = "question_analysis_json", columnDefinition = "TEXT")
+    private String questionAnalysisJson;
+
+    /** 生成该报告的模型名称，便于排查。 */
+    @Column(length = 64)
+    private String model;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
