@@ -142,8 +142,19 @@
               <div class="center-main-card">
                 <div class="center-content">
                   <!-- AI 面试官头像区域 -->
-                  <div class="ai-avatar-wrap" :class="{ ready: avatarConnected || showCenterCameraPreview, idle: !avatarConnected && !showCenterCameraPreview }">
-                    <div class="ai-avatar" :class="{ 'ready-face': avatarConnected || showCenterCameraPreview }">
+                  <div class="ai-avatar-wrap ready">
+                    <div class="ai-avatar ready-face">
+                      <video
+                        v-if="!avatarConnected"
+                        class="ai-avatar-img interviewer-direct-video"
+                        :src="listeningInterviewerVideo"
+                        autoplay
+                        muted
+                        loop
+                        playsinline
+                        preload="auto"
+                        aria-label="正在认真聆听的专业女性面试官"
+                      ></video>
                       <video
                         ref="centerCameraVideoRef"
                         class="ai-avatar-img center-camera-preview"
@@ -155,7 +166,7 @@
                       <video
                         ref="avatarVideoRef"
                         class="avatar-video avatar-video-source"
-                        :poster="moyangImg"
+                        :poster="femaleInterviewerImg"
                         autoplay
                         playsinline
                         @loadeddata="handleAvatarVideoLoaded"
@@ -166,13 +177,18 @@
                         class="avatar-video avatar-video-keyed"
                         v-show="avatarConnected"
                       ></canvas>
-                      <div v-if="!avatarConnected && !showCenterCameraPreview" class="center-waiting-text">正在打开摄像头...</div>
                     </div>
                   </div>
 
                   <!-- AI 名称和状态 -->
                   <div class="ai-meta">
-                    <div class="ai-avatar-status">{{ avatarStatusText }}</div>
+                    <div class="ai-avatar-status">{{ interviewerStatusText }}</div>
+                    <button
+                      v-if="interviewerState === 'error' || interviewerState === 'unconfigured'"
+                      class="interviewer-retry-btn"
+                      type="button"
+                      @click="reconnectInterviewer"
+                    >重新连接</button>
                   </div>
 
                 </div>
@@ -262,6 +278,26 @@
         </div>
       </div>
     </main>
+
+    <InterviewDialog
+      :visible="initStatus === 'initializing' || initStatus === 'error'"
+      :title="initDialogTitle"
+      :message="initDialogMessage"
+      :busy="initStatus === 'initializing'"
+      :dismissible="false"
+      :primary-text="initStatus === 'error' ? initDialogPrimaryText : undefined"
+      :secondary-text="initStatus === 'error' ? '返回模拟面试首页' : undefined"
+      @primary="handleInitDialogPrimary"
+      @secondary="returnToMockInterview"
+    />
+    <InterviewDialog
+      :visible="noticeDialog.visible"
+      :title="noticeDialog.title"
+      :message="noticeDialog.message"
+      primary-text="知道了"
+      @primary="closeNoticeDialog"
+      @close="closeNoticeDialog"
+    />
   </div>
 </template>
 
@@ -269,16 +305,32 @@
 import { ref, onBeforeUnmount, nextTick, onMounted, onActivated, onDeactivated, computed, watch } from 'vue'
 import { useRouter } from 'vue-router';
 import { conversationApi } from '../api/conversation';
+import { authApi } from '../api/auth';
 import { avatarApi, type AvatarActionInput } from '../api/avatar';
-import { redirectToLoginOnSessionExpired } from '../api/index';
+import {
+  interviewerApi,
+  resolveApiBase,
+  redirectToLoginOnSessionExpired,
+} from '../api/index';
 import { PATHS } from '../routes/paths';
 import { AvatarWebApiDriver } from '../services/avatarWebApiDriver';
-import moyangImg from '@/assets/interview/mianshiguan.png';
+import femaleInterviewerImg from '@/assets/interview/female-interviewer.png';
+import listeningInterviewerVideo from '@/assets/interview/female-interviewer-final.mp4';
+import InterviewDialog from '../components/InterviewDialog.vue';
 
 const router = useRouter()
 const CONFIG_STORAGE_KEY = 'interview_config_draft';
+const noticeDialog = ref({ visible: false, title: '', message: '' });
 
-const sessionToken = ref<string | null>(localStorage.getItem('session_token') || null);
+function showNoticeDialog(title: string, message: string) {
+  noticeDialog.value = { visible: true, title, message };
+}
+
+function closeNoticeDialog() {
+  noticeDialog.value.visible = false;
+}
+
+const sessionToken = ref<string | null>(localStorage.getItem('token') || localStorage.getItem('session_token') || null);
 const localUserId = Number(localStorage.getItem('user_id') || '0');
 const userId = ref<number | null>(localUserId > 0 ? localUserId : null);
 const jobRole = ref(localStorage.getItem('job_role') || '');
@@ -300,7 +352,167 @@ const config = ref({
 
 const ending = ref(false);
 const sending = ref(false);
+
+/**
+ * 面试官（AI）连接状态机。
+ * idle → connecting → ready → asking → waiting_answer → thinking → asking …，异常进入 error，
+ * 没有可用模型时进入 unconfigured（页面明确提示“AI 面试官服务尚未配置”，不再无限 loading）。
+ */
+type InterviewerState =
+  | 'idle'
+  | 'connecting'
+  | 'ready'
+  | 'asking'
+  | 'waiting_answer'
+  | 'thinking'
+  | 'error'
+  | 'unconfigured';
+const interviewerState = ref<InterviewerState>('idle');
+const interviewerModelLabel = ref('');
+const interviewerErrorText = ref('');
+let interviewerProbeTask: Promise<InterviewerState> | null = null;
+
+const interviewerStatusText = computed(() => {
+  switch (interviewerState.value) {
+    case 'connecting':
+      return '正在连接 AI 面试官…';
+    case 'ready':
+      return interviewerModelLabel.value
+        ? `AI 面试官已连接（${interviewerModelLabel.value}）`
+        : 'AI 面试官已连接';
+    case 'asking':
+      return '面试官正在提问…';
+    case 'thinking':
+      return '面试官正在分析你的回答…';
+    case 'waiting_answer':
+      return '等待你的回答…';
+    case 'error':
+      return `AI 面试官连接失败${interviewerErrorText.value ? `：${interviewerErrorText.value}` : ''}`;
+    case 'unconfigured':
+      return 'AI 面试官服务尚未配置';
+    default:
+      return 'AI 面试官待连接';
+  }
+});
+
+const isInterviewerTalking = computed(() =>
+  ['ready', 'asking', 'thinking', 'waiting_answer'].includes(interviewerState.value),
+);
+
+function classifyInterviewerFailure(message: string): InterviewerState {
+  const text = String(message || '');
+  if (/尚未配置|未配置|没有可用|模型配置|模型未|请先配置|not configured|no model/i.test(text)) {
+    return 'unconfigured';
+  }
+  return 'error';
+}
+
+/** 探测面试官是否真的可用（复用后端已配置且测试通过的文本模型列表）。 */
+async function probeInterviewer(): Promise<InterviewerState> {
+  if (interviewerProbeTask) return interviewerProbeTask;
+  interviewerProbeTask = (async () => {
+    interviewerState.value = 'connecting';
+    interviewerErrorText.value = '';
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 10000);
+    try {
+      const status = await interviewerApi.status(controller.signal);
+      if (!status.configured) {
+        interviewerModelLabel.value = '';
+        interviewerState.value = 'unconfigured';
+        return 'unconfigured' as InterviewerState;
+      }
+      interviewerModelLabel.value = String(status.model || '').trim();
+      interviewerState.value = 'ready';
+      return 'ready' as InterviewerState;
+    } catch (e: any) {
+      const aborted = e?.name === 'AbortError';
+      interviewerErrorText.value = aborted ? '连接超时' : (e?.message || '无法访问 AI 面试官服务');
+      interviewerState.value = 'error';
+      console.warn('[AiChat] 面试官可用性探测失败:', e?.message || e);
+      return 'error' as InterviewerState;
+    } finally {
+      window.clearTimeout(timer);
+    }
+  })();
+  try {
+    return await interviewerProbeTask;
+  } finally {
+    interviewerProbeTask = null;
+  }
+}
+
+async function ensureInterviewerReady(): Promise<InterviewerState> {
+  if (['ready', 'asking', 'thinking', 'waiting_answer'].includes(interviewerState.value)) return 'ready';
+  return probeInterviewer();
+}
+
 const pendingConversationInit = ref(true);
+type InitStatus = 'idle' | 'initializing' | 'success' | 'error';
+type InitErrorKind = 'missing-position' | 'auth' | 'request';
+const initStatus = ref<InitStatus>('idle');
+const initErrorKind = ref<InitErrorKind>('request');
+const initErrorMessage = ref('');
+let initializationTask: Promise<boolean> | null = null;
+type InitFlowState = 'idle' | 'loading_profile' | 'waiting_job' | 'initializing' | 'ready' | 'error';
+const initFlowState = ref<InitFlowState>('idle');
+let profileLoadTask: Promise<boolean> | null = null;
+
+async function loadTargetPosition(): Promise<boolean> {
+  if (profileLoadTask) return profileLoadTask;
+  profileLoadTask = (async () => {
+    initFlowState.value = 'loading_profile';
+    try {
+      const profile = await authApi.getCurrentProfile();
+      const profileUserId = Number(profile?.id || 0);
+      if (profileUserId > 0) {
+        userId.value = profileUserId;
+        localStorage.setItem('user_id', String(profileUserId));
+      }
+      const targetPosition = String(profile?.target_position || '').trim();
+      if (!targetPosition) {
+        jobRole.value = '';
+        localStorage.removeItem('job_role');
+        initFlowState.value = 'waiting_job';
+        return false;
+      }
+      jobRole.value = targetPosition;
+      localStorage.setItem('job_role', targetPosition);
+      return true;
+    } catch (error) {
+      console.error('[AiChat] 读取目标岗位失败:', error);
+      const cachedPosition = String(localStorage.getItem('job_role') || '').trim();
+      if (cachedPosition) {
+        jobRole.value = cachedPosition;
+        return true;
+      }
+      initFlowState.value = 'error';
+      throw error;
+    }
+  })();
+  try {
+    return await profileLoadTask;
+  } finally {
+    profileLoadTask = null;
+  }
+}
+const initDialogTitle = computed(() => {
+  if (initStatus.value === 'initializing') return '正在初始化模拟面试';
+  if (initErrorKind.value === 'missing-position') return '尚未设置面试岗位';
+  if (initErrorKind.value === 'auth') return '登录状态已失效';
+  return '模拟面试初始化失败';
+});
+const initDialogMessage = computed(() => {
+  if (initStatus.value === 'initializing') return '正在创建面试会话并加载面试环境，请稍候。';
+  if (initErrorKind.value === 'missing-position') return '开始模拟面试前，需要先选择或设置目标岗位。';
+  if (initErrorKind.value === 'auth') return '当前登录状态不可用，请重新登录后再开始模拟面试。';
+  return initErrorMessage.value || '暂时无法创建面试会话，请重新尝试。';
+});
+const initDialogPrimaryText = computed(() => {
+  if (initErrorKind.value === 'missing-position') return '去填写岗位';
+  if (initErrorKind.value === 'auth') return '重新登录';
+  return '重新尝试';
+});
 const timerText = ref('00:00:00');
 const pageEnteredAtMs = Date.now();
 const cameraEnabled = ref(false);
@@ -324,7 +536,7 @@ const emotionCurrentPositivityPercent = ref(0);
 const micEnabled = ref(false);
 const micError = ref('');
 const micLevel = ref(0);
-const textInputMode = ref(false);
+const textInputMode = ref(true);
 const recordingAudio = ref(false);
 const transcribingAudio = ref(false);
 const voicePanelTip = ref('点击大麦克风按钮进行录音');
@@ -427,7 +639,12 @@ const liveAiSpeech = computed(() => {
 
 const centerCaptionText = computed(() => {
   if (!avatarConnected.value) {
-    return '正在接通面试官，请稍候...';
+    const userText = centerCaptionSpeaker.value === 'user'
+      ? String(latestUserTranscript.value || '').trim()
+      : '';
+    if (userText) return userText;
+    const aiText = String(liveAiSpeech.value || '').trim();
+    return aiText && aiText !== '等待 AI 发言' ? aiText : interviewerStatusText.value;
   }
   if (centerCaptionSpeaker.value === 'user') {
     const userText = String(latestUserTranscript.value || '').trim();
@@ -437,7 +654,7 @@ const centerCaptionText = computed(() => {
 });
 
 const centerCaptionLabel = computed(() => {
-  if (!avatarConnected.value) return '系统';
+  if (!avatarConnected.value) return isInterviewerTalking.value ? '面试官' : '系统';
   if (centerCaptionSpeaker.value === 'user' && String(latestUserTranscript.value || '').trim()) return '我';
   return '面试官';
 });
@@ -445,12 +662,6 @@ const centerCaptionLabel = computed(() => {
 const isCenterCaptionUser = computed(() => centerCaptionLabel.value === '我');
 const showCenterCameraPreview = computed(() => cameraEnabled.value && !avatarConnected.value);
 
-const avatarStatusText = computed(() => {
-  if (avatarConnecting.value) return '面试官接通中...';
-  if (avatarConnected.value) return '数字人在线';
-  if (avatarError.value) return `数字人未连接：${avatarError.value}`;
-  return '数字人未连接';
-});
 const chatInputPlaceholder = computed(() => {
   if (textInputMode.value) return `对${jobRole.value || '面试官'}说点什么...`;
   if (recordingAudio.value || transcribingAudio.value) return voicePanelTip.value;
@@ -621,6 +832,8 @@ function resolveOpeningGreetingText(): string {
 }
 
 function ensureInitialInterviewerGreeting() {
+  // 面试官服务不可用时不做任何“假装已连接”的发言
+  if (interviewerState.value !== 'ready') return;
   const hasAiSpeech = messages.value.some((m) => m.role === 'ai' && String(m.content || '').trim().length > 0);
   if (hasAiSpeech) return;
   messages.value.push({
@@ -628,6 +841,75 @@ function ensureInitialInterviewerGreeting() {
     content: resolveOpeningGreetingText(),
     ts: new Date().toLocaleTimeString(),
   });
+}
+
+async function requestInitialQuestion() {
+  if (!conversationId.value) throw new Error('面试会话尚未创建');
+  interviewerState.value = 'asking';
+  const authToken = localStorage.getItem('session_token') || localStorage.getItem('token') || '';
+  const response = await fetch(`${resolveApiBase()}/langgraph/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(authToken ? { Authorization: `Bearer ${authToken}`, 'X-Session-Token': authToken } : {}),
+    },
+    body: JSON.stringify({
+      conversation_id: conversationId.value,
+      initial_question: true,
+      job_role: jobRole.value,
+    }),
+  });
+  if (!response.ok || !response.body) {
+    const text = await response.text().catch(() => '');
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+  let answer = '';
+  let finished = false;
+  while (!finished) {
+    const chunk = await reader.read();
+    finished = !!chunk.done;
+    if (chunk.value) buffer += decoder.decode(chunk.value, { stream: !finished });
+    const events = buffer.split(/\r?\n\r?\n/);
+    buffer = events.pop() || '';
+    for (const event of events) {
+      const data = event.split(/\r?\n/)
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trim())
+        .join('\n');
+      if (!data || data === '[DONE]') continue;
+      let payload: any;
+      try {
+        payload = JSON.parse(data);
+      } catch {
+        continue;
+      }
+      if (payload?.error) throw new Error(String(payload.error));
+      if (payload?.content) answer += String(payload.content);
+    }
+  }
+  if (!answer.trim()) throw new Error('面试官未返回第一题');
+  messages.value.push({ role: 'ai', content: answer.trim(), ts: new Date().toLocaleTimeString() });
+  interviewerState.value = 'waiting_answer';
+  centerCaptionSpeaker.value = 'ai';
+  await scrollToBottom();
+}
+
+async function reconnectInterviewer() {
+  const readiness = await probeInterviewer();
+  if (readiness !== 'ready') return;
+  const hasQuestion = messages.value.some((item) => item.role === 'ai' && item.content.trim());
+  if (!hasQuestion && conversationId.value) {
+    try {
+      await requestInitialQuestion();
+    } catch (error: any) {
+      interviewerState.value = classifyInterviewerFailure(error?.message || '');
+      interviewerErrorText.value = error?.message || '连接失败';
+    }
+  }
 }
 
 async function scrollToBottom() {
@@ -1022,19 +1304,28 @@ async function ensureConversationInitialized() {
     status: 1,
   };
 
-  // 不传 user_id，让后端统一用 session_token 解析用户 ID，确保与 list 接口过滤条件一致
-  const res = await conversationApi.newId({
-    job_role: jobRole.value.trim(),
-    session_token: sessionToken.value || undefined,
-  });
-  conversationId.value = res.conversation_id;
+  let createdAt: string | undefined;
+  if (!conversationId.value) {
+    // 不传 user_id，让后端统一用 Authorization 中的登录用户创建会话。
+    const res = await conversationApi.newId({
+      job_role: jobRole.value.trim(),
+    });
+    if (!res?.conversation_id) {
+      throw new Error('创建面试会话失败：接口未返回会话编号');
+    }
+    conversationId.value = res.conversation_id;
+    createdAt = res.created_at;
+  }
 
   const startRes = await conversationApi.start({
     conversation_id: conversationId.value,
     config: configPayload,
   });
+  if (!startRes || !startRes.status) {
+    throw new Error('启动面试会话失败：接口响应不完整');
+  }
 
-  startedAt.value = startRes.started_at || res.created_at || new Date().toISOString();
+  startedAt.value = startRes.started_at || createdAt || new Date().toISOString();
   endedAt.value = null;
   status.value = 'running';
   pendingConversationInit.value = false;
@@ -1048,7 +1339,7 @@ async function ensureConversationInitialized() {
 async function handleEnd(options?: { silent?: boolean }): Promise<boolean> {
   const silent = options?.silent ?? false;
   if (!conversationId.value) {
-    if (!silent) alert('没有会话可结束');
+    if (!silent) showNoticeDialog('无法结束面试', '当前没有可结束的面试会话。');
     return false;
   }
   ending.value = true;
@@ -1068,11 +1359,11 @@ async function handleEnd(options?: { silent?: boolean }): Promise<boolean> {
     localStorage.setItem('conversation_started_at', startedAt.value || '');
     localStorage.setItem('conversation_ended_at', endedAt.value || '');
     markInterviewEndedLocally(endedAt.value || endedIso);
-    if (!silent) alert('会话已结束');
+    if (!silent) showNoticeDialog('面试已结束', '本次面试记录已保存。');
     return true;
   } catch (e: any) {
     console.error('[AiChat] 结束面试失败:', e);
-    if (!silent) alert(e?.message || '结束失败');
+    if (!silent) showNoticeDialog('结束面试失败', e?.message || '请稍后重试。');
     return false;
   } finally {
     ending.value = false;
@@ -1120,6 +1411,19 @@ async function handleEndAndReturn() {
 async function sendMessage() {
   const text = newMessage.value.trim();
   if (!text) return;
+  // 面试官未就绪时先做一次真实探测；确认无可用模型则明确提示，不伪造回答
+  const readiness = await ensureInterviewerReady();
+  if (readiness === 'unconfigured') {
+    showNoticeDialog(
+      'AI 面试官服务尚未配置',
+      '当前没有可用的面试官模型，请先在系统配置中维护文本模型（ai.service.text.*，包含 provider / base-url / api-key / model 并通过连通性测试）后再开始面试。',
+    );
+    return;
+  }
+  if (readiness === 'error') {
+    showNoticeDialog('AI 面试官连接失败', interviewerErrorText.value || '无法访问 AI 面试官服务，请稍后重试。');
+    return;
+  }
   latestUserTranscript.value = text;
   centerCaptionSpeaker.value = 'user';
   stopTtsPlayback();
@@ -1131,6 +1435,7 @@ async function sendMessage() {
   messages.value.push({ role: 'user', content: text, ts: new Date().toLocaleTimeString() });
   newMessage.value = '';
   sending.value = true;
+  interviewerState.value = 'thinking';
   try {
     await ensureConversationInitialized();
     messages.value.push({ role: 'ai', content: '', ts: new Date().toLocaleTimeString() });
@@ -1175,8 +1480,9 @@ async function sendMessage() {
     };
     await scrollToBottom();
 
-    const baseApi = (import.meta as any).env?.VITE_API_BASE ?? '/api';
-    const url = `${baseApi}/langgraph/chat`;
+    // 与项目其它接口保持一致：开发环境直连 8080，生产环境走同源 /api
+    const url = `${resolveApiBase()}/langgraph/chat`;
+    const authToken = localStorage.getItem('session_token') || localStorage.getItem('token') || '';
     if (activeChatRequestController) {
       activeChatRequestController.abort();
       activeChatRequestController = null;
@@ -1185,7 +1491,10 @@ async function sendMessage() {
     activeChatRequestController = requestController;
     const resp = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken ? { Authorization: `Bearer ${authToken}`, 'X-Session-Token': authToken } : {}),
+      },
       signal: requestController.signal,
       body: JSON.stringify({
         conversation_id: conversationId.value,
@@ -1238,8 +1547,17 @@ async function sendMessage() {
           }
 
           if (dataText) {
+            let payload: any = null;
             try {
-              const payload = JSON.parse(dataText);
+              payload = JSON.parse(dataText);
+            } catch {
+              payload = null;
+            }
+            if (payload?.error) {
+              throw new Error(String(payload.error));
+            }
+            if (payload) {
+              if (interviewerState.value === 'thinking') interviewerState.value = 'asking';
               if (payload?.type === 'tts') {
                 // 以“触发播报”为起点，不等待整段播完，避免文字被阻塞到音频结束
                 void driveAvatarByTtsFile(
@@ -1274,10 +1592,8 @@ async function sendMessage() {
                   ensureAudioTextSyncLoop();
                   await syncAiTextByAudioProgress();
                 }
-              } else if (payload?.error) {
-                throw new Error(String(payload.error));
               }
-            } catch {
+            } else {
               fullAiText += dataText;
               if (allowAiTextStreaming) {
                 ensureAudioTextSyncLoop();
@@ -1309,15 +1625,32 @@ async function sendMessage() {
     }
 
     if (!ai.content) {
-      centerCaptionSpeaker.value = 'ai';
-      ai.content = '发送失败，请稍后再试。';
-      await scrollToBottom();
+      // 面试官没有返回任何内容：如实反馈，不伪造面试官发言
+      messages.value.splice(messages.value.indexOf(ai), 1);
+      interviewerState.value = 'error';
+      interviewerErrorText.value = '面试官未返回内容';
+      showNoticeDialog('AI 面试官连接失败', '面试官没有返回内容，请检查 AI 服务与模型配置后重试。');
+      return;
     }
+    interviewerState.value = 'waiting_answer';
   } catch (e: any) {
     if (e?.name === 'AbortError') return;
     console.error('[AiChat] 发送失败:', e);
-    centerCaptionSpeaker.value = 'ai';
-    messages.value.push({ role: 'ai', content: '发送失败，请稍后再试。' });
+    const placeholder = messages.value[messages.value.length - 1];
+    if (placeholder?.role === 'ai' && !String(placeholder.content || '').trim()) {
+      messages.value.pop();
+    }
+    const failure = classifyInterviewerFailure(e?.message || '');
+    interviewerState.value = failure;
+    interviewerErrorText.value = e?.message || '请求失败';
+    if (failure === 'unconfigured') {
+      showNoticeDialog(
+        'AI 面试官服务尚未配置',
+        '当前没有可用的面试官模型，请先在系统配置中维护文本模型（ai.service.text.*）后再开始面试。',
+      );
+    } else {
+      showNoticeDialog('AI 面试官连接失败', e?.message || '无法访问 AI 面试官服务，请稍后重试。');
+    }
   } finally {
     activeChatRequestController = null;
     sending.value = false;
@@ -1817,33 +2150,126 @@ function handleSpaceHoldKeyUp(event: KeyboardEvent) {
   if (recordingAudio.value) stopVoiceRecording();
 }
 
-async function initializeFreshInterviewSession() {
-  messages.value = [];
-  latestUserTranscript.value = '';
-  centerCaptionSpeaker.value = 'ai';
-  conversationId.value = null;
-  startedAt.value = null;
-  endedAt.value = null;
-  status.value = null;
-  pendingConversationInit.value = true;
-  localStorage.removeItem('conversation_id');
-  localStorage.removeItem('conversation_status');
-  localStorage.removeItem('conversation_started_at');
-  localStorage.removeItem('conversation_ended_at');
+async function initializeFreshInterviewSession(): Promise<boolean> {
+  if (initializationTask) return initializationTask;
+
+  initializationTask = (async () => {
+    if (!sessionToken.value) {
+      initFlowState.value = 'error';
+      initErrorKind.value = 'auth';
+      initErrorMessage.value = '';
+      initStatus.value = 'error';
+      return false;
+    }
+    if (!jobRole.value.trim()) {
+      initFlowState.value = 'waiting_job';
+      initErrorKind.value = 'missing-position';
+      initErrorMessage.value = '';
+      initStatus.value = 'error';
+      return false;
+    }
+
+    initStatus.value = 'initializing';
+    initFlowState.value = 'initializing';
+    initErrorMessage.value = '';
+    messages.value = [];
+    latestUserTranscript.value = '';
+    centerCaptionSpeaker.value = 'ai';
+    conversationId.value = null;
+    startedAt.value = null;
+    endedAt.value = null;
+    status.value = null;
+    pendingConversationInit.value = true;
+    localStorage.removeItem('conversation_id');
+    localStorage.removeItem('conversation_status');
+    localStorage.removeItem('conversation_started_at');
+    localStorage.removeItem('conversation_ended_at');
+
+    try {
+      await ensureConversationInitialized();
+      initStatus.value = 'success';
+      initFlowState.value = 'ready';
+    } catch (e: any) {
+      console.error('[AiChat] 初始化会话失败:', e?.message || e);
+      const statusCode = Number(e?.status || 0);
+      const errorCode = String(e?.code || e?.payload?.error || e?.payload?.msg || '');
+      const errorField = String(e?.payload?.field || '');
+      const missingPosition = errorCode === 'missing_or_empty_field'
+        && ['target_position', 'job_role', 'positionName'].includes(errorField);
+      initErrorKind.value = statusCode === 401 ? 'auth' : missingPosition ? 'missing-position' : 'request';
+      initErrorMessage.value = statusCode === 401 || missingPosition
+        ? ''
+        : '初始化过程中出现异常，请重新尝试。';
+      initStatus.value = 'error';
+      initFlowState.value = missingPosition ? 'waiting_job' : 'error';
+      return false;
+    }
+
+    // 本阶段只初始化文字面试官；数字人、摄像头和语音不参与文字会话链路。
+    const interviewerReadiness = await ensureInterviewerReady();
+    if (interviewerReadiness === 'unconfigured') {
+      showNoticeDialog(
+        'AI 面试官服务尚未配置',
+        '当前没有可用的面试官模型。请在系统配置中维护文本模型（ai.service.text.*，含 provider / base-url / api-key / model 并通过连通性测试）后再开始面试。',
+      );
+    } else if (interviewerReadiness === 'error') {
+      showNoticeDialog(
+        'AI 面试官连接失败',
+        interviewerErrorText.value || '无法访问 AI 面试官服务，请检查 AI 服务是否已启动后重试。',
+      );
+    } else {
+      try {
+        await requestInitialQuestion();
+      } catch (error: any) {
+        const failure = classifyInterviewerFailure(error?.message || '');
+        interviewerState.value = failure;
+        interviewerErrorText.value = error?.message || '第一题生成失败';
+        showNoticeDialog(
+          failure === 'unconfigured' ? 'AI 面试官服务尚未配置' : 'AI 面试官连接失败',
+          failure === 'unconfigured'
+            ? '后端尚未配置可用的 DeepSeek API Key。'
+            : '第一题生成失败，请使用“重新连接”再次尝试。',
+        );
+      }
+    }
+    await scrollToBottom();
+    return true;
+  })();
 
   try {
-    await ensureConversationInitialized();
-  } catch (e: any) {
-    console.error('[AiChat] 初始化会话失败:', e?.message || e);
-    alert('面试初始化失败，请返回重试');
-    router.push(PATHS.AI_MOCK_INTERVIEW);
-    return;
+    return await initializationTask;
+  } finally {
+    initializationTask = null;
   }
+}
 
-  await ensureAvatarConnected();
-  ensureInitialInterviewerGreeting();
-  await scrollToBottom();
-  await playOpeningGreetingByAvatarOnce();
+async function prepareAndInitializeInterview(): Promise<boolean> {
+  sessionToken.value = localStorage.getItem('token') || localStorage.getItem('session_token') || null;
+  if (!sessionToken.value) {
+    initErrorKind.value = 'auth';
+    initErrorMessage.value = '';
+    initStatus.value = 'error';
+    initFlowState.value = 'error';
+    return false;
+  }
+  try {
+    const hasPosition = await loadTargetPosition();
+    if (!hasPosition) {
+      initErrorKind.value = 'missing-position';
+      initErrorMessage.value = '';
+      initStatus.value = 'error';
+      return false;
+    }
+  } catch (error: any) {
+    const statusCode = Number(error?.response?.status || error?.status || 0);
+    initErrorKind.value = statusCode === 401 ? 'auth' : 'request';
+    initErrorMessage.value = statusCode === 401
+      ? ''
+      : '暂时无法读取目标岗位，请重新尝试。';
+    initStatus.value = 'error';
+    return false;
+  }
+  return initializeFreshInterviewSession();
 }
 
 onMounted(async () => {
@@ -1851,18 +2277,6 @@ onMounted(async () => {
   resetAiTipsRotation();
   startAiTipsRotation();
   startEnvMonitorSimulation();
-
-  if (!sessionToken.value) {
-    alert('未登录，请先登录');
-    router.push(PATHS.AI_MOCK_INTERVIEW);
-    return;
-  }
-
-  if (!jobRole.value.trim()) {
-    alert('未找到面试岗位，请先配置面试参数');
-    router.push(PATHS.AI_MOCK_INTERVIEW);
-    return;
-  }
 
   const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
   if (raw) {
@@ -1878,9 +2292,7 @@ onMounted(async () => {
     }
   }
 
-  // 摄像头优先并行启动，减少进入页面后的“慢半拍”感知
-  const cameraStartTask = !cameraEnabled.value ? handleCameraToggle() : Promise.resolve();
-  await Promise.all([initializeFreshInterviewSession(), cameraStartTask]);
+  await prepareAndInitializeInterview();
 });
 
 let activatedOnce = false;
@@ -1895,11 +2307,32 @@ onActivated(() => {
   window.addEventListener('keyup', handleSpaceHoldKeyUp);
   resetAiTipsRotation();
   startAiTipsRotation();
-  void initializeFreshInterviewSession();
-  if (!cameraEnabled.value) {
-    void handleCameraToggle();
+  if (initStatus.value !== 'success' || !conversationId.value) {
+    void prepareAndInitializeInterview();
   }
 });
+
+function returnToMockInterview() {
+  router.push(PATHS.AI_MOCK_INTERVIEW);
+}
+
+function handleInitDialogPrimary() {
+  if (initErrorKind.value === 'missing-position') {
+    router.push({
+      path: PATHS.MY,
+      query: {
+        edit: 'target-position',
+        returnTo: PATHS.AI_MOCK_INTERVIEW,
+      },
+    });
+    return;
+  }
+  if (initErrorKind.value === 'auth') {
+    router.push(PATHS.LOGIN);
+    return;
+  }
+  void prepareAndInitializeInterview();
+}
 
 onDeactivated(() => {
   window.removeEventListener('keydown', handleSpaceHoldKeyDown);
@@ -3031,7 +3464,9 @@ onBeforeUnmount(() => {
 
 .ai-avatar.ready-face {
   width: 100%;
-  height: 100%;
+  height: auto;
+  max-height: 100%;
+  aspect-ratio: 3 / 2;
   border-radius: 42px;
   border: none;
   overflow: hidden;
@@ -3110,10 +3545,14 @@ onBeforeUnmount(() => {
   mask-composite: intersect;
 }
 
-.avatar-fallback-img {
-  position: relative;
-  z-index: 2;
-  filter: saturate(1.03) contrast(1.02);
+.interviewer-direct-video {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: saturate(1.02) contrast(1.02) brightness(0.98);
 }
 
 .center-camera-preview {
@@ -3161,6 +3600,22 @@ onBeforeUnmount(() => {
   font-size: 13px;
   line-height: 1.4;
   min-height: 18px;
+}
+
+.interviewer-retry-btn {
+  margin-top: 8px;
+  padding: 6px 14px;
+  border: 1px solid rgba(112, 159, 255, 0.38);
+  border-radius: 8px;
+  background: rgba(22, 36, 66, 0.7);
+  color: #c8dbff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.interviewer-retry-btn:hover {
+  background: rgba(38, 57, 96, 0.82);
+  border-color: rgba(132, 178, 255, 0.62);
 }
 
 .ai-status {

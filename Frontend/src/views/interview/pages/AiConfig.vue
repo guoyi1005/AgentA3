@@ -19,7 +19,8 @@
 
 						<div class="field-group">
 							<label>目标职位</label>
-							<input v-model="jobRole" placeholder="请在此粘贴职位描述或具体要求..." />
+							<input v-model="jobRole" placeholder="请在此粘贴职位描述或具体要求..." @input="jobRoleError = ''" />
+							<p v-if="jobRoleError" class="field-error" role="alert">{{ jobRoleError }}</p>
 						</div>
 
 						<div class="field-group">
@@ -201,6 +202,7 @@ const interviewers: InterviewerOption[] = [
 ];
 
 const jobRole = ref(localStorage.getItem('job_role') || '');
+const jobRoleError = ref('');
 const starting = ref(false);
 const selectedInterviewerId = ref<InterviewerId>('anran');
 
@@ -296,9 +298,10 @@ onBeforeUnmount(() => {
 
 const handleStart = async () => {
 	if (!jobRole.value.trim()) {
-		alert('请先填写目标职位');
+		jobRoleError.value = '请先填写目标职位';
 		return;
 	}
+	jobRoleError.value = '';
 	starting.value = true;
 	try {
 		config.value.difficulty = Math.min(5, Math.max(1, Number(config.value.difficulty || 3)));

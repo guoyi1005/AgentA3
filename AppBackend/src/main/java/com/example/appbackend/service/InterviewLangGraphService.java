@@ -1,7 +1,5 @@
 package com.example.appbackend.service;
 
-import com.example.appbackend.dto.LlmChatRequest;
-import com.example.appbackend.dto.LlmChatResponse;
 import com.example.appbackend.entity.AiInterviewMessage;
 import com.example.appbackend.entity.InterviewConfig;
 import com.example.appbackend.entity.InterviewConversation;
@@ -31,33 +29,40 @@ public class InterviewLangGraphService {
     private final AiInterviewMessageRepository messageRepository;
     private final InterviewConfigRepository configRepository;
     private final InterviewUserProfileRepository profileRepository;
-    private final LlmService llmService;
+    private final InterviewDeepSeekService deepSeekService;
     private final ObjectMapper objectMapper;
 
     public InterviewLangGraphService(InterviewConversationRepository conversationRepository,
                                      AiInterviewMessageRepository messageRepository,
                                      InterviewConfigRepository configRepository,
                                      InterviewUserProfileRepository profileRepository,
-                                     LlmService llmService,
+                                     InterviewDeepSeekService deepSeekService,
                                      ObjectMapper objectMapper) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.configRepository = configRepository;
         this.profileRepository = profileRepository;
-        this.llmService = llmService;
+        this.deepSeekService = deepSeekService;
         this.objectMapper = objectMapper;
     }
 
     public SseEmitter chat(Map<String, Object> body, String authorization) {
         String conversationId = InterviewJsonHelper.asStr(body.get("conversation_id"));
         String content = InterviewJsonHelper.asStr(body.get("content"));
-        if (!StringUtils.hasText(conversationId) || !StringUtils.hasText(content)) {
-            throw new InterviewServiceException("missing_or_empty_field", 400);
+        boolean initialQuestion = Boolean.TRUE.equals(body.get("initial_question"))
+                || "true".equalsIgnoreCase(InterviewJsonHelper.asStr(body.get("initial_question")));
+        if (!StringUtils.hasText(conversationId)) {
+            throw new InterviewServiceException("missing_or_empty_field", 400, Map.of("field", "conversation_id"));
+        }
+        if (!initialQuestion && !StringUtils.hasText(content)) {
+            throw new InterviewServiceException("missing_or_empty_field", 400, Map.of("field", "content"));
         }
         InterviewConversation conversation = conversationRepository.findByConversationId(conversationId)
                 .orElseThrow(() -> new InterviewServiceException("conversation_not_found", 400));
 
-        persistMessage(conversation, "user", content, null);
+        if (!initialQuestion) {
+            persistMessage(conversation, "user", content, null);
+        }
 
         String jobRole = Optional.ofNullable(InterviewJsonHelper.asStr(body.get("job_role")))
                 .filter(StringUtils::hasText)
@@ -72,12 +77,6 @@ public class InterviewLangGraphService {
             if (StringUtils.hasText(extra)) {
                 system = system + "\n" + extra;
             }
-        }
-
-        StringBuilder history = new StringBuilder();
-        List<AiInterviewMessage> messages = messageRepository.findByConversationIdOrderByIdAsc(conversationId);
-        for (AiInterviewMessage m : messages) {
-            history.append(m.getRole()).append(": ").append(m.getContent()).append('\n');
         }
 
         @SuppressWarnings("unchecked")
@@ -97,31 +96,37 @@ public class InterviewLangGraphService {
             }
         }
 
-        StringBuilder input = new StringBuilder();
-        input.append("近七天记录：无\n");
-        input.append("近期对话记忆：\n").append(history.isEmpty() ? "（面试开始）" : history).append('\n');
         if (userInfo != null) {
-            input.append("候选人信息：").append(userInfo).append('\n');
+            system = system + "\n候选人信息：" + userInfo;
         }
-        input.append("候选人：").append(content).append('\n').append("面试官（安然）：");
 
-        LlmChatRequest req = new LlmChatRequest();
-        req.setPrompt(system);
-        req.setInput(input.toString());
+        List<Map<String, String>> promptMessages = new ArrayList<>();
+        promptMessages.add(Map.of("role", "system", "content", system));
+        List<AiInterviewMessage> history = messageRepository.findByConversationIdOrderByIdAsc(conversationId);
+        for (AiInterviewMessage message : history) {
+            String role = "assistant".equalsIgnoreCase(message.getRole()) ? "assistant" : "user";
+            promptMessages.add(Map.of("role", role, "content", message.getContent()));
+        }
+        if (initialQuestion && history.isEmpty()) {
+            promptMessages.add(Map.of(
+                    "role", "user",
+                    "content", "请开始这场模拟面试。先简短问候，然后只提出一道与“" + jobRole + "”岗位相关的第一题。"
+            ));
+        }
 
         SseEmitter emitter = new SseEmitter(0L);
         CompletableFuture.runAsync(() -> {
             try {
-                LlmChatResponse resp = llmService.chat(req, authorization);
-                String answer = resp != null && StringUtils.hasText(resp.getAnswer())
-                        ? resp.getAnswer() : "好的，我们继续。请先做一个简短的自我介绍。";
+                String answer = deepSeekService.chat(promptMessages);
                 emitContentChunks(emitter, answer);
                 persistMessage(conversation, "assistant", answer, null);
                 emitter.send(SseEmitter.event().data("[DONE]"));
                 emitter.complete();
             } catch (Exception e) {
                 try {
-                    Map<String, Object> err = Map.of("error", e.getMessage() == null ? "internal_error" : e.getMessage());
+                    String code = e instanceof InterviewServiceException serviceError
+                            ? serviceError.getCode() : "interview_ai_request_failed";
+                    Map<String, Object> err = Map.of("error", code);
                     emitter.send(SseEmitter.event().data(objectMapper.writeValueAsString(err)));
                     emitter.send(SseEmitter.event().data("[DONE]"));
                 } catch (Exception ignored) {

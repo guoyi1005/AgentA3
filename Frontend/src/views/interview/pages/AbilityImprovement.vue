@@ -13,7 +13,11 @@
         <div v-else-if="error" class="error-text">{{ error }}</div>
         <div v-else class="category-layout">
           <!-- 第一行：彩色渐变卡片（推荐课程样式）-->
-          <section v-for="(items, position) in groupedCoursesRow1" :key="position" class="section category-section">
+          <section
+            v-for="(items, position) in groupedCoursesRow1"
+            :key="position"
+            :class="['section', 'category-section', { 'product-manager-section': position === '产品经理' }]"
+          >
             <div class="section-header">
               <div class="section-title-wrap">
                 <h2 class="section-title">{{ position }}</h2>
@@ -793,6 +797,32 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 产品经理资源标题较长：保留图片与卡片宽度，仅释放底部信息区高度。 */
+.product-manager-section .course-card .card-visual {
+  height: 196px;
+  min-height: 196px;
+  flex: 0 0 196px;
+}
+
+.product-manager-section .course-info {
+  height: auto;
+  min-height: 112px;
+  flex: 1 1 auto;
+  padding-bottom: 18px;
+  overflow: visible;
+}
+
+.product-manager-section .course-title {
+  min-width: 0;
+  margin-bottom: 0;
+  line-height: 1.5;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 

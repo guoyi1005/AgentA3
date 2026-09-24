@@ -265,7 +265,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Sidebar from '../components/Sidebar.vue'
 import { authApi, type InterviewJobPositionItem } from '../api/auth'
 import { PATHS } from '../routes/paths'
@@ -273,6 +273,7 @@ import defaultAvatarImg from '@/assets/interview/1.png'
 import { clearAuth } from '../../../utils/auth'
 
 const router = useRouter()
+const route = useRoute()
 
 const handleLogout = () => {
   localStorage.removeItem('session_token')
@@ -765,6 +766,7 @@ async function saveProfile() {
 		return
 	}
 	try {
+		const selectedTargetPosition = editForm.target_positions.join(',')
 		await authApi.updateProfile({
 			id: currentUserId.value,
 			nickname: editForm.nickname || undefined,
@@ -773,13 +775,18 @@ async function saveProfile() {
 			work_experience_years: Number(editForm.work_experience_years || 0),
 			work_experience: editForm.work_experience || null,
 			graduation_year: editForm.graduation_year,
-			target_position: editForm.target_positions.join(',') || null,
+			target_position: selectedTargetPosition || null,
 			tech_stack: editForm.tech_stacks.join(',') || null,
 			skill_tags: editForm.skill_tags || null,
 			avatar_url: editForm.avatar_url || undefined,
 		})
+		localStorage.setItem('job_role', selectedTargetPosition)
 		await loadProfile()
 		editVisible.value = false
+		const returnTo = typeof route.query.returnTo === 'string' ? route.query.returnTo : ''
+		if (route.query.edit === 'target-position' && returnTo.startsWith('/interview/')) {
+			await router.replace(returnTo)
+		}
 	} catch (e: any) {
 		editError.value = e?.message || '保存失败，请稍后重试'
 	} finally {
@@ -792,6 +799,9 @@ onMounted(async () => {
 	errorText.value = ''
 	try {
 		await loadProfile()
+		if (route.query.edit === 'target-position') {
+			await openEdit()
+		}
 	} catch (e) {
 		console.error('[My] load profile failed', e)
 		errorText.value = '个人信息加载失败，请稍后刷新重试'

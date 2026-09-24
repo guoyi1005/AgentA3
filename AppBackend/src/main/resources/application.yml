@@ -168,6 +168,11 @@ exam:
     max-zip-entries: 2000
 
 interview:
+  # DeepSeek 凭据仅从环境变量读取（DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL / DEEPSEEK_MODEL），仓库内不保存密钥。
+  deepseek:
+    base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    model: ${DEEPSEEK_MODEL:deepseek-chat}
+    api-key: ${DEEPSEEK_API_KEY:}
   chroma:
     host: ${CHROMA_HOST:localhost}
     port: ${CHROMA_PORT:8001}

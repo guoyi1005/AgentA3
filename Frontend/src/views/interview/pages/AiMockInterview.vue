@@ -175,7 +175,11 @@
           </div>
           <div class="history-card">
             <div v-if="loadingHistory" class="loading-tip">加载中...</div>
-            <div v-else-if="historyList.length === 0" class="empty-tip">暂无历史面试记录</div>
+            <div v-else-if="historyError" class="history-error" role="alert">
+              <span>{{ historyError }}</span>
+              <button type="button" @click="loadHistory">重新加载</button>
+            </div>
+            <div v-else-if="historyList.length === 0" class="empty-tip">暂无面试记录</div>
             <div v-else class="table-container">
               <table class="history-table">
                 <thead>
@@ -259,6 +263,25 @@
         </section>
       </div>
     </main>
+
+    <InterviewDialog
+      :visible="startDialog !== null"
+      :title="startDialogTitle"
+      :message="startDialogMessage"
+      :primary-text="startDialogPrimaryText"
+      secondary-text="取消"
+      @primary="handleStartDialogPrimary"
+      @secondary="closeStartDialog"
+      @close="closeStartDialog"
+    />
+    <InterviewDialog
+      :visible="noticeDialog.visible"
+      :title="noticeDialog.title"
+      :message="noticeDialog.message"
+      primary-text="知道了"
+      @primary="closeNoticeDialog"
+      @close="closeNoticeDialog"
+    />
   </div>
 </template>
 
@@ -268,11 +291,21 @@ import { ref, computed, onBeforeUnmount, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router';
 import { conversationApi } from '../api/conversation';
 import { authApi } from '../api/auth';
-import { redirectToLoginOnSessionExpired } from '../api/index';
+import { redirectToLoginOnSessionExpired, resolveApiBase } from '../api/index';
 import type { ConversationItem } from '../api/conversation';
 import { PATHS } from '../routes/paths';
+import InterviewDialog from '../components/InterviewDialog.vue';
 
 const router = useRouter()
+const noticeDialog = ref({ visible: false, title: '', message: '' });
+
+function showNoticeDialog(title: string, message: string) {
+  noticeDialog.value = { visible: true, title, message };
+}
+
+function closeNoticeDialog() {
+  noticeDialog.value.visible = false;
+}
 
 const initialStatus = localStorage.getItem("conversation_status") || "";
 const initialJobRole = localStorage.getItem("job_role") || "";
@@ -301,6 +334,7 @@ const config = ref({
 
 const historyList = ref<ConversationItem[]>([]);
 const loadingHistory = ref(false);
+const historyError = ref('');
 const showConfig = ref(false);
 const pendingConversationInit = ref(false);
 const summarizingConversationId = ref<string | null>(null);
@@ -325,7 +359,7 @@ function getReportActionText(item: ConversationItem) {
 async function handleSummarize(item: ConversationItem) {
   const convId = String(item.conversation_id || '').trim();
   if (!convId) {
-    alert('缺少 conversation_id，无法生成报告');
+    showNoticeDialog('无法生成报告', '当前记录缺少会话编号，请重新加载后再试。');
     return;
   }
   if (summarizingConversationId.value) return;
@@ -346,7 +380,7 @@ async function handleSummarize(item: ConversationItem) {
     router.push(`${PATHS.EVALUATION_REPORT}?conversation_id=${encodeURIComponent(convId)}`);
   } catch (e: any) {
     const msg = e?.message || '生成报告失败';
-    alert(msg);
+    showNoticeDialog('报告生成失败', msg);
   } finally {
     summarizingConversationId.value = null;
   }
@@ -354,6 +388,7 @@ async function handleSummarize(item: ConversationItem) {
 
 async function loadHistory() {
   loadingHistory.value = true;
+  historyError.value = '';
   try {
     // 不传 user_id，让后端直接用 session 中的用户 ID 过滤，避免因 localStorage 与 session 不同步导致 403
     const res = await conversationApi.list({
@@ -361,6 +396,9 @@ async function loadHistory() {
       page_size: 20,
       order_by: '-created_at'
     });
+    if (!res || !Array.isArray(res.items)) {
+      throw new Error('历史记录接口返回格式异常');
+    }
     console.log("[Mock] History list:", res.items);
     historyList.value = res.items;
     const scoreMap: Record<string, number> = {};
@@ -372,7 +410,9 @@ async function loadHistory() {
     historyScoreMap.value = scoreMap;
   } catch (e: any) {
     console.error("[Mock] Failed to load history:", e?.message || e);
-    // 若是 403/401 等已在 api/index.ts 处理的错误，不重复提示
+    historyList.value = [];
+    historyScoreMap.value = {};
+    historyError.value = '面试记录加载失败，请稍后重试';
   } finally {
     loadingHistory.value = false;
   }
@@ -413,6 +453,12 @@ function formatStatus(s: string) {
 }
 
 const starting = ref(false);
+const startDialog = ref<null | 'missing-position' | 'login'>(null);
+const startDialogTitle = computed(() => startDialog.value === 'login' ? '登录状态已失效' : '尚未设置面试岗位');
+const startDialogMessage = computed(() => startDialog.value === 'login'
+  ? '开始模拟面试前，需要先登录账号。'
+  : '开始模拟面试前，需要先选择或设置目标岗位。');
+const startDialogPrimaryText = computed(() => startDialog.value === 'login' ? '重新登录' : '去填写岗位');
 const ending = ref(false);
 const sending = ref(false);
 const goingBack = ref(false);
@@ -605,7 +651,7 @@ async function ensureConversationInitialized() {
 
 async function handleStart() {
   if (!sessionToken.value) {
-    alert("未登录，请先登录");
+    startDialog.value = 'login';
     return;
   }
   // 未填写目标岗位时，尝试从当前用户档案（session）拉取
@@ -621,7 +667,7 @@ async function handleStart() {
     }
   }
   if (!jobRole.value.trim()) {
-    alert("请填写面试岗位，或在「我的」中设置目标岗位");
+    startDialog.value = 'missing-position';
     return;
   }
   starting.value = true;
@@ -642,16 +688,36 @@ async function handleStart() {
     router.push(PATHS.AI_CHAT);
   } catch (e: any) {
     console.error("[Mock] 开始面试失败:", e);
-    alert(e?.message || "开始失败");
+    startDialog.value = 'missing-position';
   } finally {
     starting.value = false;
   }
 }
 
+function closeStartDialog() {
+  startDialog.value = null;
+}
+
+function handleStartDialogPrimary() {
+  const dialog = startDialog.value;
+  startDialog.value = null;
+  if (dialog === 'login') {
+    router.push(PATHS.LOGIN);
+    return;
+  }
+  router.push({
+    path: PATHS.MY,
+    query: {
+      edit: 'target-position',
+      returnTo: PATHS.AI_MOCK_INTERVIEW,
+    },
+  });
+}
+
 async function handleEnd(options?: { silent?: boolean }): Promise<boolean> {
   const silent = options?.silent ?? false;
   if (!conversationId.value) {
-    if (!silent) alert("没有会话可结束");
+    if (!silent) showNoticeDialog('无法结束面试', '当前没有可结束的面试会话。');
     return false;
   }
   ending.value = true;
@@ -680,13 +746,13 @@ async function handleEnd(options?: { silent?: boolean }): Promise<boolean> {
     localStorage.setItem("conversation_status", status.value || "");
     localStorage.setItem("conversation_started_at", startedAt.value || "");
     localStorage.setItem("conversation_ended_at", endedAt.value || "");
-    if (!silent) alert("会话已结束");
+    if (!silent) showNoticeDialog('面试已结束', '本次面试记录已保存。');
     returnToConfigPanel();
     await loadHistory();
     return true;
   } catch (e: any) {
     console.error("[Mock] 结束面试失败:", e);
-    if (!silent) alert(e?.message || "结束失败");
+    if (!silent) showNoticeDialog('结束面试失败', e?.message || '请稍后重试。');
     return false;
   } finally {
     ending.value = false;
@@ -718,7 +784,7 @@ async function handleBack() {
     if (shouldEndBeforeLeave) {
       const ok = await handleEnd({ silent: true });
       if (!ok) {
-        alert('结束面试失败，请重试');
+        showNoticeDialog('结束面试失败', '请重试后再返回。');
         return;
       }
     } else {
@@ -741,11 +807,15 @@ async function sendMessage() {
     const ai = messages.value[messages.value.length - 1];
     if (!ai) return;
     await scrollToBottom();
-    const baseApi = (import.meta as any).env?.VITE_API_BASE ?? "/api";
-    const url = `${baseApi}/langgraph/chat`;
+    // 与项目其它接口保持一致：开发环境直连 8080，生产环境走同源 /api
+    const url = `${resolveApiBase()}/langgraph/chat`;
+    const authToken = localStorage.getItem("session_token") || localStorage.getItem("token") || "";
     const resp = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken ? { Authorization: `Bearer ${authToken}`, 'X-Session-Token': authToken } : {}),
+      },
       body: JSON.stringify({
         conversation_id: conversationId.value,
         content: text,
@@ -816,12 +886,25 @@ async function sendMessage() {
     }
 
     if (!ai.content) {
-      ai.content = '发送失败，请稍后再试。';
-      await scrollToBottom();
+      messages.value.splice(messages.value.indexOf(ai), 1);
+      showNoticeDialog('AI 面试官连接失败', '面试官没有返回内容，请检查 AI 服务与模型配置后重试。');
+      return;
     }
   } catch (e: any) {
     console.error("[Mock] 发送失败:", e);
-    messages.value.push({ role: 'ai', content: "发送失败，请稍后再试。" });
+    const placeholder = messages.value[messages.value.length - 1];
+    if (placeholder?.role === 'ai' && !String(placeholder.content || '').trim()) {
+      messages.value.pop();
+    }
+    const failureText = String(e?.message || '');
+    if (/尚未配置|未配置|没有可用|模型配置|模型未|not configured|no model/i.test(failureText)) {
+      showNoticeDialog(
+        'AI 面试官服务尚未配置',
+        '当前没有可用的面试官模型，请先在系统配置中维护文本模型（ai.service.text.*）后再开始面试。',
+      );
+    } else {
+      showNoticeDialog('AI 面试官连接失败', failureText || '无法访问 AI 面试官服务，请稍后重试。');
+    }
   } finally {
     sending.value = false;
   }
@@ -1482,6 +1565,39 @@ video {
   color: var(--text-secondary);
   text-align: center;
   padding: 40px;
+}
+
+.history-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 36px 20px;
+  color: #c7cfdf;
+  text-align: center;
+}
+
+.history-error button {
+  height: 36px;
+  padding: 0 16px;
+  color: #dfe6ff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  background: rgba(91, 108, 214, 0.14);
+  border: 1px solid rgba(110, 130, 255, 0.34);
+  border-radius: 8px;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.history-error button:hover {
+  background: rgba(91, 108, 214, 0.22);
+  border-color: rgba(126, 145, 255, 0.52);
+}
+
+.history-error button:focus-visible {
+  outline: 2px solid rgba(128, 154, 255, 0.75);
+  outline-offset: 2px;
 }
 
 .panel-header {

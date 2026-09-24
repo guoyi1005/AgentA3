@@ -26,7 +26,6 @@ export function isSessionExpiredResponse(status: number, payload?: any): boolean
 
 export function redirectToLoginOnSessionExpired(status: number, payload?: any): boolean {
   if (!isSessionExpiredResponse(status, payload)) return false;
-  alert("登录状态已失效，请重新登录");
   const keysToClear = [
     "session_token",
     "token",
@@ -43,7 +42,7 @@ export function redirectToLoginOnSessionExpired(status: number, payload?: any): 
   return true;
 }
 
-function resolveApiBase(): string {
+export function resolveApiBase(): string {
   const raw = import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_BASE
   if (raw === undefined || raw === null) return "http://localhost:8080/api"
   const origin = String(raw).replace(/\/$/, "")
@@ -69,7 +68,8 @@ function buildUrl(path: string, query?: RequestOptions["query"]): string {
       if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
     });
   }
-  return url.pathname + url.search; // 仅返回相对路径，便于代理
+  // 开发环境默认直连 8080；生产环境的空 API_BASE 仍会解析为当前域名，交给 nginx 代理。
+  return url.toString();
 }
 
 async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<T> {
@@ -127,8 +127,14 @@ async function request<T>(method: string, path: string, opts: RequestOptions = {
       console.log("Response Body:", text);
       console.groupEnd();
     }
-    const code = payload && typeof payload === "object" ? (payload as any).error : undefined;
-    throw new ApiError(`HTTP ${res.status}: ${text || res.statusText}`, res.status, code, payload ?? text);
+    const code = payload && typeof payload === "object"
+      ? ((payload as any).error || (payload as any).msg)
+      : undefined;
+    const field = payload && typeof payload === "object" ? (payload as any).field : undefined;
+    const safeMessage = code === "missing_or_empty_field"
+      ? `缺少必填字段${field ? `：${field}` : ""}`
+      : `HTTP ${res.status}: ${res.statusText || "请求失败"}`;
+    throw new ApiError(safeMessage, res.status, code, payload ?? text);
   }
   const contentType = res.headers.get("content-type") || "";
   const data = contentType.includes("application/json") ? ((await res.json()) as T) : ((await res.text()) as unknown as T);
@@ -148,6 +154,17 @@ export const api = {
   patch: <T>(path: string, body?: any, opts?: Omit<RequestOptions, "body">) =>
     request<T>("PATCH", path, { ...(opts as any), body } as RequestOptions),
   delete: <T>(path: string, opts?: RequestOptions) => request<T>("DELETE", path, opts),
+};
+
+export interface InterviewerAiStatus {
+  configured: boolean;
+  base_url: string;
+  model?: string;
+}
+
+export const interviewerApi = {
+  status: (signal?: AbortSignal) =>
+    api.get<InterviewerAiStatus>("/interview/ai/status", signal ? { signal } : undefined),
 };
 
 // 示例：题库 API（对接 Django 可快速替换路径）
