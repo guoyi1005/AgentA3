@@ -66,6 +66,21 @@ const signupButtonText = computed(() => {
   return '立即报名'
 })
 
+const introductionParagraphs = computed(() => {
+  const content = String(activity.value?.content || activity.value?.description || '').trim()
+  if (!content) return ['暂无活动介绍信息']
+
+  const explicitParagraphs = content
+    .split(/\n\s*\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+
+  if (explicitParagraphs.length > 1) return explicitParagraphs
+
+  const sentences = content.match(/[^。！？!?]+[。！？!?]?/g) || [content]
+  return sentences.map((sentence) => sentence.trim()).filter(Boolean)
+})
+
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const d = new Date(String(dateStr).replace(' ', 'T'))
@@ -163,7 +178,11 @@ onMounted(load)
             <div class="main-content">
               <section class="intro-section">
                 <h2>活动介绍</h2>
-                <p>{{ activity.content || activity.description || '暂无活动介绍信息' }}</p>
+                <div class="intro-copy">
+                  <p v-for="(paragraph, index) in introductionParagraphs" :key="index">
+                    {{ paragraph }}
+                  </p>
+                </div>
               </section>
 
               <section v-if="activity.tags && activity.tags.length" class="tags-section">
@@ -396,17 +415,29 @@ onMounted(load)
   font-size: 18px;
   font-weight: 600;
   color: #0f172a;
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   padding-left: 12px;
   border-left: 3px solid #3b82f6;
 }
 
-.intro-section p {
+.intro-copy {
+  display: grid;
+  gap: 14px;
+  max-width: 72ch;
+}
+
+.intro-copy p {
   font-size: 15px;
-  line-height: 1.8;
+  line-height: 1.9;
   color: #475569;
   margin: 0;
-  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.intro-copy p:first-child {
+  color: #334155;
+  font-weight: 500;
 }
 
 .tags-section {

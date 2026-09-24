@@ -974,7 +974,6 @@
 #app .activities-reference .ca-calendar__count,
 #app .activities-reference .progress-percent,
 #app .activity-detail-reference .back-btn,
-#app .activity-detail-reference .signup-btn:not(.disabled),
 #app .signup-reference .agreement a {
   color: var(--ref-ink);
 }
