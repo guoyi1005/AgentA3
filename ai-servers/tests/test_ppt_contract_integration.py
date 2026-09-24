@@ -440,7 +440,7 @@ def test_merge_clears_table_chart_template_markers(catalog):
     """Table/chart demo labels like Revenue/Growth must not survive partial fills."""
     layout = catalog.get_layout("general", "title_table_description")
     merged = _merge_content_into_layout(layout, {
-        "main_title": "校园二手交易核心流程",
+        "main_title": "校园就业服务核心流程",
         "supporting_note": "平台通过实名认证、商品发布、在线沟通和线下交易完成闭环。",
     })
 
@@ -475,7 +475,7 @@ def test_merge_clears_table_chart_template_markers(catalog):
     leaked = {*texts, *structured}
     assert "Revenue" not in leaked
     assert "Growth" not in leaked
-    assert any("校园二手交易核心流程" in text for text in texts)
+    assert any("校园就业服务核心流程" in text for text in texts)
 
 
 def test_sanitize_reports_unknown_ids(catalog):

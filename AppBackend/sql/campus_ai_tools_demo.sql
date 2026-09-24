@@ -1,4 +1,4 @@
--- 校园服务 AI 工具测试数据（课表/活动/会议/食堂/设施/二手）
+﻿-- 校园服务 AI 工具测试数据（课表/活动/会议/食堂/设施）
 -- 适配当前库用户：admin=101, wangli=102, zzs=103
 -- 可重复执行：先清理 demo 区间再插入
 SET NAMES utf8mb4;
@@ -181,24 +181,6 @@ VALUES
     (103, '2026003001', '2025-2026', 2, '12', '概率论', '1-16 周', '1-2 节', 5, '明德楼 113', '朝阳校区', '马老师', 'PROB-01', '考试', 32, 0, 3, 32, 2.5, NOW(), NOW());
 
 -- ============================================================
--- 5. 二手物品（java_secondhand_api）
--- ============================================================
-DELETE FROM secondhand_favorite WHERE item_id BETWEEN 9001 AND 9010;
-DELETE FROM secondhand_item WHERE id BETWEEN 9001 AND 9010;
-
-INSERT INTO secondhand_item
-    (id, user_id, category_id, title, description, images, price, original_price, `condition`, location, view_count, favorite_count, status, create_time, update_time)
-VALUES
-    (9001, 103, 1, 'iPad Air 4 256G WiFi 版', '2023 年购入，屏幕无划痕，带原装充电器和保护套。', '["https://picsum.photos/800/600?random=201"]', 2800.00, 4999.00, 2, '图书馆门口', 256, 18, 2, NOW(), NOW()),
-    (9002, 103, 1, 'AirPods Pro 2 代', '使用两个月，配件齐全，几乎全新。', '["https://picsum.photos/800/600?random=202"]', 1200.00, 1899.00, 2, '松园 1 号楼', 189, 12, 2, NOW(), NOW()),
-    (9003, 104, 1, '小米 12 手机 8+256G', '无维修无进水，拍照清晰。', '["https://picsum.photos/800/600?random=203"]', 1500.00, 3699.00, 3, '学校南门', 320, 25, 2, NOW(), NOW()),
-    (9004, 104, 2, '考研数学全套资料', '高数线代概率教材及真题集，笔记较少。', '["https://picsum.photos/800/600?random=204"]', 120.00, 350.00, 3, '博学楼', 480, 32, 2, NOW(), NOW()),
-    (9005, 105, 2, 'Python 编程从入门到实践', '保存完好，有少量学习笔记。', '["https://picsum.photos/800/600?random=205"]', 35.00, 84.00, 2, '图书馆', 210, 15, 2, NOW(), NOW()),
-    (9006, 103, 3, 'Nike Air Force 1 白色 42 码', '穿了五六次，清洗后几乎无痕迹。', '["https://picsum.photos/800/600?random=206"]', 380.00, 799.00, 2, '中心广场', 560, 40, 2, NOW(), NOW()),
-    (9007, 105, 4, '美的落地风扇', '去年夏天买的，拆卸方便。', '["https://picsum.photos/800/600?random=207"]', 120.00, 299.00, 2, '松园 2 号楼', 88, 5, 2, NOW(), NOW()),
-    (9008, 104, 5, '威尔逊羽毛球拍', '单拍，磅数 22 磅，进攻型。', '["https://picsum.photos/800/600?random=208"]', 150.00, 380.00, 3, '东区运动场', 75, 4, 2, NOW(), NOW());
-
--- ============================================================
 -- 6. 会议（java_meeting_api）— admin(101) 与 zzs(103)
 -- ============================================================
 DELETE FROM meeting_record WHERE meeting_session_id IN (SELECT id FROM meeting_session WHERE session_id LIKE 'demo-%');
@@ -216,7 +198,7 @@ VALUES
     ('demo-005', 'M4N5O6', 103, '导师见面预约', 'reserved', 'idle', DATE_ADD(NOW(), INTERVAL 1 DAY), 30, NULL, NULL, NULL, 0, NOW(), NOW());
 
 INSERT INTO meeting_record (meeting_session_id, source, content, create_time)
-SELECT id, 'manual', '确认本周联调范围：课表、活动、食堂、二手四个模块。', NOW()
+SELECT id, 'manual', '确认本周联调范围：课表、活动、食堂、设施四个模块。', NOW()
 FROM meeting_session WHERE session_id = 'demo-001';
 
 INSERT INTO meeting_record (meeting_session_id, source, content, create_time)

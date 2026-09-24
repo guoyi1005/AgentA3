@@ -219,7 +219,7 @@ class RagApiRoutesTest(unittest.TestCase):
                 "/internal/rag/query",
                 headers=self.headers,
                 json={
-                    "input": "请生成一份 8 页 PPT，主题是校园二手交易平台介绍。",
+                    "input": "请生成一份 8 页 PPT，主题是智慧校园就业服务介绍。",
                     "agentName": "leader_agent",
                     "metadata": {
                         "testFrom": "admin_tool_console",
@@ -246,7 +246,7 @@ class RagApiRoutesTest(unittest.TestCase):
             "/internal/rag/query",
             headers=self.headers,
             json={
-                "input": "请生成一份 8 页 PPT，主题是校园二手交易平台介绍。",
+                "input": "请生成一份 8 页 PPT，主题是智慧校园就业服务介绍。",
                 "agentName": "leader_agent",
                 "metadata": {
                     "testFrom": "admin_tool_console",
@@ -261,7 +261,7 @@ class RagApiRoutesTest(unittest.TestCase):
         payload = response.json()
         self.assertEqual("ppt_template_selection", payload["answerType"])
         self.assertGreaterEqual(len(payload["metadata"].get("pptTemplateCatalog") or []), 1)
-        self.assertIn("校园二手交易平台介绍", payload["metadata"]["pptGenerationDraft"]["topic"])
+        self.assertIn("智慧校园就业服务介绍", payload["metadata"]["pptGenerationDraft"]["topic"])
 
     def test_file_content_extraction_tools_are_exposed_for_admin_toggles(self):
         response = self.client.get("/internal/rag/agents", headers=self.headers)
@@ -463,7 +463,7 @@ class RagApiRoutesTest(unittest.TestCase):
             "/internal/rag/query",
             headers=self.headers,
             json={
-                "input": "请把以下内容按原文转成纯文本文件：校园二手交易应当当面验货。",
+                "input": "请把以下内容按原文转成纯文本文件：智慧校园服务信息应及时更新。",
                 "agentName": "leader_agent",
                 "metadata": {
                     "testFrom": "admin_tool_console",
@@ -1804,17 +1804,6 @@ class FakeRagModelProvider:
 
     def _build_leader_plan(self, input_text, rag_strategy=""):
         text = input_text or ""
-        if "统计" in text and "二手" in text:
-            return {
-                "intent": "secondhand_query",
-                "target_agent": "leader_agent",
-                "need_retrieval": False,
-                "rag_strategy": "",
-                "action": "call_tool",
-                "tool_name": "java_secondhand_api",
-                "route_reason": "LLM 根据启用工具清单选择旧物查询工具。",
-                "answer": "",
-            }
         if "统计" in text:
             return {
                 "intent": "canteen_query",

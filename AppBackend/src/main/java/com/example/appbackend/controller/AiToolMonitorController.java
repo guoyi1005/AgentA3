@@ -140,8 +140,6 @@ public class AiToolMonitorController {
                     "campus_service", "系统能力", "查询食堂档口和菜品"),
             new ToolDefinition("java_facility_api", "设施位置查询工具", "设施位置查询工具（java_facility_api）",
                     "campus_service", "系统能力", "查询校园设施位置"),
-            new ToolDefinition("java_secondhand_api", "旧物查询工具", "旧物查询工具（java_secondhand_api）",
-                    "campus_service", "系统能力", "查询二手商品信息"),
             new ToolDefinition("text_to_markdown_tool", "Markdown 内容整理", "Markdown 内容整理（text_to_markdown_tool）",
                     "content_export", "内容整理", "整理/导出 Markdown 文件"),
             new ToolDefinition("text_to_txt_tool", "TXT 内容整理", "TXT 内容整理（text_to_txt_tool）",

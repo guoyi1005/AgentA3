@@ -181,7 +181,7 @@ test('floating assistant source wires canonical learning and campus resource car
   for (const kind of [
     'explanation', 'mind_map', 'diagram', 'exercise', 'code_example', 'extended_reading',
     'image', 'video', 'audio', 'document', 'presentation', 'spreadsheet', 'bundle',
-    'course', 'activity', 'meeting', 'dining', 'facility', 'secondhand'
+    'course', 'activity', 'meeting', 'dining', 'facility'
   ]) {
     assert.match(source, new RegExp(`\\b${kind}:`))
   }

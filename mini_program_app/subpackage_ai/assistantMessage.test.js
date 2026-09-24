@@ -239,8 +239,6 @@ test('business routes are local allowlists and ambiguous kinds never guess a rou
     '/subpackage_schedule/scheduleDetail/scheduleDetail?id=CS%2F1')
   assert.equal(resolveBusinessResourceRoute({ kind: 'activity', payload: { businessId: 7 } }),
     '/subpackage_community/communityDetail/communityDetail?id=7')
-  assert.equal(resolveBusinessResourceRoute({ kind: 'secondhand', payload: { businessId: '二手 8' } }),
-    '/subpackage_lostfound/lostfoundDetail/lostfoundDetail?id=%E4%BA%8C%E6%89%8B%208')
   assert.equal(resolveBusinessResourceRoute({ kind: 'meeting', payload: { businessId: 'meeting/9' } }),
     '/subpackage_meeting/meetingDetail/meetingDetail?sessionId=meeting%2F9')
   for (const kind of ['dining', 'facility', 'unknown']) {

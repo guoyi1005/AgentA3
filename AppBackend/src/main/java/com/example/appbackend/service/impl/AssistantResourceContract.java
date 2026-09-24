@@ -28,8 +28,8 @@ final class AssistantResourceContract {
             Map.entry("activity", Set.of("business_card")),
             Map.entry("meeting", Set.of("business_card")),
             Map.entry("dining", Set.of("business_card")),
-            Map.entry("facility", Set.of("business_card")),
-            Map.entry("secondhand", Set.of("business_card")));
+            Map.entry("facility", Set.of("business_card"))
+    );
 
     private AssistantResourceContract() {
     }

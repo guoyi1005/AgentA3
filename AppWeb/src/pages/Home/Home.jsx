@@ -7,7 +7,6 @@ import { getActivityList } from '../../api/activity'
 import { getForumStatistics, getHotPosts, getHotTopics, getPostList } from '../../api/forum'
 import { getFacilityHeat, getNavigationStatistics, getNearbyFacilityCount } from '../../api/map'
 import { getMerchantStatistics } from '../../api/merchant'
-import { getSecondhandReportStatistics, getSecondhandStatistics } from '../../api/secondhand'
 import { getUserList } from '../../api/user'
 import './Home.css'
 
@@ -104,17 +103,11 @@ function Home() {
     totalDiscountActivities: 0,
     merchantAvgScore: 0,
     merchantReviews: 0,
-    onSaleItems: 0,
-    soldItems: 0,
-    offlineItems: 0,
-    totalSecondhandItems: 0,
     hotTopics: [],
     hotPosts: [],
     hotFacilities: [],
     popularDestinations: [],
     recentActivities: [],
-    secondhandCategoryDistribution: [],
-    secondhandPublishTrend: [],
     activityTrend: [],
     topMerchants: [],
     facilityTypeDistribution: [],
@@ -128,7 +121,6 @@ function Home() {
     },
     moderation: {
       pendingForumReports: 0,
-      pendingSecondhandReports: 0,
     },
   })
 
@@ -150,9 +142,7 @@ function Home() {
         navigationRes,
         facilityHeatRes,
         merchantStatRes,
-        secondhandStatRes,
         forumStatRes,
-        secondhandReportRes,
         facilityCountRes,
       ] = await Promise.allSettled([
         getUserList({ page: 1, size: 1 }),
@@ -163,9 +153,7 @@ function Home() {
         getNavigationStatistics(range),
         getFacilityHeat({ limit: 5 }),
         getMerchantStatistics(range),
-        getSecondhandStatistics(range),
         getForumStatistics(),
-        getSecondhandReportStatistics(),
         getNearbyFacilityCount(),
       ])
 
@@ -177,9 +165,7 @@ function Home() {
       const navigationData = navigationRes.status === 'fulfilled' ? navigationRes.value?.data : null
       const facilityHeatData = facilityHeatRes.status === 'fulfilled' ? facilityHeatRes.value?.data : null
       const merchantStatData = merchantStatRes.status === 'fulfilled' ? merchantStatRes.value?.data : null
-      const secondhandStatData = secondhandStatRes.status === 'fulfilled' ? secondhandStatRes.value?.data : null
       const forumStatData = forumStatRes.status === 'fulfilled' ? forumStatRes.value?.data : null
-      const secondhandReportData = secondhandReportRes.status === 'fulfilled' ? secondhandReportRes.value?.data : null
       const facilityCountData = facilityCountRes.status === 'fulfilled' ? facilityCountRes.value?.data : null
 
       const hotFacilities = getList(facilityHeatData).slice(0, 5)
@@ -199,17 +185,11 @@ function Home() {
         totalDiscountActivities: merchantStatData?.totalActivities || 0,
         merchantAvgScore: merchantStatData?.avgScore || 0,
         merchantReviews: merchantStatData?.totalReviews || 0,
-        onSaleItems: secondhandStatData?.onSaleItems || 0,
-        soldItems: secondhandStatData?.soldItems || 0,
-        offlineItems: secondhandStatData?.offlineItems || 0,
-        totalSecondhandItems: secondhandStatData?.totalItems || 0,
         hotTopics: getList(hotTopicData).slice(0, 5),
         hotPosts: getList(hotPostData?.records || hotPostData).slice(0, 5),
         hotFacilities: hotFacilities.length ? hotFacilities : popularDestinations,
         popularDestinations,
         recentActivities: getList(activityData?.records).slice(0, 5),
-        secondhandCategoryDistribution: getList(secondhandStatData?.categoryDistribution).slice(0, 6),
-        secondhandPublishTrend: getList(secondhandStatData?.dailyPublishTrend).slice(-7),
         activityTrend: getList(merchantStatData?.activityTrend).slice(-7),
         topMerchants: getList(merchantStatData?.topMerchants).slice(0, 5),
         facilityTypeDistribution: getList(facilityCountData?.statistics).slice(0, 6),
@@ -223,7 +203,6 @@ function Home() {
         },
         moderation: {
           pendingForumReports: forumStatData?.pendingReports || 0,
-          pendingSecondhandReports: secondhandReportData?.pending || 0,
         },
       })
       setUpdatedAt(new Date().toLocaleString('zh-CN', { hour12: false }))
@@ -236,7 +215,7 @@ function Home() {
     loadDashboard()
   }, [loadDashboard])
 
-  const pendingModerationTotal = dashboard.moderation.pendingForumReports + dashboard.moderation.pendingSecondhandReports
+  const pendingModerationTotal = dashboard.moderation.pendingForumReports
 
   const navigationCompletionRate = useMemo(() => {
     const total = Number(dashboard.totalNavigations) || 0
@@ -252,7 +231,6 @@ function Home() {
   const primaryMetrics = useMemo(() => ([
     { label: '用户总数', value: formatNumber(dashboard.totalUsers), hint: '注册账号规模' },
     { label: '论坛帖子', value: formatNumber(dashboard.totalPosts), hint: `${formatNumber(dashboard.forum.totalComments)} 条评论互动` },
-    { label: '在售旧物', value: formatNumber(dashboard.onSaleItems), hint: `累计 ${formatNumber(dashboard.totalSecondhandItems)} 件发布` },
     { label: '优惠活动', value: formatNumber(dashboard.activeDiscountActivities), hint: `${formatNumber(dashboard.activeMerchants)} 家在营商家` },
   ]), [dashboard])
 
@@ -261,7 +239,6 @@ function Home() {
     { label: '活跃话题', value: formatNumber(dashboard.forum.activeTopics) },
     { label: '累计导航', value: formatNumber(dashboard.totalNavigations) },
     { label: '导航完成率', value: navigationCompletionRate == null ? '-' : formatPercent(navigationCompletionRate) },
-    { label: '已售旧物', value: formatNumber(dashboard.soldItems) },
     { label: '待处理举报', value: formatNumber(pendingModerationTotal) },
   ]), [dashboard, navigationCompletionRate, pendingModerationTotal])
 
@@ -290,41 +267,6 @@ function Home() {
       },
     }],
   }), [dashboard.hotFacilities])
-
-  const categoryPieChartOption = useMemo(() => ({
-    tooltip: { trigger: 'item' },
-    legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
-    color: CHART_COLORS,
-    series: [{
-      type: 'pie',
-      radius: ['42%', '68%'],
-      center: ['50%', '42%'],
-      label: { formatter: '{b}\n{c}', fontSize: 11 },
-      data: dashboard.secondhandCategoryDistribution.map((item) => ({
-        name: countItemName(item),
-        value: countItemValue(item),
-      })),
-      itemStyle: { borderColor: '#fff', borderWidth: 2 },
-    }],
-  }), [dashboard.secondhandCategoryDistribution])
-
-  const secondhandStatusOption = useMemo(() => ({
-    tooltip: { trigger: 'item' },
-    legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
-    color: ['#4a7fad', '#5b8f72', '#94a3b8'],
-    series: [{
-      type: 'pie',
-      radius: ['46%', '72%'],
-      center: ['50%', '44%'],
-      label: { show: false },
-      data: [
-        { name: '在售', value: dashboard.onSaleItems },
-        { name: '已售', value: dashboard.soldItems },
-        { name: '已下架', value: dashboard.offlineItems },
-      ].filter((item) => item.value > 0),
-      itemStyle: { borderColor: '#fff', borderWidth: 2 },
-    }],
-  }), [dashboard.onSaleItems, dashboard.soldItems, dashboard.offlineItems])
 
   const navigationStatusOption = useMemo(() => {
     const inProgress = Math.max(
@@ -380,32 +322,6 @@ function Home() {
     }],
   }), [dashboard.activityTrend])
 
-  const secondhandTrendOption = useMemo(() => ({
-    grid: { left: 8, right: 12, top: 20, bottom: 12, containLabel: true },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: dashboard.secondhandPublishTrend.map(formatTrendLabel),
-      axisLine: { lineStyle: { color: '#dbe3ea' } },
-      axisLabel: { color: '#64748b', fontSize: 11 },
-    },
-    yAxis: {
-      type: 'value',
-      minInterval: 1,
-      splitLine: { lineStyle: { color: '#eef2f6' } },
-      axisLabel: { color: '#64748b', fontSize: 11 },
-    },
-    series: [{
-      type: 'bar',
-      data: dashboard.secondhandPublishTrend.map(countItemValue),
-      barWidth: 18,
-      itemStyle: {
-        borderRadius: [6, 6, 0, 0],
-        color: '#5b8f72',
-      },
-    }],
-  }), [dashboard.secondhandPublishTrend])
-
   const topMerchantOption = useMemo(() => ({
     grid: { left: 8, right: 16, top: 8, bottom: 8, containLabel: true },
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
@@ -454,7 +370,6 @@ function Home() {
     { label: '论坛帖子', desc: '内容审核与置顶', route: '/forum/post' },
     { label: '活动管理', desc: '发布与报名查看', route: '/activity/manage' },
     { label: '导航统计', desc: '路线与目的地分析', route: '/facility/nav-analytics' },
-    { label: '二手物品', desc: '上架与分类运营', route: '/market/item' },
     { label: '特惠商家', desc: '优惠与评价管理', route: '/discount/merchant' },
     { label: '食堂管理', desc: '档口与菜品维护', route: '/facility/canteen' },
   ]
@@ -482,7 +397,7 @@ function Home() {
   return (
     <div className="home-container">
       <div className="home-toolbar">
-        <p>基于论坛、活动、地图导航、特惠与二手等模块的真实运营数据，帮助管理员快速发现趋势、热度与待办事项。</p>
+        <p>基于论坛、活动、地图导航、特惠与设施等模块的真实运营数据，帮助管理员快速发现趋势、热度与待办事项。</p>
         <div className="home-toolbar__actions">
           {updatedAt ? <span>更新于 {updatedAt}</span> : null}
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadDashboard}>刷新</Button>
@@ -495,13 +410,6 @@ function Home() {
             <button type="button" className="home-alert home-alert--warn" onClick={() => navigate('/forum/report')}>
               <strong>{formatNumber(dashboard.moderation.pendingForumReports)}</strong>
               <span>条论坛举报待处理</span>
-              <RightOutlined />
-            </button>
-          ) : null}
-          {dashboard.moderation.pendingSecondhandReports > 0 ? (
-            <button type="button" className="home-alert home-alert--warn" onClick={() => navigate('/market/report')}>
-              <strong>{formatNumber(dashboard.moderation.pendingSecondhandReports)}</strong>
-              <span>条二手举报待处理</span>
               <RightOutlined />
             </button>
           ) : null}
@@ -562,20 +470,6 @@ function Home() {
           )}
         </Card>
 
-        <Card className="home-board-card" title="旧物流转结构">
-          {loading ? <Skeleton active paragraph={{ rows: 3 }} /> : (
-            dashboard.totalSecondhandItems > 0 ? (
-              <div className="home-insight-chart-wrap">
-                <EChart option={secondhandStatusOption} height={180} />
-                <p className="home-insight-caption">
-                  在售 {formatNumber(dashboard.onSaleItems)} · 已售 {formatNumber(dashboard.soldItems)} · 下架 {formatNumber(dashboard.offlineItems)}
-                </p>
-              </div>
-            ) : (
-              <PanelEmpty description="暂无旧物数据" actionLabel="查看二手管理" onAction={() => navigate('/market/item')} />
-            )
-          )}
-        </Card>
       </section>
 
       <div className="home-layout">
@@ -622,22 +516,13 @@ function Home() {
               )}
             </Card>
 
-            <Card className="home-board-card" title="近 7 日旧物上架趋势">
-              {loading ? <Skeleton active paragraph={{ rows: 5 }} /> : (
-                dashboard.secondhandPublishTrend.length ? (
-                  <EChart option={secondhandTrendOption} height={220} />
-                ) : (
-                  <PanelEmpty description="暂无旧物上架趋势" actionLabel="查看二手管理" onAction={() => navigate('/market/item')} />
-                )
-              )}
-            </Card>
           </div>
         </section>
 
         <aside className="home-layout__side">
           <div className="home-section-head">
-            <h3>地图与交易</h3>
-            <span>设施热度、商家与分类分布</span>
+            <h3>地图与校园服务</h3>
+            <span>设施热度、商家与设施分布</span>
           </div>
 
           <Card className="home-board-card" title="热门设施 / 目的地">
@@ -680,16 +565,6 @@ function Home() {
                 </>
               ) : (
                 <PanelEmpty description="暂无商家排行" actionLabel="前往特惠管理" onAction={() => navigate('/discount/merchant')} />
-              )
-            )}
-          </Card>
-
-          <Card className="home-board-card" title="旧物分类分布">
-            {loading ? <Skeleton active paragraph={{ rows: 4 }} /> : (
-              dashboard.secondhandCategoryDistribution.length ? (
-                <EChart option={categoryPieChartOption} height={220} />
-              ) : (
-                <PanelEmpty description="暂无旧物分类数据" actionLabel="查看二手管理" onAction={() => navigate('/market/item')} />
               )
             )}
           </Card>

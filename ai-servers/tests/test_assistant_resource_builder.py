@@ -87,19 +87,6 @@ BUSINESS_CASES = {
         },
         {"businessId", "name", "category", "location", "openingHours", "status", "longitude", "latitude"},
     ),
-    "secondhand": (
-        {
-            "businessId": "secondhand-5",
-            "title": "二手教材",
-            "category": "图书",
-            "price": 20,
-            "condition": "九成新",
-            "status": "available",
-            "createdAt": "2026-07-14T09:00:00Z",
-            "imageUrl": "https://cdn.example.edu/book.png",
-        },
-        {"businessId", "title", "category", "price", "condition", "status", "createdAt", "imageUrl"},
-    ),
 }
 
 
@@ -235,7 +222,6 @@ def test_business_cards_use_exact_allowlist_and_strip_pii(kind):
         ("meeting", "open_resource"),
         ("dining", "follow_up"),
         ("facility", "follow_up"),
-        ("secondhand", "open_resource"),
     ],
 )
 def test_business_cards_only_offer_open_when_the_app_has_a_detail_route(kind, expected_action):

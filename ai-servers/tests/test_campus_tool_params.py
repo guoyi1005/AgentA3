@@ -70,16 +70,5 @@ class CampusToolParamsTest(unittest.TestCase):
         self.assertIn("status=PUBLISHED", urls[0])
         self.assertNotIn("/api/activities/search", urls[0])
 
-    def test_secondhand_list_query_omits_keyword(self):
-        from app.services.campus_tool_params import build_secondhand_params
-
-        for query in ("现在有什么二手的东西", "有什么闲置物品", "最近有哪些旧物"):
-            with self.subTest(query=query):
-                params = build_secondhand_params(query)
-                self.assertNotIn("keyword", params, query)
-                self.assertEqual(1, params["current"])
-                self.assertEqual(10, params["size"])
-
-
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,4 @@
-const BUSINESS_CARD_KINDS = new Set(['activity', 'secondhand', 'course', 'dining', 'facility'])
+const BUSINESS_CARD_KINDS = new Set(['activity', 'course', 'dining', 'facility'])
 
 const FIELD_LABELS = {
   title: '名称',
@@ -20,7 +20,6 @@ const FIELD_LABELS = {
 
 const KIND_LABELS = {
   activity: '校园活动',
-  secondhand: '二手物品',
   course: '课程',
   dining: '餐饮',
   facility: '设施',
@@ -61,7 +60,6 @@ export function businessCardDetailRows(resource) {
   const kind = String(resource?.kind || '').trim()
   const fieldOrder = {
     activity: ['title', 'startTime', 'endTime', 'location', 'category', 'status'],
-    secondhand: ['title', 'price', 'condition', 'category', 'status'],
     course: ['courseName', 'teacherName', 'weekday', 'classroom', 'weekText'],
     dining: ['name', 'category', 'location', 'openingHours', 'priceRange'],
     facility: ['name', 'category', 'location', 'openingHours', 'status'],

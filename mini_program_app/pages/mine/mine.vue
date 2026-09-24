@@ -181,7 +181,7 @@ export default {
       }
     },
     applyMessageState(state = {}) {
-      this.messageUnreadCount = Number(state.unreadLostFoundAppCount || 0)
+      this.messageUnreadCount = Number(state.unreadNoticeCount || 0)
         + Number(state.unreadExamCount || 0)
     },
     changeAvatar() {

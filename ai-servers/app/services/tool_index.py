@@ -17,7 +17,6 @@ TOOL_KEYWORDS: Dict[str, Sequence[str]] = {
     "java_meeting_api": ("会议", "会议列表", "会议状态", "预约会议"),
     "java_canteen_api": ("食堂", "餐厅", "档口", "菜品", "吃什么", "餐饮优惠", "优惠券", "统计", "数量", "多少", "列表", "排名"),
     "java_facility_api": ("教学楼", "宿舍", "操场", "图书馆", "设施位置", "在哪里", "导航"),
-    "java_secondhand_api": ("二手", "旧物", "闲置", "转让", "买卖物品", "统计", "数量", "多少", "列表", "排名"),
     "generated_export_tools": ("导出", "文件版", "文档版", "下载", "打包", "附件"),
     "text_to_markdown_tool": ("文本转markdown", "转成md", "导出为md", "md文件", "markdown文件", "按原文导出markdown"),
     "text_to_txt_tool": ("文本转txt", "转成txt", "导出为txt", "txt文件", "纯文本", "纯文本文件", "保存为纯文本", "按原文导出", "文本导出"),

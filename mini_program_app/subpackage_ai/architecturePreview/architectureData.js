@@ -55,7 +55,7 @@ export const ARCH_ICONS = {
 
 // 默认数据（100% 还原参考图）
 export const DEFAULT_ARCHITECTURE_DATA = {
-  title: '二手交易平台架构图',
+  title: '智慧校园平台架构图',
   subtitle: '分层解耦 · 高可用 · 易扩展 · 高性能 · 安全可靠 · 可维护',
   requestedHierarchyMode: 'STRUCTURED',
   resolvedHierarchyMode: 'STRUCTURED',
@@ -68,9 +68,9 @@ export const DEFAULT_ARCHITECTURE_DATA = {
       border: '#C7D2FE',
       iconKey: 'monitor',
       nodes: [
-        { name: '移动 App', description: '买卖物品、下单交易', tech: [] },
-        { name: 'Web 端',  description: '浏览商品、管理订单', tech: [] },
-        { name: '微信小程序', description: '快速交易、消息通知', tech: [] },
+        { name: '移动 App', description: '校园服务、学习与就业功能', tech: [] },
+        { name: 'Web 端',  description: '信息浏览、业务办理与个人中心', tech: [] },
+        { name: '微信小程序', description: '移动服务、消息通知与快捷入口', tech: [] },
         { name: '管理后台', description: '运营管理、数据统计', tech: [] },
       ],
     },
@@ -111,14 +111,14 @@ export const DEFAULT_ARCHITECTURE_DATA = {
           iconKey: 'user',
         },
         {
-          name: '商品服务',
-          description: '商品发布、编辑\n分类管理、浏览',
+          name: '服务管理',
+          description: '校园服务数据\n分类与内容管理',
           tech: ['Spring Boot'],
           iconKey: 'shop',
         },
         {
-          name: '订单服务',
-          description: '下单、支付、退款\n订单状态、物流',
+          name: '学习与就业服务',
+          description: '学习路径、岗位匹配\n就业分析与进度管理',
           tech: ['Spring Boot'],
           iconKey: 'cart',
         },

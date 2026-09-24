@@ -548,29 +548,6 @@ CAMPUS_SERVICE_TOOLS = [
         "status": "implemented",
         "configurable": True,
     },
-    {
-        "name": "java_secondhand_api",
-        "zhName": "旧物查询工具",
-        "displayName": "旧物查询工具（java_secondhand_api）",
-        "category": "campus_service",
-        "purpose": "调用 Java 后端校园旧物接口查询二手、闲置、转让物品。",
-        "trigger": "用户询问旧物、二手、闲置、转让、买卖物品。",
-        "outputs": ["secondhand_list"],
-        "endpoints": [
-            {"method": "GET", "path": "/api/secondhand/category/list", "description": "分类列表", "params": {}},
-            {"method": "GET", "path": "/api/secondhand/item/list", "description": "物品列表（可按分类/关键词/价格/新旧筛选）", "params": {"current": 1, "size": 5, "sort": "latest"}},
-            {"method": "GET", "path": "/api/secondhand/item/1", "description": "物品详情", "params": {}},
-            {"method": "GET", "path": "/api/secondhand/item/my", "description": "我的发布", "params": {"current": 1, "size": 5}},
-            {"method": "GET", "path": "/api/secondhand/user/1/items", "description": "用户公开商品", "params": {"current": 1, "size": 5}},
-            {"method": "GET", "path": "/api/secondhand/favorite/my", "description": "我的收藏", "params": {"current": 1, "size": 5}},
-            {"method": "GET", "path": "/api/secondhand/browse-history/my", "description": "我的浏览历史", "params": {"current": 1, "size": 5}},
-            {"method": "GET", "path": "/api/trade/record/list", "description": "交易记录列表", "params": {"current": 1, "size": 5}},
-            {"method": "GET", "path": "/api/trade/record/1", "description": "交易记录详情", "params": {}},
-            {"method": "GET", "path": "/api/trade/record/by-item/1", "description": "按商品查交易记录", "params": {}},
-        ],
-        "status": "implemented",
-        "configurable": True,
-    },
     MEETING_TASK_TOOL,
 ]
 
@@ -829,7 +806,7 @@ def get_rag_framework(
             {
                 "name": "campus_service_tools",
                 "category": "java_backend",
-                "purpose": "Leader 识别课表、活动、会议、食堂、设施位置、旧物查询意图后调用对应 Java 后端接口，且受后台工具开关控制。",
+                "purpose": "Leader 识别课表、活动、会议、食堂和设施位置查询意图后调用对应 Java 后端接口，且受后台工具开关控制。",
                 "status": "implemented",
             },
             {
@@ -5694,7 +5671,6 @@ def _strategy_label(strategy_name: str) -> str:
         "java_meeting_api": "会议查询工具",
         "java_canteen_api": "食堂餐饮查询工具",
         "java_facility_api": "设施位置查询工具",
-        "java_secondhand_api": "旧物查询工具",
         **TEXT_TO_FILE_TOOL_LABELS,
         "excel_export_tool": "Excel 导出工具",
         "pptx_export_tool": "PPT 导出工具",
@@ -5720,7 +5696,6 @@ def _tool_zh_name(tool_name: str) -> str:
         "java_meeting_api": "会议查询工具",
         "java_canteen_api": "食堂餐饮查询工具",
         "java_facility_api": "设施位置查询工具",
-        "java_secondhand_api": "旧物查询工具",
         **TEXT_TO_FILE_TOOL_LABELS,
         "content_archive_tool": "附件打包工具",
         **{

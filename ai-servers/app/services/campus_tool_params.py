@@ -30,7 +30,6 @@ CAMPUS_SERVICE_TOOL_NAMES = {
     "java_meeting_api",
     "java_canteen_api",
     "java_facility_api",
-    "java_secondhand_api",
 }
 
 _PARAM_BUILDERS: Dict[str, Callable[[str], Dict[str, Any]]] = {}
@@ -214,29 +213,6 @@ def build_facility_params(input_text: str) -> Dict[str, Any]:
     return params
 
 
-def _is_secondhand_list_query(text: str) -> bool:
-    normalized = re.sub(r"[\s，。！？、,.!?;；:：\n\r\t]", "", str(text or ""))
-    if not normalized:
-        return False
-    list_patterns = (
-        r"^(现在|今天|今日|最近|近期|当前)?(有)?(什么|哪些|有没有).*(二手|旧物|闲置|东西|物品)",
-        r"^(什么|哪些|有没有).*(二手|旧物|闲置|东西|物品)",
-        r"^(二手|旧物|闲置)(物品|东西)?(列表)?$",
-    )
-    return any(re.search(pattern, normalized) for pattern in list_patterns)
-
-
-@_register("java_secondhand_api")
-def build_secondhand_params(input_text: str) -> Dict[str, Any]:
-    params: Dict[str, Any] = {"current": 1, "size": 10, "sort": "latest"}
-    if _is_secondhand_list_query(input_text):
-        return params
-    keyword = _keyword_from_input(input_text, {"旧物", "二手", "闲置", "物品", "东西", "卖", "买", "转让"})
-    if keyword:
-        params["keyword"] = keyword
-    return params
-
-
 def resolve_campus_tool_params(
     tool_name: str,
     input_text: str,
@@ -370,17 +346,6 @@ def build_service_tool_request_urls(
             list_params["name"] = keyword
         urls.append(_url(base_url, "/api/v1/facility/list", list_params))
         return urls
-
-    if name == "java_secondhand_api":
-        api_params: Dict[str, Any] = {
-            "current": int(params.get("current") or 1),
-            "size": int(params.get("size") or 10),
-            "sort": params.get("sort") or "latest",
-        }
-        keyword = str(params.get("keyword") or "").strip()
-        if keyword:
-            api_params["keyword"] = keyword
-        return [_url(base_url, "/api/secondhand/item/list", api_params)]
 
     return []
 

@@ -270,7 +270,6 @@ const RESOURCE_KIND_LABELS = {
 	meeting: '会议',
 	dining: '餐饮',
 	facility: '校园设施',
-	secondhand: '二手物品'
 }
 const RESOURCE_ICON_LABELS = {
 	image: '图', video: '影', audio: '音', document: '文', presentation: '演',

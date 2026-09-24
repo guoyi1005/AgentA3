@@ -33,7 +33,6 @@ const toolLabels = {
   java_meeting_api: '会议工具',
   java_canteen_api: '餐饮工具',
   java_facility_api: '设施工具',
-  java_secondhand_api: '旧物工具',
 }
 
 const getToolLabel = (value) => toolLabels[value] || value || '-'

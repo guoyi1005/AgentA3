@@ -25,17 +25,6 @@ import {
   updateMerchantCategory,
 } from '../../api/merchant'
 import { auditRegistration, getRegistrationList } from '../../api/registration'
-import {
-  createSecondhandCategory,
-  deleteSecondhandCategory,
-  deleteSecondhandItem,
-  getSecondhandAdminList,
-  getSecondhandCategoryList,
-  getSecondhandItemDetail,
-  getSecondhandStatistics,
-  offlineSecondhandItem,
-  updateSecondhandCategory,
-} from '../../api/secondhand'
 import { closeSignIn, getSignInList, openSignIn } from '../../api/signin'
 import { deleteSystemConfig, getSystemConfigList, getSystemConfigTestLogs, testAiModel, testSystemConfig, upsertSystemConfig } from '../../api/systemConfig'
 import { getAiModelProviders } from '../../api/rag'
@@ -318,49 +307,6 @@ const colorMap = {
   收物: 'blue',
 }
 
-const SECONDHAND_STATUS_FILTER_MAP = {
-  全部: undefined,
-  出物: { tradeType: 'sell' },
-  收物: { tradeType: 'buy' },
-  已下架: { status: 4 },
-}
-
-const formatSecondhandPrice = (price, originalPrice) => {
-  const current = Number(price)
-  const original = Number(originalPrice)
-  if (!Number.isFinite(current)) return '-'
-  const currentText = `¥${current.toFixed(current % 1 === 0 ? 0 : 2)}`
-  if (Number.isFinite(original) && original > current) {
-    return `${currentText} / 原价¥${original.toFixed(original % 1 === 0 ? 0 : 2)}`
-  }
-  return currentText
-}
-
-const getTradeTypeStatusText = (item = {}) => {
-  const status = Number(item.status)
-  if (status === 4) return '已下架'
-  const tradeType = String(item.tradeType || 'sell')
-  return tradeType === 'buy' ? '收物' : '出物'
-}
-
-const normalizeSecondhandItemRow = (item = {}) => {
-  const images = Array.isArray(item.images) ? item.images : []
-  const coverImage = images.find((url) => typeof url === 'string' && url.trim()) || ''
-  const publisherName = item.publisherName || item.seller?.username || item.seller?.realName || '-'
-  const viewCount = Number(item.viewCount || 0)
-  const favoriteCount = Number(item.favoriteCount || 0)
-  const inquiryCount = Number(item.inquiryCount || 0)
-  return {
-    ...item,
-    coverImage,
-    publisherName,
-    priceText: formatSecondhandPrice(item.price, item.originalPrice),
-    statusText: getTradeTypeStatusText(item),
-    location: item.location || item.tradeLocation || item.pickupPoint || '-',
-    heatMeta: `浏览 ${viewCount} · 收藏 ${favoriteCount} · 咨询 ${inquiryCount}`,
-  }
-}
-
 const toSummaryRows = (obj, prefix = '') =>
   Object.entries(obj || {}).map(([label, value], index) => ({
     id: `${prefix}${label}-${index}`,
@@ -408,7 +354,7 @@ function EChart({ option, height = 320 }) {
   return <div ref={chartRef} style={{ width: '100%', height }} />
 }
 
-const loadWorkspaceData = async (pageKey, { current, pageSize, keyword, status, contextId, marketCategoryId, urlStallId, currentPostTitle }) => {
+const loadWorkspaceData = async (pageKey, { current, pageSize, keyword, status, contextId, urlStallId, currentPostTitle }) => {
   switch (pageKey) {
     case 'user-manage': {
       const res = await getUserList({ page: current, size: pageSize, username: keyword })
@@ -532,47 +478,6 @@ const loadWorkspaceData = async (pageKey, { current, pageSize, keyword, status, 
       ]
       return { rows, total: rows.length }
     }
-    case 'market-item':
-    case 'market-audit': {
-      const filter = SECONDHAND_STATUS_FILTER_MAP[status] || {}
-      const res = await getSecondhandAdminList({
-        page: current,
-        size: pageSize,
-        keyword,
-        status: filter.status,
-        tradeType: filter.tradeType,
-        categoryId: marketCategoryId || undefined,
-      })
-      const rows = (res.data?.records || []).map(normalizeSecondhandItemRow)
-      return { rows, total: res.data?.total || 0 }
-    }
-    case 'market-category': {
-      const [res, statRes] = await Promise.all([
-        getSecondhandCategoryList(),
-        getSecondhandStatistics().catch(() => ({ data: null })),
-      ])
-      const distribution = Array.isArray(statRes?.data?.categoryDistribution)
-        ? statRes.data.categoryDistribution
-        : []
-      const countMap = Object.fromEntries(
-        distribution.map((item) => [String(item.name || ''), Number(item.value || 0)]),
-      )
-      const keywordText = String(keyword || '').trim()
-      const rows = (Array.isArray(res.data) ? res.data : [])
-        .map((item, index) => {
-          const itemCount = countMap[item.categoryName] ?? 0
-          return {
-            ...item,
-            accentIndex: index % 5,
-            itemCount,
-            itemCountText: `${itemCount} 件`,
-            sortText: item.sort == null ? '-' : `第 ${item.sort} 位`,
-          }
-        })
-        .filter((item) => !keywordText || String(item.categoryName || '').includes(keywordText))
-        .sort((a, b) => Number(a.sort ?? 0) - Number(b.sort ?? 0))
-      return { rows, total: rows.length }
-    }
     case 'discount-merchant': {
       const res = await getMerchantList({ page: current, size: pageSize, keyword })
       return { rows: res.data?.records || [], total: res.data?.total || 0 }
@@ -587,11 +492,8 @@ const loadWorkspaceData = async (pageKey, { current, pageSize, keyword, status, 
       return { rows, total: rows.length }
     }
     case 'discount-analytics': {
-      const [merchantStatRes, secondhandStatRes] = await Promise.all([getMerchantStatistics(), getSecondhandStatistics()])
-      const rows = [
-        ...toSummaryRows(merchantStatRes.data, 'discount.'),
-        ...toSummaryRows(secondhandStatRes.data, 'secondhand.'),
-      ]
+      const merchantStatRes = await getMerchantStatistics()
+      const rows = toSummaryRows(merchantStatRes.data, 'discount.')
       return { rows, total: rows.length }
     }
     case 'system-config': {
@@ -1150,13 +1052,6 @@ function WorkspacePage({ pageKey }) {
   const [keyword, setKeyword] = useState('')
   const [status, setStatus] = useState('全部')
   const [rows, setRows] = useState([])
-  const [marketRankTab, setMarketRankTab] = useState('latest')
-  const [marketRankItems, setMarketRankItems] = useState([])
-  const [marketCategoryOptions, setMarketCategoryOptions] = useState([])
-  const [marketCategoryId, setMarketCategoryId] = useState()
-  const [marketDetailOpen, setMarketDetailOpen] = useState(false)
-  const [marketDetailLoading, setMarketDetailLoading] = useState(false)
-  const [marketDetail, setMarketDetail] = useState(null)
   const [loading, setLoading] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -1294,11 +1189,6 @@ function WorkspacePage({ pageKey }) {
     setKeyword('')
     setStatus('全部')
     setRows([])
-    setMarketRankTab('latest')
-    setMarketRankItems([])
-    setMarketCategoryId(undefined)
-    setMarketDetailOpen(false)
-    setMarketDetail(null)
     setContextInput('')
     setContextId('')
     setUrlStallId('')
@@ -1366,7 +1256,6 @@ function WorkspacePage({ pageKey }) {
           keyword,
           status,
           contextId,
-          marketCategoryId,
           urlStallId,
           currentPostTitle: searchParams.get('postTitle') || forumPostOptions.find((item) => item.value === String(contextId))?.label || '',
         })
@@ -1397,7 +1286,7 @@ function WorkspacePage({ pageKey }) {
     return () => {
       cancelled = true
     }
-  }, [contextId, forumPostOptions, marketCategoryId, page, pageKey, workspacePage, workspacePageSize, keyword, searchParams, status, urlStallId])
+  }, [contextId, forumPostOptions, page, pageKey, workspacePage, workspacePageSize, keyword, searchParams, status, urlStallId])
 
   // 解析 URL 参数（仅 facility-stall-dish 页面）
   useEffect(() => {
@@ -1507,59 +1396,6 @@ function WorkspacePage({ pageKey }) {
     }
   }, [pageKey, rows, selectedMarkerId])
 
-  useEffect(() => {
-    if (pageKey !== 'market-item' && pageKey !== 'market-audit') return undefined
-    let cancelled = false
-    const loadRankAndCategories = async () => {
-      try {
-        const [listRes, categoryRes] = await Promise.all([
-          getSecondhandAdminList({ page: 1, size: 100 }),
-          getSecondhandCategoryList().catch(() => ({ data: [] })),
-        ])
-        if (cancelled) return
-        setMarketRankItems((listRes.data?.records || []).map(normalizeSecondhandItemRow))
-        const categories = Array.isArray(categoryRes.data) ? categoryRes.data : []
-        setMarketCategoryOptions(categories.map((item) => ({ value: item.id, label: item.categoryName })))
-      } catch {
-        if (!cancelled) {
-          setMarketRankItems([])
-          setMarketCategoryOptions([])
-        }
-      }
-    }
-    loadRankAndCategories()
-    return () => {
-      cancelled = true
-    }
-  }, [pageKey, rows])
-
-  const marketRankTop4 = useMemo(() => {
-    const list = [...marketRankItems]
-    const byNumber = (key) => (a, b) => Number(b[key] || 0) - Number(a[key] || 0)
-    const byTime = (a, b) => String(b.createTime || '').localeCompare(String(a.createTime || ''))
-    if (marketRankTab === 'views') list.sort(byNumber('viewCount'))
-    else if (marketRankTab === 'favorites') list.sort(byNumber('favoriteCount'))
-    else if (marketRankTab === 'inquiries') list.sort(byNumber('inquiryCount'))
-    else list.sort(byTime)
-    return list.slice(0, 4)
-  }, [marketRankItems, marketRankTab])
-
-  const openMarketItemDetail = async (record) => {
-    if (!record?.id) return
-    setMarketDetailOpen(true)
-    setMarketDetailLoading(true)
-    setMarketDetail(null)
-    try {
-      const res = await getSecondhandItemDetail(record.id)
-      setMarketDetail(normalizeSecondhandItemRow(res.data || record))
-    } catch (error) {
-      setMarketDetail(normalizeSecondhandItemRow(record))
-      message.error(error?.message || '详情加载失败')
-    } finally {
-      setMarketDetailLoading(false)
-    }
-  }
-
   const refreshPageData = async () => {
     const result = await loadWorkspaceData(pageKey, {
       current: pagination.current,
@@ -1567,7 +1403,6 @@ function WorkspacePage({ pageKey }) {
       keyword,
       status,
       contextId,
-      marketCategoryId,
       urlStallId,
       currentPostTitle: searchParams.get('postTitle') || forumPostOptions.find((item) => item.value === String(contextId))?.label || '',
     })
@@ -1837,7 +1672,6 @@ function WorkspacePage({ pageKey }) {
     'facility-dormitory',
     'facility-analytics',
     'facility-stall-dish',
-    'market-category',
     'discount-category',
     'discount-merchant',
     'system-config',
@@ -1957,7 +1791,7 @@ function WorkspacePage({ pageKey }) {
             images: typeof record.images === 'string' ? record.images : JSON.stringify(record.images || []),
           }
         : {}),
-      ...(['market-category', 'discount-category'].includes(pageKey)
+      ...(pageKey === 'discount-category'
         ? {
             categoryName: record.categoryName,
             sort: record.sort,
@@ -2082,10 +1916,6 @@ function WorkspacePage({ pageKey }) {
         'facility-restaurant': {
           create: () => createStall(values),
           edit: () => updateStall(editingRecord.id, values),
-        },
-        'market-category': {
-          create: () => createSecondhandCategory(values),
-          edit: () => updateSecondhandCategory(editingRecord.id, values),
         },
         'discount-category': {
           create: () => createMerchantCategory(values),
@@ -2409,7 +2239,6 @@ function WorkspacePage({ pageKey }) {
             </Form.Item>
           </>
         )
-      case 'market-category':
       case 'discount-category':
         return (
           <>
@@ -2743,40 +2572,6 @@ function WorkspacePage({ pageKey }) {
               删除
             </Button>
           </Popconfirm>
-        )
-      case 'market-item':
-      case 'market-audit':
-        return (
-          <Space size="small">
-            <Button size="small" onClick={() => openMarketItemDetail(record)}>
-              查看详情
-            </Button>
-            {Number(record.status) === 2 ? (
-              <Popconfirm title="确定下架该物品吗？下架后用户端将不可见。" onConfirm={() => runAction(() => offlineSecondhandItem(record.id), '物品已下架')}>
-                <Button size="small" loading={actionLoading}>
-                  下架
-                </Button>
-              </Popconfirm>
-            ) : null}
-            <Popconfirm title="确定删除该物品吗？删除后不可恢复。" onConfirm={() => runAction(() => deleteSecondhandItem(record.id), '物品已删除')}>
-              <Button size="small" danger loading={actionLoading}>
-                删除
-              </Button>
-            </Popconfirm>
-          </Space>
-        )
-      case 'market-category':
-        return (
-          <Space size="small">
-            <Button size="small" onClick={() => openEditModal(record)}>
-              编辑
-            </Button>
-            <Popconfirm title="确定删除该分类吗？" onConfirm={() => runAction(() => deleteSecondhandCategory(record.id), '分类已删除')}>
-              <Button size="small" danger loading={actionLoading}>
-                删除
-              </Button>
-            </Popconfirm>
-          </Space>
         )
       case 'discount-category':
         return (
@@ -3357,9 +3152,6 @@ function WorkspacePage({ pageKey }) {
       'facility-stall-dish',
       'facility-marker',
       'map-marker',
-      'market-item',
-      'market-audit',
-      'market-category',
       'discount-category',
       'discount-merchant',
       'system-config',
@@ -4198,14 +3990,8 @@ function WorkspacePage({ pageKey }) {
     const activeActivities = Number(metricMap['discount.activeActivities'] || 0)
     const totalReviews = Number(metricMap['discount.totalReviews'] || 0)
     const avgScore = Number(metricMap['discount.avgScore'] || 0)
-    const totalItems = Number(metricMap['secondhand.totalItems'] || 0)
-    const onSaleItems = Number(metricMap['secondhand.onSaleItems'] || 0)
-    const soldItems = Number(metricMap['secondhand.soldItems'] || 0)
-    const offlineItems = Number(metricMap['secondhand.offlineItems'] || 0)
-
     const topMerchants = parseSummaryList(metricMap['discount.topMerchants'])
     const activityTrend = parseSummaryList(metricMap['discount.activityTrend'])
-    const categoryDistribution = parseSummaryList(metricMap['secondhand.categoryDistribution'])
 
     const trendOption = {
       grid: { left: 16, right: 16, top: 18, bottom: 18, containLabel: true },
@@ -4263,44 +4049,12 @@ function WorkspacePage({ pageKey }) {
       }],
     }
 
-    const categoryOption = {
-      tooltip: { trigger: 'item' },
-      series: [{
-        type: 'pie',
-        radius: ['44%', '72%'],
-        center: ['50%', '48%'],
-        label: { formatter: '{b}\n{c}' },
-        data: categoryDistribution.map((item, index) => ({
-          name: item.name || `分类 ${index + 1}`,
-          value: Number(item.count ?? item.value ?? 0),
-        })),
-      }],
-    }
-
-    const statusOption = {
-      tooltip: { trigger: 'item' },
-      series: [{
-        type: 'pie',
-        radius: ['42%', '70%'],
-        center: ['50%', '48%'],
-        label: { formatter: '{b}\n{c}' },
-        data: [
-          { name: '在售旧物', value: onSaleItems },
-          { name: '已售旧物', value: soldItems },
-          { name: '已下架旧物', value: offlineItems },
-        ],
-      }],
-    }
-
     const statCards = [
       { label: '商家总数', value: totalMerchants },
       { label: '优惠活动', value: totalActivities },
       { label: '进行中活动', value: activeActivities },
       { label: '平均评分', value: avgScore ? avgScore.toFixed(1) : '0.0' },
       { label: '评价总数', value: totalReviews },
-      { label: '旧物总量', value: totalItems },
-      { label: '在售旧物', value: onSaleItems },
-      { label: '已售旧物', value: soldItems },
     ]
 
     return (
@@ -4320,12 +4074,6 @@ function WorkspacePage({ pageKey }) {
           </Card>
           <Card className="workspace-table-card" title="热门商家">
             {topMerchants.length ? <EChart option={merchantOption} height={320} /> : <Empty description="暂无商家排行数据" />}
-          </Card>
-          <Card className="workspace-table-card" title="旧物分类分布">
-            {categoryDistribution.length ? <EChart option={categoryOption} height={320} /> : <Empty description="暂无旧物分类数据" />}
-          </Card>
-          <Card className="workspace-table-card" title="旧物状态分布">
-            <EChart option={statusOption} height={320} />
           </Card>
         </div>
       </div>
@@ -4691,7 +4439,7 @@ function WorkspacePage({ pageKey }) {
 
   return (
     <div className="workspace-page">
-      {page.title && pageKey !== 'market-item' && pageKey !== 'market-audit' ? (
+      {page.title ? (
         <section className="workspace-hero">
           <div>
             <span className="workspace-badge">{page.badge}</span>
@@ -4716,197 +4464,6 @@ function WorkspacePage({ pageKey }) {
       <section className="workspace-main workspace-main-single">
         {pageKey === 'map-marker' || pageKey === 'facility-marker' ? renderMarkerManagePanel() : pageKey === 'facility-analytics' ? renderFacilityAnalyticsPanel() : pageKey === 'map-analytics' ? renderMapAnalyticsPanel() : pageKey === 'discount-analytics' ? renderDiscountAnalyticsPanel() : (
         <>
-        {pageKey === 'market-item' || pageKey === 'market-audit' ? (
-          <div className="market-admin">
-            <aside className="market-admin__side">
-              <div className="market-admin__side-title">
-                <h2>物品管理</h2>
-                <p>仅可查看详情、下架与删除，不可编辑用户内容。</p>
-              </div>
-              <div className="market-admin__field">
-                <label>关键词</label>
-                <Input
-                  allowClear
-                  placeholder="搜索标题"
-                  prefix={<SearchOutlined />}
-                  value={keyword}
-                  onChange={(event) => {
-                    setPagination((prev) => ({ ...prev, current: 1 }))
-                    setKeyword(event.target.value)
-                  }}
-                />
-              </div>
-              <div className="market-admin__field">
-                <label>状态</label>
-                <Select
-                  value={status}
-                  options={page.filters.status.map((item) => ({ value: item, label: item }))}
-                  onChange={(value) => {
-                    setPagination((prev) => ({ ...prev, current: 1 }))
-                    setStatus(value)
-                  }}
-                />
-              </div>
-              <div className="market-admin__field">
-                <label>分类</label>
-                <Select
-                  allowClear
-                  placeholder="全部分类"
-                  value={marketCategoryId}
-                  options={marketCategoryOptions}
-                  onChange={(value) => {
-                    setPagination((prev) => ({ ...prev, current: 1 }))
-                    setMarketCategoryId(value)
-                  }}
-                />
-              </div>
-              <div className="market-admin__tip">
-                管理端不提供上架、售出或内容编辑，避免改写用户发布信息。
-              </div>
-            </aside>
-
-            <main className="market-admin__main">
-              <section className="market-admin__rank">
-                <div className="market-admin__rank-head">
-                  <div>
-                    <h3>当前在管旧物</h3>
-                    <p>按维度展示前四，便于管理员快速巡检。</p>
-                  </div>
-                  <Tabs
-                    size="small"
-                    activeKey={marketRankTab}
-                    onChange={setMarketRankTab}
-                    items={[
-                      { key: 'latest', label: '最新发布' },
-                      { key: 'views', label: '最多浏览' },
-                      { key: 'favorites', label: '最多收藏' },
-                      { key: 'inquiries', label: '最多咨询' },
-                    ]}
-                  />
-                </div>
-                {marketRankTop4.length ? (
-                  <div className="market-admin__rank-grid">
-                    {marketRankTop4.map((item) => (
-                      <article key={`rank-${item.id}`} className="market-admin__card">
-                        <div className="market-admin__cover">
-                          {item.coverImage ? <img src={item.coverImage} alt={item.title || '旧物封面'} /> : <div className="market-admin__cover-empty">暂无图片</div>}
-                          <span className={`market-admin__status market-admin__status--${item.status === 4 ? 'offline' : (item.tradeType === 'buy' ? 'buy' : 'sell')}`}>{item.statusText || '-'}</span>
-                        </div>
-                        <div className="market-admin__card-body">
-                          <h4>{item.title || '-'}</h4>
-                          <p>{item.categoryName || '未分类'}</p>
-                          <div className="market-admin__price">{item.priceText || '-'}</div>
-                          <div className="market-admin__heat">{item.heatMeta}</div>
-                          <div className="market-admin__meta">
-                            <span>{item.publisherName || '-'}</span>
-                            <span>{item.location || '-'}</span>
-                          </div>
-                          <div className="market-admin__card-actions">
-                            <Button size="small" onClick={() => openMarketItemDetail(item)}>查看详情</Button>
-                            {Number(item.status) === 2 ? (
-                              <Popconfirm title="确定下架该物品吗？" onConfirm={() => runAction(() => offlineSecondhandItem(item.id), '物品已下架')}>
-                                <Button size="small" loading={actionLoading}>下架</Button>
-                              </Popconfirm>
-                            ) : null}
-                            <Popconfirm title="确定删除该物品吗？" onConfirm={() => runAction(() => deleteSecondhandItem(item.id), '物品已删除')}>
-                              <Button size="small" danger loading={actionLoading}>删除</Button>
-                            </Popconfirm>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <Empty description="暂无排行数据" />
-                )}
-              </section>
-
-              <section className="market-admin__table-wrap">
-                <div className="market-admin__table-head">
-                  <h3>全部物品</h3>
-                  <span>共 {pagination.total} 条</span>
-                </div>
-                <Table
-                  columns={columns}
-                  dataSource={rows}
-                  loading={loading}
-                  rowKey={(record) => record.id || record.key || JSON.stringify(record)}
-                  locale={{ emptyText: page.emptyText }}
-                  scroll={{ x: 'max-content' }}
-                  pagination={{
-                    current: pagination.current,
-                    pageSize: pagination.pageSize,
-                    total: pagination.total,
-                    showSizeChanger: true,
-                  }}
-                  onChange={(nextPagination) => {
-                    setPagination((prev) => ({
-                      ...prev,
-                      current: nextPagination.current,
-                      pageSize: nextPagination.pageSize,
-                    }))
-                  }}
-                />
-              </section>
-            </main>
-          </div>
-        ) : null}
-        {pageKey === 'market-category' ? (
-          <div className="market-category-panel">
-            <div className="market-category-panel__toolbar">
-              <div>
-                <h2>旧物分类</h2>
-                <p>按排序展示分类，并显示当前关联物品数量。</p>
-              </div>
-              <div className="market-category-panel__actions">
-                <Input
-                  allowClear
-                  placeholder="搜索分类"
-                  prefix={<SearchOutlined />}
-                  value={keyword}
-                  onChange={(event) => {
-                    setPagination((prev) => ({ ...prev, current: 1 }))
-                    setKeyword(event.target.value)
-                  }}
-                  style={{ width: 220 }}
-                />
-                <Button type="primary" onClick={openCreateModal}>
-                  新增分类
-                </Button>
-              </div>
-            </div>
-            {rows.length ? (
-              <div className="market-category-grid">
-                {rows.map((item) => (
-                  <article
-                    key={item.id || item.categoryName}
-                    className={`market-category-card market-category-card--accent-${item.accentIndex ?? 0}`}
-                  >
-                    <div className="market-category-card__top">
-                      <span className="market-category-card__sort">排序 {item.sort ?? '-'}</span>
-                      <span className="market-category-card__count">{item.itemCountText || '0 件'}</span>
-                    </div>
-                    <h3>{item.categoryName || '-'}</h3>
-                    <p>用于校园旧物发布与筛选。</p>
-                    <div className="market-category-card__actions">
-                      <Button size="small" onClick={() => openEditModal(item)}>
-                        编辑
-                      </Button>
-                      <Popconfirm title="确定删除该分类吗？" onConfirm={() => runAction(() => deleteSecondhandCategory(item.id), '分类已删除')}>
-                        <Button size="small" danger loading={actionLoading}>
-                          删除
-                        </Button>
-                      </Popconfirm>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <Empty description={page.emptyText} />
-            )}
-          </div>
-        ) : null}
-        {pageKey === 'market-category' || pageKey === 'market-item' || pageKey === 'market-audit' ? null : (
         <Card
           className="workspace-table-card"
           extra={
@@ -4986,7 +4543,6 @@ function WorkspacePage({ pageKey }) {
             <Empty description={page.emptyText} />
           )}
         </Card>
-        )}
         </>
         )}
       </section>
@@ -5005,71 +4561,6 @@ function WorkspacePage({ pageKey }) {
           {renderModalFields()}
         </Form>
       </Modal>
-
-      <Drawer
-        open={marketDetailOpen}
-        title="物品详情"
-        width={560}
-        onClose={() => setMarketDetailOpen(false)}
-        destroyOnHidden
-        className="market-detail-drawer"
-      >
-        {marketDetailLoading ? (
-          <Empty description="详情加载中..." />
-        ) : marketDetail ? (
-          <div className="market-detail">
-            <div className="market-detail__gallery">
-              {(Array.isArray(marketDetail.images) && marketDetail.images.length
-                ? marketDetail.images
-                : marketDetail.coverImage
-                  ? [marketDetail.coverImage]
-                  : []
-              ).map((url) => (
-                <Image key={url} src={url} alt={marketDetail.title || '物品图片'} />
-              ))}
-              {!(Array.isArray(marketDetail.images) && marketDetail.images.length) && !marketDetail.coverImage ? (
-                <div className="market-detail__empty-img">暂无图片</div>
-              ) : null}
-            </div>
-            <h3>{marketDetail.title || '-'}</h3>
-            <div className="market-detail__row"><span>状态</span><strong>{marketDetail.statusText || '-'}</strong></div>
-            <div className="market-detail__row"><span>分类</span><strong>{marketDetail.categoryName || '-'}</strong></div>
-            <div className="market-detail__row"><span>价格</span><strong>{marketDetail.priceText || '-'}</strong></div>
-            <div className="market-detail__row"><span>地点</span><strong>{marketDetail.location || '-'}</strong></div>
-            <div className="market-detail__row"><span>发布者</span><strong>{marketDetail.publisherName || '-'}</strong></div>
-            <div className="market-detail__row"><span>热度</span><strong>{marketDetail.heatMeta || '-'}</strong></div>
-            <div className="market-detail__row"><span>发布时间</span><strong>{marketDetail.createTime || '-'}</strong></div>
-            <div className="market-detail__desc">
-              <span>描述</span>
-              <p>{marketDetail.description || '暂无描述'}</p>
-            </div>
-            <div className="market-detail__actions">
-              {Number(marketDetail.status) === 2 ? (
-                <Popconfirm
-                  title="确定下架该物品吗？"
-                  onConfirm={async () => {
-                    const ok = await runAction(() => offlineSecondhandItem(marketDetail.id), '物品已下架')
-                    if (ok) setMarketDetailOpen(false)
-                  }}
-                >
-                  <Button loading={actionLoading}>下架</Button>
-                </Popconfirm>
-              ) : null}
-              <Popconfirm
-                title="确定删除该物品吗？"
-                onConfirm={async () => {
-                  const ok = await runAction(() => deleteSecondhandItem(marketDetail.id), '物品已删除')
-                  if (ok) setMarketDetailOpen(false)
-                }}
-              >
-                <Button danger loading={actionLoading}>删除</Button>
-              </Popconfirm>
-            </div>
-          </div>
-        ) : (
-          <Empty description="暂无物品详情" />
-        )}
-      </Drawer>
 
       <Drawer
         open={meetingDetailOpen}

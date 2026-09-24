@@ -1,25 +1,12 @@
-import {
-  getChatSessions,
-  getChatUnreadCount,
-  getTradeNotificationUnreadCount,
-  getTradeNotifications,
-  getChatMessageSummary
-} from '@/api/secondhand'
 import { getEnabledAnnouncements } from '@/api/notice'
 import { getAppMessageUnreadCount } from '@/api/message'
 import { getToken } from '@/utils/storage'
 import { startMessageSocket, stopMessageSocket } from '@/utils/messageSocket'
 
 const state = {
-  unreadChatCount: 0,
-  unreadTradeCount: 0,
-  unreadAppCount: 0,
-  unreadLostFoundAppCount: 0,
+  unreadNoticeCount: 0,
   unreadExamCount: 0,
   totalUnreadCount: 0,
-  sessions: [],
-  tradeNotifications: [],
-  activeChatSessionId: null,
   lastSyncAt: 0,
   syncing: false,
   started: false
@@ -50,29 +37,9 @@ function getAnnouncementUnreadCount(res) {
 }
 
 function buildSignature(nextState) {
-  const sessionPart = (nextState.sessions || [])
-    .map((item) => [
-      item.sessionId,
-      item.otherUsername,
-      item.otherAvatar,
-      item.lastMessage,
-      item.lastTime,
-      item.unreadCount,
-      item.tradeStatus,
-      item.contactExchangeStatus
-    ].join(':'))
-    .join('|')
-  const tradePart = (nextState.tradeNotifications || [])
-    .map((item) => [item.id, item.isRead, item.tradeStatus, item.createTime].join(':'))
-    .join('|')
   return [
-    nextState.unreadChatCount,
-    nextState.unreadTradeCount,
-    nextState.unreadAppCount,
-    nextState.unreadLostFoundAppCount,
-    nextState.unreadExamCount,
-    sessionPart,
-    tradePart
+    nextState.unreadNoticeCount,
+    nextState.unreadExamCount
   ].join('::')
 }
 
@@ -92,15 +59,9 @@ function notify(reason = 'sync') {
 
 export function getMessageState() {
   return {
-    unreadChatCount: state.unreadChatCount,
-    unreadTradeCount: state.unreadTradeCount,
-    unreadAppCount: state.unreadAppCount,
-    unreadLostFoundAppCount: state.unreadLostFoundAppCount,
+    unreadNoticeCount: state.unreadNoticeCount,
     unreadExamCount: state.unreadExamCount,
     totalUnreadCount: state.totalUnreadCount,
-    sessions: [...state.sessions],
-    tradeNotifications: [...state.tradeNotifications],
-    activeChatSessionId: state.activeChatSessionId,
     lastSyncAt: state.lastSyncAt,
     syncing: state.syncing,
     started: state.started
@@ -121,23 +82,14 @@ export async function refreshMessageState(reason = 'manual') {
   if (state.syncing) return getMessageState()
   state.syncing = true
   try {
-    const [chatUnreadRes, tradeUnreadRes, announceRes, appMessageUnreadRes, sessionsRes, tradeRes] = await Promise.all([
-      getChatUnreadCount(),
-      getTradeNotificationUnreadCount(),
+    const [announceRes, appMessageUnreadRes] = await Promise.all([
       getEnabledAnnouncements().catch(() => ({ data: [] })),
-      getAppMessageUnreadCount({ showError: false }).catch(() => ({ data: { lostFound: 0 } })),
-      getChatSessions({ current: 1, size: 100 }),
-      getTradeNotifications({ current: 1, size: 100 })
+      getAppMessageUnreadCount({ showError: false }).catch(() => ({ data: { exam: 0 } }))
     ])
 
-    state.unreadChatCount = numberValue(chatUnreadRes?.data)
-    state.unreadTradeCount = numberValue(tradeUnreadRes?.data)
-    state.unreadAppCount = getAnnouncementUnreadCount(announceRes)
-    state.unreadLostFoundAppCount = numberValue(appMessageUnreadRes?.data?.lostFound)
+    state.unreadNoticeCount = getAnnouncementUnreadCount(announceRes)
     state.unreadExamCount = numberValue(appMessageUnreadRes?.data?.exam)
-    state.totalUnreadCount = state.unreadChatCount + state.unreadTradeCount + state.unreadAppCount
-    state.sessions = getRecords(sessionsRes)
-    state.tradeNotifications = getRecords(tradeRes)
+    state.totalUnreadCount = state.unreadNoticeCount + state.unreadExamCount
     state.lastSyncAt = Date.now()
 
     const signature = buildSignature(state)
@@ -154,34 +106,6 @@ export async function refreshMessageState(reason = 'manual') {
   return getMessageState()
 }
 
-export async function refreshChatListState(reason = 'chat-list') {
-  if (!getToken()) return getMessageState()
-  if (state.syncing) return getMessageState()
-  state.syncing = true
-  try {
-    const res = await getChatMessageSummary({ current: 1, size: 30 })
-    const summary = res?.data || {}
-    const sessionsPage = summary.sessions || {}
-    state.sessions = Array.isArray(sessionsPage.records) ? sessionsPage.records : []
-    state.unreadChatCount = numberValue(summary.chatUnreadCount)
-    state.unreadTradeCount = numberValue(summary.tradeUnreadCount)
-    state.totalUnreadCount = state.unreadChatCount + state.unreadTradeCount + state.unreadAppCount
-    state.lastSyncAt = Date.now()
-
-    const signature = buildSignature(state)
-    if (signature !== lastSignature || reason !== 'realtime') {
-      lastSignature = signature
-      notify(reason)
-    }
-  } catch (error) {
-    console.warn('messageStore refreshChatListState failed', error)
-  } finally {
-    state.syncing = false
-    if (realtimeRefreshPending) scheduleRealtimeRefresh()
-  }
-  return getMessageState()
-}
-
 function scheduleRealtimeRefresh() {
   if (realtimeRefreshTimer) return
   const wait = Math.max(120, REALTIME_MIN_INTERVAL - (Date.now() - lastRealtimeRefreshAt))
@@ -190,7 +114,7 @@ function scheduleRealtimeRefresh() {
     if (state.syncing) return
     realtimeRefreshPending = false
     lastRealtimeRefreshAt = Date.now()
-    refreshChatListState('realtime')
+    refreshMessageState('realtime')
   }, wait)
 }
 
@@ -218,25 +142,11 @@ export function stopMessageSync() {
   state.started = false
 }
 
-export function setActiveChatSession(sessionId) {
-  state.activeChatSessionId = sessionId ? Number(sessionId) : null
-  notify('active-chat')
-}
-
-export function clearActiveChatSession(sessionId) {
-  if (!sessionId || Number(sessionId) === Number(state.activeChatSessionId)) {
-    state.activeChatSessionId = null
-    notify('active-chat')
-  }
-}
-
 export default {
   state,
   getState: getMessageState,
   subscribe: subscribeMessageStore,
   refresh: refreshMessageState,
   start: startMessageSync,
-  stop: stopMessageSync,
-  setActiveChatSession,
-  clearActiveChatSession
+  stop: stopMessageSync
 }

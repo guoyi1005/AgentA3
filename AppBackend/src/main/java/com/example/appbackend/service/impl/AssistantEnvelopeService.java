@@ -77,7 +77,7 @@ public class AssistantEnvelopeService {
     private static final Pattern STORAGE_KEY = Pattern.compile(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.[a-z0-9]{1,16}");
     private static final Set<String> BUSINESS_KINDS = Set.of(
-            "course", "activity", "meeting", "dining", "facility", "secondhand");
+            "course", "activity", "meeting", "dining", "facility");
     private static final Set<String> FILE_DELIVERIES = Set.of(
             "image", "video", "audio", "document", "presentation", "spreadsheet", "bundle");
     private static final Set<String> CONTENT_KINDS = Set.of(
@@ -134,8 +134,7 @@ public class AssistantEnvelopeService {
             "activity", Set.of("businessId", "title", "category", "startTime", "endTime", "location", "status"),
             "meeting", Set.of("businessId", "title", "startTime", "endTime", "location", "status"),
             "dining", Set.of("businessId", "name", "category", "location", "openingHours", "rating", "priceRange", "imageUrl"),
-            "facility", Set.of("businessId", "name", "category", "location", "openingHours", "status", "longitude", "latitude"),
-            "secondhand", Set.of("businessId", "title", "category", "price", "condition", "status", "createdAt", "imageUrl")
+            "facility", Set.of("businessId", "name", "category", "location", "openingHours", "status", "longitude", "latitude")
     );
 
     private final AiLeaderMessageRepository messageRepository;

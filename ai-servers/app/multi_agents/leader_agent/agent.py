@@ -27,7 +27,6 @@ _CARD_COMPANION_REQUIREMENTS = [
 
 _CARD_COMPANION_MODES = {
     "activity_query",
-    "secondhand_query",
     "meeting_query",
     "canteen_query",
     "facility_location",
@@ -36,7 +35,6 @@ _CARD_COMPANION_MODES = {
 
 _TOOL_CARD_LABELS = {
     "java_activity_api": "活动",
-    "java_secondhand_api": "二手物品",
     "java_meeting_api": "会议",
     "java_canteen_api": "餐饮结果",
     "java_facility_api": "设施",
@@ -1597,18 +1595,6 @@ class LeaderAgent:
                     "不要输出经纬度以外的内部字段名。",
                 ],
             }
-        if plan.tool_name == "java_secondhand_api":
-            return {
-                "mode": "secondhand_query",
-                "format": "secondhand_answer",
-                "card_companion": True,
-                "requirements": [
-                    "用户是在问旧物、二手、闲置或转让物品。",
-                    *_CARD_COMPANION_REQUIREMENTS,
-                    "不要展示手机号、微信号、精确个人联系信息等敏感信息；如接口返回联系人，只提示在系统内查看。",
-                    "不要编造砍价建议、交易状态或联系方式。",
-                ],
-            }
         return {
             "mode": "tool_result",
             "format": "concise_answer",
@@ -1720,7 +1706,7 @@ def _leader_profile_usage_policy(callable_catalog: Optional[Dict[str, Any]]) -> 
         )
     policies.extend([
         "Mermaid 图表如需文件版，可按 Markdown 文件导出；不再单独提供 mmd 源码附件。",
-        "用户表达课表、活动、会议列表/状态、食堂餐饮、设施位置、旧物二手等查询意图时，你必须根据当前语义自行从 leader_callable_catalog.tools 中选择对应的 Java 后端服务工具，而不是依赖系统关键词规则或编造答案。",
+        "用户表达课表、活动、会议列表/状态、食堂餐饮、设施位置等查询意图时，你必须根据当前语义自行从 leader_callable_catalog.tools 中选择对应的 Java 后端服务工具，而不是依赖系统关键词规则或编造答案。",
         "当前 user_input 永远优先于 conversation_context；只有 user_input 缺少主语或对象时，才允许用 conversation_context 补全。",
         "如果 user_input 是追问、省略主语或短句，例如“上几次呢”“老师呢”“在哪上”“什么时候呢”“这个呢”，必须结合 conversation_context 的最近主题、最近工具和摘要恢复真实意图；上下文已能确定时不要再反问用户。",
         "如果 user_input 已经表达新的课表状态意图，例如“今天有课吗”“从什么时候开始没有课”“哪天没课”，不要把最近课程主题补进去；这类问题是课表查询，不是某门课时间查询。",
@@ -1729,7 +1715,7 @@ def _leader_profile_usage_policy(callable_catalog: Optional[Dict[str, Any]]) -> 
         "用户问某门课什么时候学、什么时候上课、周几几点上时，也是课程信息查询，必须优先选择 java_schedule_api；但“什么时候开始没有课/哪天没课/今天有课吗”属于课表状态查询，不要套用最近课程。",
         "用户问某门课本学期有几节课、几次课、多少课时或上课次数时，也是课程信息查询，必须优先选择 java_schedule_api。",
         "用户问某个具体活动怎么样、是否值得参加、活动详情或介绍时，必须 action=call_tool 且 tool_name=java_activity_api；禁止 direct_answer，也禁止只回复“正在查询”。",
-        "action=call_tool 且 tool_name 为 java_schedule_api、java_activity_api、java_meeting_api、java_canteen_api、java_facility_api、java_secondhand_api 时，必须同时输出 tool_params 结构化查询参数；系统会合并 tool_params 与规则解析，优先使用 tool_params。",
+        "action=call_tool 且 tool_name 为 java_schedule_api、java_activity_api、java_meeting_api、java_canteen_api、java_facility_api 时，必须同时输出 tool_params 结构化查询参数；系统会合并 tool_params 与规则解析，优先使用 tool_params。",
         "java_schedule_api 的 tool_params 示例：{\"scope\":\"current_week|week|semester|all_semesters\",\"week\":null,\"weekday\":null,\"date\":null,\"month\":null,\"courseKeyword\":\"\",\"sessionStart\":null,\"sessionEnd\":null}。",
         "java_activity_api 的 tool_params 示例：{\"mode\":\"list|search\",\"keyword\":\"\",\"status\":\"PUBLISHED\",\"timePhase\":null,\"page\":1,\"size\":10}；具体活动名查询时 mode=search 且 keyword 填活动名。",
         "java_meeting_api 的 tool_params 示例：{\"keyword\":\"\",\"pageNum\":1,\"pageSize\":10}；java_canteen_api：{\"mode\":\"search|browse\",\"keyword\":\"\"}。",

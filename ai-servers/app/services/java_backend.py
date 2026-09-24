@@ -804,7 +804,6 @@ class JavaBackendRetriever:
             "java_meeting_api": self._search_meetings,
             "java_canteen_api": self._search_canteen,
             "java_facility_api": self._search_facilities,
-            "java_secondhand_api": self._search_secondhand,
         }
         handler = handlers.get(name)
         if handler is None:
@@ -1098,29 +1097,6 @@ class JavaBackendRetriever:
 
         return self._dedupe_results(results)[:10]
 
-    def _search_secondhand(
-        self,
-        authorization: str,
-        input_text: str,
-        tool_params: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
-        params = tool_params if isinstance(tool_params, dict) and tool_params else resolve_campus_tool_params("java_secondhand_api", input_text)
-        api_params: Dict[str, Any] = {
-            "current": int(params.get("current") or 1),
-            "size": int(params.get("size") or 10),
-            "sort": params.get("sort") or "latest",
-        }
-        keyword = str(params.get("keyword") or "").strip()
-        if keyword:
-            api_params["keyword"] = keyword
-        payload = self._get_json(
-            "/api/secondhand/item/list",
-            authorization,
-            params=api_params,
-        )
-        records = self._page_records(self._extract_result_data(payload))
-        return [self._secondhand_result(row) for row in records[:10]]
-
     def _page_records(self, data: Any) -> List[Dict[str, Any]]:
         if isinstance(data, list):
             return [item for item in data if isinstance(item, dict)]
@@ -1222,33 +1198,6 @@ class JavaBackendRetriever:
             "latitude": row.get("latitude"),
             "floor": row.get("floor"),
             "building": row.get("building"),
-        }
-
-    def _secondhand_result(self, row: Dict[str, Any]) -> Dict[str, Any]:
-        images = row.get("images")
-        image_url = row.get("imageUrl") or row.get("coverImage")
-        if not image_url and isinstance(images, list) and images:
-            image_url = images[0]
-        elif not image_url and isinstance(images, str) and images.strip():
-            try:
-                parsed = json.loads(images)
-                if isinstance(parsed, list) and parsed:
-                    image_url = parsed[0]
-            except json.JSONDecodeError:
-                image_url = images.split(",")[0].strip() if "," in images else images.strip()
-        return {
-            "type": "secondhand_item",
-            "id": row.get("id"),
-            "name": row.get("title") or row.get("itemName"),
-            "category": row.get("categoryName"),
-            "price": row.get("price"),
-            "condition": row.get("condition") or row.get("conditionText"),
-            "status": row.get("status"),
-            "sellerName": row.get("sellerName") or row.get("publisherName"),
-            "location": row.get("location"),
-            "description": row.get("description"),
-            "viewCount": row.get("viewCount"),
-            "imageUrl": image_url,
         }
 
     def _dedupe_results(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

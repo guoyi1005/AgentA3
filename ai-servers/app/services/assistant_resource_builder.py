@@ -23,16 +23,14 @@ BUSINESS_CARD_FIELDS: Dict[str, Tuple[str, ...]] = {
     "meeting": ("businessId", "title", "startTime", "endTime", "location", "status"),
     "dining": ("businessId", "name", "category", "location", "openingHours", "rating", "priceRange", "imageUrl"),
     "facility": ("businessId", "name", "category", "location", "openingHours", "status", "longitude", "latitude"),
-    "secondhand": ("businessId", "title", "category", "price", "condition", "status", "createdAt", "imageUrl"),
 }
-_APP_DETAIL_RESOURCE_KINDS = {"course", "activity", "meeting", "secondhand"}
+_APP_DETAIL_RESOURCE_KINDS = {"course", "activity", "meeting"}
 
 _KIND_ALIASES = {
     "course": "course", "course_schedule": "course", "course_schedule_summary": "course",
     "activity": "activity", "meeting": "meeting",
     "dining": "dining", "restaurant": "dining", "stall": "dining", "dish": "dining", "coupon": "dining",
     "facility": "facility", "facility_location": "facility",
-    "secondhand": "secondhand", "secondhand_item": "secondhand",
 }
 _FIELD_ALIASES = {
     ("course", "businessId"): ("businessId", "courseId", "id"),
@@ -58,8 +56,6 @@ _FIELD_ALIASES = {
     ("facility", "businessId"): ("businessId", "facilityId", "id"),
     ("facility", "name"): ("name", "title"),
     ("facility", "category"): ("category", "facilityTypeName"),
-    ("secondhand", "businessId"): ("businessId", "itemId", "id"),
-    ("secondhand", "title"): ("title", "name"),
 }
 _SAFE_RESOURCE_METADATA = {
     "source", "sourceId", "sourceType", "sourceVersion", "retrievedAt",
@@ -649,7 +645,7 @@ def _business_summary(kind, payload):
     fields = {
         "course": ("teacherName", "weekday", "classroom"), "activity": ("category", "startTime", "location"),
         "meeting": ("startTime", "location", "status"), "dining": ("category", "location", "openingHours"),
-        "facility": ("category", "location", "status"), "secondhand": ("category", "price", "condition"),
+        "facility": ("category", "location", "status"),
     }[kind]
     return _text(" · ".join(str(payload[field]) for field in fields if payload.get(field) not in (None, "")), 400)
 

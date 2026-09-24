@@ -993,7 +993,6 @@ function trimDuplicateListForCards(content, cards) {
   const kind = cards[0]?.kind
   const labels = {
     activity: '活动',
-    secondhand: '二手物品',
     course: '课程',
     meeting: '会议',
     dining: '餐饮',

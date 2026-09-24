@@ -11,7 +11,7 @@
           <slot name="left">
             <view
               v-if="showBack"
-              class="market-back-button"
+              class="nav-back-button"
               @click="onBack"
             >
               <text class="nav-back-icon" :style="{ color: iconColorValue }">{{ backIcon }}</text>
@@ -406,7 +406,7 @@ export default {
 </style>
 
 <style lang="scss">
-.market-back-button {
+.nav-back-button {
   position: relative;
   width: 64rpx;
   height: 64rpx;
@@ -423,7 +423,7 @@ export default {
   transition: background-color 0.18s ease, transform 0.12s ease;
 }
 
-.market-back-button::before {
+.nav-back-button::before {
   content: '';
   width: 20rpx;
   height: 20rpx;
@@ -434,7 +434,7 @@ export default {
   box-sizing: border-box;
 }
 
-.market-back-button:active {
+.nav-back-button:active {
   background: rgba(15, 23, 42, 0.06);
   transform: scale(0.96);
 }

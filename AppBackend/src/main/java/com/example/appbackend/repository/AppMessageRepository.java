@@ -37,16 +37,4 @@ public interface AppMessageRepository extends JpaRepository<AppMessage, Long> {
                                                     @Param("moduleType") String moduleType,
                                                     @Param("eventTypes") Collection<String> eventTypes);
 
-    @Modifying
-    @Query("UPDATE AppMessage am SET am.isRead = true, am.readTime = CURRENT_TIMESTAMP " +
-            "WHERE am.userId = :userId AND am.moduleType = :moduleType " +
-            "AND am.eventType = :eventType AND am.sourceType = :sourceType AND am.isRead = false " +
-            "AND am.sourceId IN (" +
-            "SELECT cm.id FROM ChatMessage cm WHERE cm.sessionId = :sessionId AND cm.senderId <> :userId" +
-            ")")
-    int markChatMessagesReadBySession(@Param("userId") Long userId,
-                                      @Param("sessionId") Long sessionId,
-                                      @Param("moduleType") String moduleType,
-                                      @Param("eventType") String eventType,
-                                      @Param("sourceType") String sourceType);
 }

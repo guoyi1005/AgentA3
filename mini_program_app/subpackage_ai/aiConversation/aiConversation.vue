@@ -491,7 +491,6 @@ const TOOL_LABELS = {
   java_meeting_api: '会议查询工具',
   java_canteen_api: '食堂餐饮查询工具',
   java_facility_api: '设施位置查询工具',
-  java_secondhand_api: '旧物查询工具',
   generated_export_tools: '内容整理工具',
   text_to_markdown_tool: '文本转 Markdown 工具',
   text_to_txt_tool: '文本转 TXT 工具',
@@ -535,7 +534,6 @@ const RESOURCE_KIND_LABELS = {
   meeting: '会议',
   dining: '餐饮',
   facility: '校园设施',
-  secondhand: '二手物品'
 }
 const RESOURCE_ICON_LABELS = {
   image: '图',

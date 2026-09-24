@@ -34,7 +34,7 @@ test('learning package registers student learning pages without disturbing exist
 
   assert.deepEqual(config.preloadRule['pages/index/index'].packages.slice(0, 14), [
     'subpackage_promotion', 'subpackage_forum', 'subpackage_message', 'subpackage_signin',
-    'subpackage_schedule', 'subpackage_lostfound', 'subpackage_facility', 'subpackage_sports',
+    'subpackage_schedule', 'subpackage_facility', 'subpackage_sports',
     'subpackage_teaching', 'subpackage_dormitory', 'subpackage_community', 'subpackage_ai',
     'subpackage_meeting', 'subpackage_notice'
   ])

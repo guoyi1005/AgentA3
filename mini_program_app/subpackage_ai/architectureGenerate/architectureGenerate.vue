@@ -19,7 +19,7 @@
               v-model="description"
               class="architecture-textarea"
               maxlength="2000"
-              placeholder="例如：生成一个校园二手交易系统的整体架构图，包含核心业务流程和数据流向..."
+              placeholder="例如：生成智慧校园就业系统的整体架构图，包含核心业务流程和数据流向..."
               placeholder-class="textarea-placeholder"
               :adjust-position="false"
               :show-confirm-bar="false"

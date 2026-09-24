@@ -15,8 +15,6 @@ public interface AppMessageService {
 
     void markReadByCategory(AppMessageDTO.ReadByCategoryCommand command, Long userId);
 
-    void markLostFoundChatMessagesReadBySession(Long sessionId, Long userId);
-
     AppMessageDTO.MessageVO createIfAbsent(AppMessageDTO.CreateCommand command);
 
     /**

@@ -61,15 +61,6 @@
 				"navigationBarBackgroundColor": "#FFFFFF",
 				"navigationBarTextStyle": "black"
 			}
-		},
-		{
-			"path": "pages/market/message/message",
-			"style": {
-				"navigationBarTitleText": "消息",
-				"navigationStyle": "custom",
-				"navigationBarBackgroundColor": "#FFFFFF",
-				"navigationBarTextStyle": "black"
-			}
 		}
 	],
 	"subPackages": [
@@ -215,15 +206,6 @@
 						"navigationBarBackgroundColor": "#FFFFFF",
 						"navigationBarTextStyle": "black"
 					}
-				},
-				{
-					"path": "lostFoundChatMessages/lostFoundChatMessages",
-					"style": {
-						"navigationBarTitleText": "聊天消息",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
 				}
 			]
 		},
@@ -293,158 +275,6 @@
 					"path": "schedulePeriodSettings/schedulePeriodSettings",
 					"style": {
 						"navigationBarTitleText": "节次时间设置",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				}
-			]
-		},
-		{
-			"root": "subpackage_lostfound",
-			"pages": [
-				{
-					"path": "lostfoundList/lostfoundList",
-					"style": {
-						"navigationBarTitleText": "校园集市",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "marketplaceHome/marketplaceHome",
-					"style": {
-						"navigationBarTitleText": "校园市集",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "marketSearch/marketSearch",
-					"style": {
-						"navigationBarTitleText": "搜索商品",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "marketHotList/marketHotList",
-					"style": {
-						"navigationBarTitleText": "热门商品",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "lostfoundDetail/lostfoundDetail",
-					"style": {
-						"navigationBarTitleText": "详情",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "lostfoundChat/lostfoundChat",
-					"style": {
-						"navigationBarTitleText": "聊天",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "myItems/myItems",
-					"style": {
-						"navigationBarTitleText": "我的市集",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "myMessages/myMessages",
-					"style": {
-						"navigationBarTitleText": "市集消息",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "marketplaceProfile/marketplaceProfile",
-					"style": {
-						"navigationBarTitleText": "我的市集",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "myFavorites/myFavorites",
-					"style": {
-						"navigationBarTitleText": "我的收藏",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "userHomepage/userHomepage",
-					"style": {
-						"navigationBarTitleText": "TA 的主页",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "myPurchases/myPurchases",
-					"style": {
-						"navigationBarTitleText": "我的购买",
-						"navigationStyle": "custom",
-						"app-plus": {
-							"titleNView": false
-						}
-					}
-				},
-				{
-					"path": "marketTradeRecords/marketTradeRecords",
-					"style": {
-						"navigationBarTitleText": "交易记录",
-						"navigationStyle": "custom",
-						"app-plus": {
-							"titleNView": false
-						}
-					}
-				},
-				{
-					"path": "marketBrowseHistory/marketBrowseHistory",
-					"style": {
-						"navigationBarTitleText": "浏览记录",
-						"navigationStyle": "custom",
-						"app-plus": {
-							"titleNView": false
-						}
-					}
-				},
-				{
-					"path": "marketNotifications/marketNotifications",
-					"style": {
-						"navigationBarTitleText": "系统通知",
-						"navigationStyle": "custom",
-						"navigationBarBackgroundColor": "#FFFFFF",
-						"navigationBarTextStyle": "black"
-					}
-				},
-				{
-					"path": "marketTradeNotifications/marketTradeNotifications",
-					"style": {
-						"navigationBarTitleText": "交易通知",
 						"navigationStyle": "custom",
 						"navigationBarBackgroundColor": "#FFFFFF",
 						"navigationBarTextStyle": "black"
@@ -1283,7 +1113,6 @@
 				"subpackage_message",
 				"subpackage_signin",
 				"subpackage_schedule",
-				"subpackage_lostfound",
 				"subpackage_facility",
 				"subpackage_sports",
 				"subpackage_teaching",

@@ -260,8 +260,7 @@ export function resolveBusinessResourceRoute(resource) {
   const routes = {
     course: `/subpackage_schedule/scheduleDetail/scheduleDetail?id=${encodedId}`,
     activity: `/subpackage_community/communityDetail/communityDetail?id=${encodedId}`,
-    meeting: `/subpackage_meeting/meetingDetail/meetingDetail?sessionId=${encodedId}`,
-    secondhand: `/subpackage_lostfound/lostfoundDetail/lostfoundDetail?id=${encodedId}`
+    meeting: `/subpackage_meeting/meetingDetail/meetingDetail?sessionId=${encodedId}`
   }
   return routes[textValue(source.kind).toLowerCase()] || null
 }

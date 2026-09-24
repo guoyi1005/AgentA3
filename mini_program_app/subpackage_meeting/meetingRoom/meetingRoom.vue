@@ -186,7 +186,7 @@ export default {
 			const currentId = this.getCurrentUserId()
 			return !!currentId && meeting?.creatorId != null && String(meeting.creatorId) === currentId
 		},
-		// 登录响应未返回用户 id：优先读本地缓存，缺失时解析 JWT 中的 userId（与 lostfound 模块同款实现）
+		// 登录响应未返回用户 id：优先读本地缓存，缺失时解析 JWT 中的 userId
 		getCurrentUserId() {
 			const user = getUserInfo()
 			const storedId = user?.id || user?.userId

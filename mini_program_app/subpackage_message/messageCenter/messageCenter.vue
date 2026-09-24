@@ -21,33 +21,7 @@
         <text class="section-title">{{ activeModuleLabel }}</text>
       </view>
 
-      <view v-if="activeModule === 'LOST_FOUND'" class="category-list">
-        <view
-          v-for="entry in lostFoundEntries"
-          :key="entry.type"
-          class="category-item"
-          :class="{ disabled: entry.disabled }"
-          @click="openCategory(entry)"
-        >
-          <view class="category-icon" :class="entry.iconClass">
-            <image class="category-icon-img" src="/static/icons/line/message-circle.svg" mode="aspectFit" />
-            <view v-if="entry.unreadCount > 0" class="unread-dot"></view>
-          </view>
-          <view class="category-body">
-            <view class="category-row">
-              <text class="category-title">{{ entry.title }}</text>
-              <text class="category-time">{{ entry.timeText }}</text>
-            </view>
-            <text class="category-desc">{{ entry.desc }}</text>
-          </view>
-          <view class="category-right">
-            <text v-if="entry.unreadCount > 0" class="category-count">{{ formatCount(entry.unreadCount) }}</text>
-            <text class="category-arrow">›</text>
-          </view>
-        </view>
-      </view>
-
-      <view v-else-if="activeModule === 'EXAM'" class="category-list">
+      <view v-if="activeModule === 'EXAM'" class="category-list">
         <view
           v-for="entry in examEntries"
           :key="entry.id"
@@ -118,22 +92,18 @@ import { refreshMessageState } from '@/utils/messageStore'
 import { getForumMessageUnread } from '@/api/forum.js'
 import { markForumCategoryRead, isForumCategoryRead } from '@/utils/storage.js'
 
-const LOST_FOUND_TRADE_EVENTS = ['TRADE_INTENT', 'TRADE_CONFIRM', 'TRADE_COMPLETE', 'TRADE_CANCEL']
-
 export default {
   components: { NavBar },
   data() {
     return {
       loading: false,
       messages: [],
-      unreadCount: 0,
       examUnreadCount: 0,
-      activeModule: 'LOST_FOUND',
+      activeModule: 'FORUM',
       forumCommentCount: 0,
       forumLikeCount: 0,
       forumSystemCount: 0,
       modules: [
-        { type: 'LOST_FOUND', label: '旧物交易' },
         { type: 'FORUM', label: '论坛' },
         { type: 'EXAM', label: '题库' },
         { type: 'MEETING', label: '会议' },
@@ -145,18 +115,6 @@ export default {
     activeModuleLabel() {
       const item = this.modules.find((module) => module.type === this.activeModule)
       return item ? item.label : '消息'
-    },
-    lostFoundMessages() {
-      return this.messages.filter((item) => item.moduleType === 'LOST_FOUND')
-    },
-    chatMessages() {
-      return this.lostFoundMessages.filter((item) => item.eventType === 'CHAT_MESSAGE')
-    },
-    tradeMessages() {
-      return this.lostFoundMessages.filter((item) => this.isTradeEvent(item.eventType))
-    },
-    systemMessages() {
-      return this.lostFoundMessages.filter((item) => !this.isTradeEvent(item.eventType) && item.eventType !== 'CHAT_MESSAGE')
     },
     examMessages() {
       return this.messages.filter((item) => item.moduleType === 'EXAM')
@@ -197,46 +155,6 @@ export default {
           url: '/subpackage_message/messageCategory/messageCategory?type=system'
         }
       ]
-    },
-    lostFoundEntries() {
-      const chatUnread = this.countUnread(this.chatMessages)
-      const tradeUnread = this.countUnread(this.tradeMessages)
-      const systemUnread = this.countUnread(this.systemMessages)
-      const latestSystemMessage = this.latestMessage(this.systemMessages)
-      return [
-        {
-          type: 'chat',
-          title: '聊天消息',
-          desc: chatUnread > 0 ? `你有 ${chatUnread} 条新的用户来信` : '查看旧物交易中的用户来信',
-          unreadCount: chatUnread,
-          latestTime: this.latestTime(this.chatMessages),
-          timeText: this.formatTime(this.latestTime(this.chatMessages)),
-          iconClass: 'chat-icon',
-          url: '/subpackage_message/lostFoundChatMessages/lostFoundChatMessages'
-        },
-        {
-          type: 'trade',
-          title: '交易提醒',
-          desc: tradeUnread > 0 ? `你有 ${tradeUnread} 条交易状态提醒` : '购买意向、交易确认、交易完成',
-          unreadCount: tradeUnread,
-          latestTime: this.latestTime(this.tradeMessages),
-          timeText: this.formatTime(this.latestTime(this.tradeMessages)),
-          iconClass: 'trade-icon',
-          url: '/subpackage_lostfound/marketTradeNotifications/marketTradeNotifications'
-        },
-        {
-          type: 'system',
-          title: '其他提醒',
-          desc: systemUnread > 0 ? `你有 ${systemUnread} 条系统提醒` : '联系方式交换等辅助提醒',
-          unreadCount: systemUnread,
-          latestTime: this.latestTime(this.systemMessages),
-          timeText: this.formatTime(this.latestTime(this.systemMessages)),
-          iconClass: 'system-icon',
-          message: latestSystemMessage,
-          url: this.messageTargetUrl(latestSystemMessage),
-          disabled: this.systemMessages.length === 0
-        }
-      ]
     }
   },
   async onLoad() {
@@ -263,7 +181,6 @@ export default {
     async loadUnreadCount() {
       try {
         const res = await getAppMessageUnreadCount()
-        this.unreadCount = Number(res?.data?.lostFound || 0)
         this.examUnreadCount = Number(res?.data?.exam || 0)
       } catch (e) {
         console.error('加载未读数量失败', e)
@@ -305,12 +222,6 @@ export default {
         uni.showToast({ title: '暂无相关消息', icon: 'none' })
         return
       }
-      if (entry.type === 'trade' && entry.unreadCount > 0) {
-        await this.markLostFoundTradeMessagesRead()
-      }
-      if (entry.type === 'system' && entry.unreadCount > 0) {
-        await this.markLostFoundSystemMessagesRead()
-      }
       if (entry.id && !entry.isRead) {
         try {
           await markAppMessageRead(entry.id)
@@ -329,7 +240,6 @@ export default {
       uni.navigateTo({ url })
     },
     moduleUnread(type) {
-      if (type === 'LOST_FOUND') return this.unreadCount
       if (type === 'EXAM') return this.examUnreadCount
       return 0
     },
@@ -354,50 +264,6 @@ export default {
         const current = this.timeValue(item.createTime)
         return current > latest ? current : latest
       }, 0)
-    },
-    latestMessage(list) {
-      return list.reduce((latest, item) => {
-        return this.timeValue(item.createTime) > this.timeValue(latest?.createTime) ? item : latest
-      }, null)
-    },
-    isTradeEvent(type) {
-      return LOST_FOUND_TRADE_EVENTS.includes(type)
-    },
-    async markLostFoundTradeMessagesRead() {
-      try {
-        await markAppMessagesReadByCategory({
-          moduleType: 'LOST_FOUND',
-          eventTypes: LOST_FOUND_TRADE_EVENTS
-        })
-        this.messages = this.messages.map((item) => (
-          item.moduleType === 'LOST_FOUND' && this.isTradeEvent(item.eventType)
-            ? { ...item, isRead: true }
-            : item
-        ))
-        await this.loadUnreadCount()
-        await refreshMessageState('lost-found-trade-app-messages-read')
-      } catch (error) {
-        console.warn('批量标记旧物交易提醒已读失败', error)
-      }
-    },
-    async markLostFoundSystemMessagesRead() {
-      try {
-        const eventTypes = [...new Set(this.systemMessages.map((item) => item.eventType).filter(Boolean))]
-        if (!eventTypes.length) return
-        await markAppMessagesReadByCategory({
-          moduleType: 'LOST_FOUND',
-          eventTypes
-        })
-        this.messages = this.messages.map((item) => (
-          item.moduleType === 'LOST_FOUND' && eventTypes.includes(item.eventType)
-            ? { ...item, isRead: true }
-            : item
-        ))
-        await this.loadUnreadCount()
-        await refreshMessageState('lost-found-system-app-messages-read')
-      } catch (error) {
-        console.warn('批量标记旧物其他提醒已读失败', error)
-      }
     },
     formatCount(value) {
       const count = Number(value || 0)

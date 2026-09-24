@@ -37,15 +37,6 @@
 					</view>
 				</view>
 
-				<view class="home-quick-entry__item" @click="navigate('/subpackage_lostfound/marketplaceHome/marketplaceHome')">
-					<view class="home-quick-entry__icon-wrapper">
-						<image class="home-quick-entry__icon" src="/static/APPIcon/tabbar/clipboard.png" mode="aspectFit" />
-					</view>
-					<view class="home-quick-entry__card">
-						<text class="home-quick-entry__text">失</text>
-					</view>
-				</view>
-
 				<view class="home-quick-entry__item" @click="navigate('/subpackage_forum/forumList/forumList', 'reLaunch')">
 					<view class="home-quick-entry__icon-wrapper">
 						<image class="home-quick-entry__icon home-quick-entry__icon--small" src="/static/APPIcon/tabbar/message-circle.png" mode="aspectFit" />
