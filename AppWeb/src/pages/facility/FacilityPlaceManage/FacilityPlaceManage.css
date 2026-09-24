@@ -72,6 +72,27 @@
   padding-inline: 20px;
 }
 
+.facility-place-page--embedded {
+  padding: 0;
+  background: transparent;
+}
+
+.facility-place-page--embedded .facility-place-toolbar {
+  position: static;
+  min-height: auto;
+  align-items: center;
+  margin: 0 0 16px;
+}
+
+.facility-place-page--embedded.facility-canteen-overview-page .facility-place-toolbar > .ant-space {
+  position: static;
+  margin-left: auto;
+}
+
+.facility-place-page--embedded .facility-place-card {
+  background: #fff;
+}
+
 .facility-place-back {
   height: auto;
   margin: 0 0 8px;

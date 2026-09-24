@@ -23,6 +23,7 @@ import {
 import {
   AimOutlined,
   ApartmentOutlined,
+  BankOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -32,6 +33,7 @@ import {
   FileTextOutlined,
   PlusOutlined,
   ShopOutlined,
+  ThunderboltOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -78,6 +80,7 @@ const SCENE_CONFIG = {
     title: '宿舍管理',
     description: '统一管理宿舍楼、楼层和宿舍房间。',
     rootTypes: [
+      'DORMITORY',
       'MALE_DORMITORY',
       'FEMALE_DORMITORY',
       'STAFF_DORMITORY',
@@ -91,6 +94,7 @@ const TYPE_LABELS = {
   CANTEEN: '食堂',
   SPORTS_GROUND: '运动场',
   TEACHING_BUILDING: '教学楼',
+  DORMITORY: '宿舍楼',
   DORMITORY_BUILDING: '宿舍楼',
   MALE_DORMITORY: '男生宿舍',
   FEMALE_DORMITORY: '女生宿舍',
@@ -123,6 +127,7 @@ const TYPE_LABELS = {
 const CHILD_TYPES = {
   CANTEEN: ['FLOOR'],
   TEACHING_BUILDING: ['FLOOR'],
+  DORMITORY: ['FLOOR'],
   DORMITORY_BUILDING: ['FLOOR'],
   MALE_DORMITORY: ['FLOOR'],
   FEMALE_DORMITORY: ['FLOOR'],
@@ -232,6 +237,7 @@ export default function FacilityPlaceManage({
   rootPlaceId = null,
   managementRootPlaceId = null,
   floorId = null,
+  embedded = false,
 }) {
   const config = SCENE_CONFIG[sceneType]
   const navigate = useNavigate()
@@ -458,8 +464,7 @@ export default function FacilityPlaceManage({
 
   const savePlace = async () => {
     const values = await form.validateFields()
-    const usesSeparateLocationPanel = sceneType === 'CANTEEN' && !rootPlaceId
-    const keepsExistingLocation = usesSeparateLocationPanel || isFloorLevel || isFacilityLevel
+    const keepsExistingLocation = isFloorLevel || isFacilityLevel
     setSaving(true)
     try {
       const payload = {
@@ -482,12 +487,12 @@ export default function FacilityPlaceManage({
         : await createMapPlace(payload)
       const placeId = response.data.id
       await syncImages(placeId)
-      if (!keepsExistingLocation && !isDormitory && values.geometryData?.trim()) {
+      if (!keepsExistingLocation && sceneType === 'SPORTS' && values.geometryData?.trim()) {
         await saveMapPlaceFence(placeId, {
           geometryType: values.geometryType,
           geometryData: values.geometryData.trim(),
         })
-      } else if (!keepsExistingLocation && !isDormitory && editing?.fence) {
+      } else if (!keepsExistingLocation && sceneType === 'SPORTS' && editing?.fence) {
         await deleteMapPlaceFence(placeId)
       }
       message.success(editing ? '点位已更新' : '点位已创建')
@@ -864,7 +869,7 @@ export default function FacilityPlaceManage({
   }
 
   return (
-    <div className={`facility-place-page${isOverview ? ' facility-canteen-overview-page' : ''}`}>
+    <div className={`facility-place-page${isOverview ? ' facility-canteen-overview-page' : ''}${embedded ? ' facility-place-page--embedded' : ''}`}>
       <div className="facility-place-toolbar">
         <div>
           {rootPlace ? (
@@ -877,7 +882,7 @@ export default function FacilityPlaceManage({
                   return
                 }
                 if (managementRootPlaceId) {
-                  navigate(`/facility/${sceneType === 'TEACHING' ? 'teaching' : 'dormitory'}`)
+                  navigate(`/facility/manage?type=${sceneType === 'TEACHING' ? 'teaching' : 'dormitory'}`)
                   return
                 }
                 if (!rootPlaceId) {
@@ -887,18 +892,18 @@ export default function FacilityPlaceManage({
                   return
                 }
                 navigate({
-                  CANTEEN: '/facility/canteen',
-                  SPORTS: '/facility/sports',
-                  TEACHING: '/facility/teaching',
-                  DORMITORY: '/facility/dormitory',
-                }[sceneType] || '/facility/canteen')
+                  CANTEEN: '/facility/manage?type=canteen',
+                  SPORTS: '/facility/manage?type=sports',
+                  TEACHING: '/facility/manage?type=teaching',
+                  DORMITORY: '/facility/manage?type=dormitory',
+                }[sceneType] || '/facility/manage?type=canteen')
               }}
             >
               ← 返回{facilityListLabel}
             </Button>
           ) : null}
-          {!isCanteenOverview && !isRoomManagement ? <h1>{pageTitle}</h1> : null}
-          {pageDescription && !isRoomManagement ? <p>{pageDescription}</p> : null}
+          {!embedded && !isCanteenOverview && !isRoomManagement ? <h1>{pageTitle}</h1> : null}
+          {!embedded && pageDescription && !isRoomManagement ? <p>{pageDescription}</p> : null}
         </div>
         <Space wrap>
           {isRoomManagement ? (
@@ -968,9 +973,13 @@ export default function FacilityPlaceManage({
                 const childLabel = sceneType === 'CANTEEN'
                   ? '个档口'
                   : sceneType === 'SPORTS' ? '个场地' : '个楼层'
-                const overviewActionLabel = sceneType === 'CANTEEN'
-                  ? '进入档口管理'
-                  : sceneType === 'SPORTS' ? '进入平面图管理' : `进入${roomManagerLabel}`
+                const overviewActionLabel = sceneType === 'SPORTS' ? '进入平面图管理' : '地图位置'
+                const overviewSummaryIcon = {
+                  CANTEEN: <ShopOutlined />,
+                  SPORTS: <ThunderboltOutlined />,
+                  TEACHING: <BankOutlined />,
+                  DORMITORY: <ApartmentOutlined />,
+                }[sceneType]
                 return (
                   <Card
                     key={canteen.id}
@@ -978,7 +987,7 @@ export default function FacilityPlaceManage({
                     styles={{ body: { padding: 0 } }}
                   >
                     <div className="facility-canteen-card-image">
-                      <CanteenCarousel images={canteen.images} alt={isDormitory ? '宿舍' : '食堂'} />
+                      <CanteenCarousel images={canteen.images} alt={config.title.replace('管理', '')} />
                       <div className="facility-canteen-image-shade" />
                       <div className="facility-canteen-heading">
                         <h2>{canteen.name}</h2>
@@ -989,7 +998,7 @@ export default function FacilityPlaceManage({
                     </div>
                     <div className="facility-canteen-card-info">
                       <div className="facility-canteen-summary-row">
-                        {isDormitory ? <ApartmentOutlined /> : <ShopOutlined />}
+                        {overviewSummaryIcon}
                         <span><strong>{sceneType === 'CANTEEN' ? (canteen.stallCount ?? 0) : childCount}</strong> {childLabel}</span>
                       </div>
                       <div className="facility-canteen-summary-row">
@@ -1000,12 +1009,8 @@ export default function FacilityPlaceManage({
                     <div className="facility-canteen-actions">
                       <Button
                         type="primary"
-                        icon={isDormitory ? <ApartmentOutlined /> : <ShopOutlined />}
-                        onClick={() => sceneType === 'CANTEEN'
-                          ? navigate(`/facility/canteen/${canteen.id}/stalls`)
-                          : sceneType === 'SPORTS'
-                            ? navigate(`/facility/marker?mapPlaceId=${canteen.id}`)
-                            : enterFacilityManagement(canteen)}
+                        icon={<EnvironmentOutlined />}
+                        onClick={() => navigate(`/facility/marker?mapPlaceId=${canteen.id}`)}
                       >
                         {overviewActionLabel}
                       </Button>
@@ -1014,13 +1019,11 @@ export default function FacilityPlaceManage({
                         placement="bottomRight"
                         menu={{
                           items: [
-                            { key: 'location', icon: <EnvironmentOutlined />, label: '位置管理' },
                             { key: 'edit', icon: <EditOutlined />, label: `编辑${config.title.replace('管理', '')}` },
                             { type: 'divider' },
                             { key: 'delete', icon: <DeleteOutlined />, label: `删除${config.title.replace('管理', '')}`, danger: true },
                           ],
                           onClick: ({ key }) => {
-                            if (key === 'location') navigate(`/facility/marker?mapPlaceId=${canteen.id}`)
                             if (key === 'edit') openEdit(canteen)
                             if (key === 'delete') confirmRemovePlace(canteen)
                           },
@@ -1475,24 +1478,22 @@ export default function FacilityPlaceManage({
                 : (isFloorLevel ? '例如：停水、检修等楼层通知' : undefined)}
             />
           </Form.Item>
-          {!isSimpleEditor && isOutdoorLevel ? (
+          {isOutdoorLevel ? (
             <>
               <Form.Item name="locationDesc" label="位置说明">
                 <Input placeholder="例如：东区体育馆北侧" />
               </Form.Item>
-              {!['TEACHING', 'DORMITORY'].includes(sceneType) ? (
-                <div className="place-form-grid">
-                  <Form.Item name="longitude" label="经度">
-                    <InputNumber min={-180} max={180} precision={7} style={{ width: '100%' }} />
-                  </Form.Item>
-                  <Form.Item name="latitude" label="纬度">
-                    <InputNumber min={-90} max={90} precision={7} style={{ width: '100%' }} />
-                  </Form.Item>
-                  <Form.Item name="mapVisible" label="室外地图显示" valuePropName="checked">
-                    <Switch />
-                  </Form.Item>
-                </div>
-              ) : null}
+              <div className="place-form-grid">
+                <Form.Item name="longitude" label="经度">
+                  <InputNumber min={-180} max={180} precision={7} style={{ width: '100%' }} />
+                </Form.Item>
+                <Form.Item name="latitude" label="纬度">
+                  <InputNumber min={-90} max={90} precision={7} style={{ width: '100%' }} />
+                </Form.Item>
+                <Form.Item name="mapVisible" label="室外地图显示" valuePropName="checked">
+                  <Switch />
+                </Form.Item>
+              </div>
             </>
           ) : null}
           <Form.Item label="图片">

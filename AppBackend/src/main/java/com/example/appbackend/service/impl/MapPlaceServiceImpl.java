@@ -21,13 +21,14 @@ public class MapPlaceServiceImpl implements MapPlaceService {
 
     private static final Set<String> SCENES = Set.of("CANTEEN", "SPORTS", "TEACHING", "DORMITORY", "OTHER");
     private static final Set<String> ROOT_TYPES = Set.of(
-            "CANTEEN", "SPORTS_GROUND", "TEACHING_BUILDING", "DORMITORY_BUILDING",
+            "CANTEEN", "SPORTS_GROUND", "TEACHING_BUILDING", "DORMITORY", "DORMITORY_BUILDING",
             "MALE_DORMITORY", "FEMALE_DORMITORY", "STAFF_DORMITORY", "GUEST_DORMITORY", "RESIDENTIAL_AREA",
             "LANDSCAPE", "ADMIN_BUILDING", "HOSPITAL"
     );
     private static final Map<String, Set<String>> ALLOWED_CHILDREN = Map.ofEntries(
             Map.entry("CANTEEN", Set.of("FLOOR")),
             Map.entry("TEACHING_BUILDING", Set.of("FLOOR")),
+            Map.entry("DORMITORY", Set.of("FLOOR")),
             Map.entry("DORMITORY_BUILDING", Set.of("FLOOR")),
             Map.entry("MALE_DORMITORY", Set.of("FLOOR")),
             Map.entry("FEMALE_DORMITORY", Set.of("FLOOR")),
@@ -50,6 +51,7 @@ public class MapPlaceServiceImpl implements MapPlaceService {
             Map.entry("CANTEEN", "CANTEEN"),
             Map.entry("SPORTS_GROUND", "SPORTS"),
             Map.entry("TEACHING_BUILDING", "TEACHING"),
+            Map.entry("DORMITORY", "DORMITORY"),
             Map.entry("DORMITORY_BUILDING", "DORMITORY"),
             Map.entry("MALE_DORMITORY", "DORMITORY"),
             Map.entry("FEMALE_DORMITORY", "DORMITORY"),

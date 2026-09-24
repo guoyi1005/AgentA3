@@ -1,0 +1,120 @@
+.facility-hub-page {
+  min-height: 100%;
+  padding: 24px;
+  background: #f5f7fa;
+}
+
+.facility-hub-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.facility-hub-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.facility-hub-header h1 {
+  margin: 0;
+  color: #172033;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.facility-hub-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.facility-hub-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.facility-hub-tab {
+  display: flex;
+  min-width: 0;
+  min-height: 74px;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid #e1e7ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.facility-hub-tab:hover {
+  border-color: #b9c7d8;
+  transform: translateY(-1px);
+}
+
+.facility-hub-tab.active {
+  border-color: var(--facility-tab-color);
+  box-shadow: inset 3px 0 0 var(--facility-tab-color);
+}
+
+.facility-hub-tab__icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--facility-tab-color) 12%, white);
+  color: var(--facility-tab-color);
+  font-size: 18px;
+}
+
+.facility-hub-tab__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.facility-hub-tab__copy strong {
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .facility-hub-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .facility-hub-page {
+    padding: 16px;
+  }
+
+  .facility-hub-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .facility-hub-header > .ant-btn {
+    align-self: flex-start;
+  }
+
+  .facility-hub-tabs {
+    grid-template-columns: 1fr;
+  }
+}

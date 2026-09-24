@@ -82,6 +82,20 @@ class MapPlaceServiceImplTest {
     }
 
     @Test
+    void acceptsDormitoryRootTypeWithFloorAndRoomHierarchy() {
+        MapPlaceResponse dormitory = service.create(place("DORMITORY", "DORMITORY", "香樟园", null));
+        MapPlaceResponse floor = service.create(place("DORMITORY", "FLOOR", "一层", dormitory.getId()));
+        service.create(place("DORMITORY", "DORMITORY_ROOM", "101宿舍", floor.getId()));
+
+        MapPlaceResponse detail = service.detail(dormitory.getId());
+        assertEquals("DORMITORY", detail.getPlaceType());
+        assertEquals(1, detail.getChildren().size());
+        assertEquals("FLOOR", detail.getChildren().getFirst().getPlaceType());
+        assertEquals(1, detail.getChildren().getFirst().getChildren().size());
+        assertEquals("101宿舍", detail.getChildren().getFirst().getChildren().getFirst().getName());
+    }
+
+    @Test
     void rejectsInvalidHierarchyAndPartialCoordinates() {
         MapPlaceResponse sports = service.create(place("SPORTS", "SPORTS_GROUND", "第一运动场", null));
 

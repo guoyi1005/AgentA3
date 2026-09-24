@@ -22,7 +22,7 @@ import './MarkerManage.css'
    ============================================================ */
 const AMAP_WEB_KEY = import.meta.env.VITE_AMAP_WEB_KEY || '64bc139adb6a611277fb8f6821b371ac'
 const AMAP_SECURITY_JS_CODE = import.meta.env.VITE_AMAP_SECURITY_JS_CODE || ''
-const DEFAULT_CENTER = { lng: 114.897014, lat: 40.755502 }
+const DEFAULT_CENTER = { lng: 104.146867, lat: 30.674820 }
 const DEFAULT_ZOOM = 16
 
 const STATUS_MAP = {
@@ -48,6 +48,12 @@ const toNum = (v) => {
   if (v == null) return null
   if (typeof v === 'string' && v.trim() === '') return null
   const n = Number(v); return Number.isFinite(n) ? n : null
+}
+const coordinateKey = (lng, lat) => {
+  const normalizedLng = toNum(lng)
+  const normalizedLat = toNum(lat)
+  if (normalizedLng == null || normalizedLat == null) return ''
+  return `${normalizedLng.toFixed(6)},${normalizedLat.toFixed(6)}`
 }
 const roundCoord = (v) => { const n = toNum(v); return n == null ? '' : String(Number(n.toFixed(7))) }
 const isChinaCoord = (l, a) => Number.isFinite(l) && Number.isFinite(a) && l >= 73 && l <= 136 && a >= 3 && a <= 54
@@ -448,7 +454,9 @@ export default function MarkerManage() {
     if (pointRows.length < 30) {
       pointRows.forEach(addPointMarker)
     } else {
-      const pointByPosition = new Map(pointRows.map((item) => [`${item.lng},${item.lat}`, item]))
+      const pointByPosition = new Map(
+        pointRows.map((item) => [coordinateKey(item.lng, item.lat), item]),
+      )
       amapPlugin('AMap.MarkerCluster').then(() => {
         if (cancelled || !window.AMap?.MarkerCluster) return
         const cluster = new window.AMap.MarkerCluster(
@@ -467,7 +475,10 @@ export default function MarkerManage() {
             },
             renderMarker: (context) => {
               const position = context.marker.getPosition?.()
-              const key = `${toNum(position?.getLng?.() ?? position?.lng)},${toNum(position?.getLat?.() ?? position?.lat)}`
+              const key = coordinateKey(
+                position?.getLng?.() ?? position?.lng,
+                position?.getLat?.() ?? position?.lat,
+              )
               const item = pointByPosition.get(key)
               const node = item
                 ? createMarkerContent(item)

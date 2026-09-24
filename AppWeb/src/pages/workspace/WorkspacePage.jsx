@@ -41,8 +41,8 @@ import './WorkspacePage.css'
 
 const AMAP_WEB_KEY = '64bc139adb6a611277fb8f6821b371ac'
 const DEFAULT_MAP_CENTER = {
-  longitude: 114.897014,
-  latitude: 40.755502,
+  longitude: 104.146867,
+  latitude: 30.674820,
 }
 const DEFAULT_MAP_ZOOM = 16
 const AI_MODALITIES = [

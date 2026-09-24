@@ -36,6 +36,7 @@ import StallManage from './pages/StallManage/StallManage'
 import StallIndoorManage from './pages/StallManage/StallIndoorManage'
 import MarkerManage from './pages/facility/MarkerManage/MarkerManage'
 
+import FacilityManageHub from './pages/facility/FacilityManageHub/FacilityManageHub'
 import PublicFacilityManage from './pages/facility/PublicFacilityManage/PublicFacilityManage'
 
 import FacilityAnalyticsDetail from './pages/facility/AnalyticsDetail/FacilityAnalyticsDetail'
@@ -53,7 +54,15 @@ import './App.css'
 
 // 论坛独立页面路径集合（不走 WorkspacePage）
 const FORUM_INDEPENDENT_PATHS = new Set(['/forum/post', '/forum/comment', '/forum/topic', '/forum/report'])
-const FACILITY_PLACE_PATHS = new Set(['/facility/sports', '/facility/teaching', '/facility/dormitory'])
+const FACILITY_PLACE_PATHS = new Set([
+  '/facility/manage',
+  '/facility/canteen',
+  '/facility/sports',
+  '/facility/teaching',
+  '/facility/dormitory',
+  '/facility/marker',
+  '/facility/public',
+])
 const DISCOUNT_PATHS = new Set(['/discount/merchant', '/discount/activity', '/discount/category'])
 
 function FacilityFloorList({ sceneType }) {
@@ -96,12 +105,13 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route element={<Layout />}>
           <Route path="/home" element={<Home />} />
-          <Route path="/facility/canteen" element={<FacilityPlaceManage sceneType="CANTEEN" />} />
-          <Route path="/facility/sports" element={<FacilityPlaceManage sceneType="SPORTS" />} />
-          <Route path="/facility/teaching" element={<FacilityPlaceManage sceneType="TEACHING" />} />
+          <Route path="/facility/manage" element={<FacilityManageHub />} />
+          <Route path="/facility/canteen" element={<Navigate to="/facility/manage?type=canteen" replace />} />
+          <Route path="/facility/sports" element={<Navigate to="/facility/manage?type=sports" replace />} />
+          <Route path="/facility/teaching" element={<Navigate to="/facility/manage?type=teaching" replace />} />
           <Route path="/facility/teaching/:buildingId/rooms" element={<FacilityFloorList sceneType="TEACHING" />} />
           <Route path="/facility/teaching/:buildingId/rooms/indoor" element={<StallIndoorManage sceneType="TEACHING" />} />
-          <Route path="/facility/dormitory" element={<FacilityPlaceManage sceneType="DORMITORY" />} />
+          <Route path="/facility/dormitory" element={<Navigate to="/facility/manage?type=dormitory" replace />} />
           <Route path="/facility/dormitory/:buildingId/rooms" element={<FacilityFloorList sceneType="DORMITORY" />} />
           <Route path="/facility/dormitory/:buildingId/rooms/indoor" element={<StallIndoorManage sceneType="DORMITORY" />} />
           <Route path="/facility/teaching/:buildingId" element={<TeachingBuildingManage />} />

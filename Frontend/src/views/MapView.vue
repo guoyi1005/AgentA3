@@ -170,6 +170,7 @@ function updateActivePoiScreen() {
 
 function closeActivePoi() {
   activePoi.value = null
+  syncFenceVisibility()
 }
 
 function applyCategoryFilters() {
@@ -183,7 +184,6 @@ function applyCategoryFilters() {
   mapPlaces.value.forEach((place) => {
     const visible = visibleIds.has(String(place.id))
     markerMap[place.id]?.[visible ? 'show' : 'hide']()
-    fenceMap[place.id]?.[visible ? 'show' : 'hide']()
   })
   if (activePoi.value && !visibleIds.has(String(activePoi.value.id))) closeActivePoi()
   fitCampusView()
@@ -262,6 +262,13 @@ const markerMap = {}          /* poi.id → AMap.Marker 映射 */
 const fenceMap = {}           /* poi.id → 围栏覆盖物映射 */
 const mapOverlays = []
 let infoWindow = null         /* 全局信息窗 */
+
+function syncFenceVisibility(activeId = null) {
+  const normalizedActiveId = activeId == null ? null : String(activeId)
+  Object.entries(fenceMap).forEach(([id, overlay]) => {
+    overlay[String(id) === normalizedActiveId ? 'show' : 'hide']()
+  })
+}
 
 const indoorOpen = ref(false)
 const indoorLoading = ref(false)
@@ -674,6 +681,7 @@ async function selectPoi(poi, marker) {
     const response = await getMapPlaceDetail(poi.id)
     const detail = response?.data ? toMapPoi(response.data) : poi
     activePoi.value = detail
+    syncFenceVisibility(detail.id)
     /* 使用页面右侧的统一详情卡，避免同时出现高德默认信息窗。 */
     infoWindow?.close()
     await nextTick()
@@ -762,6 +770,7 @@ async function initMap() {
       }
       if (fenceOverlay) {
         mapInstance.add(fenceOverlay)
+        fenceOverlay.hide()
         mapOverlays.push(fenceOverlay)
         fenceMap[poi.id] = fenceOverlay
       }
@@ -787,11 +796,9 @@ async function initMap() {
 
       marker.on('click', (event) => {
         event?.originEvent?.stopPropagation?.()
-        if (poi.sceneType !== 'CANTEEN') return
         togglePoi(poi, marker)
       })
       fenceOverlay?.on('click', () => {
-        if (poi.sceneType !== 'CANTEEN') return
         mapInstance.setZoomAndCenter(Math.max(mapInstance.getZoom() || MAP_ZOOM, MAP_ZOOM), [poi.lng, poi.lat])
         selectPoi(poi, marker)
       })

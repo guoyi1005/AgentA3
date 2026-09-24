@@ -27,16 +27,17 @@ export const portalGroups = [
   {
     label: '校园设施',
     items: [
-      { path: '/facility/canteen', label: '食堂管理', icon: 'shop', pageKey: 'facility-canteen' },
+      { path: '/facility/manage', label: '设施管理', icon: 'appstore' },
+      { path: '/facility/marker', label: '地图点位', icon: 'pushpin', pageKey: 'facility-marker' },
+      { path: '/facility/canteen', label: '食堂管理', icon: 'shop', pageKey: 'facility-canteen', hidden: true },
       { path: '/facility/restaurant', label: '档口管理', icon: 'shop', pageKey: 'facility-restaurant', hidden: true },
       { path: '/facility/stall-dish', label: '档口菜品管理', icon: 'shop', pageKey: 'facility-stall-dish', hidden: true },
-      { path: '/facility/sports', label: '运动场设置', icon: 'thunder', pageKey: 'facility-sports' },
-      { path: '/facility/teaching', label: '教学楼设置', icon: 'bank', pageKey: 'facility-teaching' },
-      { path: '/facility/dormitory', label: '宿舍设置', icon: 'home', pageKey: 'facility-dormitory' },
-      { path: '/facility/marker', label: '标点管理', icon: 'pushpin', pageKey: 'facility-marker' },
-     { path: '/facility/public', label: '公共设施设置', icon: 'appstore' },
-      { path: '/facility/analytics', label: '设施统计', icon: 'bar-chart', pageKey: 'facility-analytics' },
-      { path: '/facility/nav-analytics', label: '导航统计', icon: 'line-chart', pageKey: 'map-analytics' },
+      { path: '/facility/sports', label: '运动场设置', icon: 'thunder', pageKey: 'facility-sports', hidden: true },
+      { path: '/facility/teaching', label: '教学楼设置', icon: 'bank', pageKey: 'facility-teaching', hidden: true },
+      { path: '/facility/dormitory', label: '宿舍设置', icon: 'home', pageKey: 'facility-dormitory', hidden: true },
+      { path: '/facility/public', label: '公共设施设置', icon: 'appstore', hidden: true },
+      { path: '/facility/analytics', label: '设施统计', icon: 'bar-chart', pageKey: 'facility-analytics', hidden: true },
+      { path: '/facility/nav-analytics', label: '导航统计', icon: 'line-chart', pageKey: 'map-analytics', hidden: true },
     ],
   },
   {
@@ -104,7 +105,7 @@ export const navigationSections = portalGroups
 export const moduleCards = [
   { title: '校园活动', description: '活动发布、分类与基础报名管理', route: '/activity/manage' },
   { title: '校园论坛', description: '帖子、评论、话题与内容治理', route: '/forum/post' },
-  { title: '校园设施', description: '食堂、运动场、教学楼、宿舍管理与地图标点维护', route: '/facility/canteen' },
+  { title: '校园设施', description: '维护移动端校园地图使用的设施与空间层级', route: '/facility/manage' },
   { title: '校园特惠', description: '商家、优惠活动与分类运营', route: '/discount/merchant' },
   { title: '会议模块', description: '查看会议历史、转写记录和会议智能体结果', route: '/meeting/history' },
   { title: 'AI 模块', description: '维护 AI 模型配置、智能体开关和默认模型', route: '/ai/model' },
@@ -505,15 +506,15 @@ export const getNavMetaByPath = (path) => {
 const drilldownBreadcrumbs = [
   {
     match: /^\/facility\/canteen\/[^/]+\/stalls$/,
-    items: ['校园设施', { label: '食堂管理', path: '/facility/canteen' }, '档口管理'],
+    items: ['校园设施', { label: '设施管理', path: '/facility/manage?type=canteen' }, '档口管理'],
   },
   {
     match: /^\/facility\/restaurant$/,
-    items: ['校园设施', { label: '食堂管理', path: '/facility/canteen' }, '档口管理'],
+    items: ['校园设施', { label: '设施管理', path: '/facility/manage?type=canteen' }, '档口管理'],
   },
   {
     match: /^\/facility\/stall-dish$/,
-    items: ['校园设施', { label: '食堂管理', path: '/facility/canteen' }, '档口菜品管理'],
+    items: ['校园设施', { label: '设施管理', path: '/facility/manage?type=canteen' }, '档口菜品管理'],
   },
   {
     match: /^\/facility\/analytics\/[^/]+$/,
@@ -543,7 +544,7 @@ export const getBreadcrumbByPath = (path) => {
   if (/^\/facility\/canteen\/[^/]+\/stalls$/.test(normalizedPath)) {
     return [
       '校园设施',
-      { label: '食堂管理', path: '/facility/canteen' },
+      { label: '设施管理', path: '/facility/manage?type=canteen' },
       { label: '档口管理' },
     ]
   }
@@ -551,7 +552,7 @@ export const getBreadcrumbByPath = (path) => {
   if (/^\/facility\/teaching\/[^/]+$/.test(normalizedPath)) {
     return [
       '校园设施',
-      { label: '教学楼设置', path: '/facility/teaching' },
+      { label: '设施管理', path: '/facility/manage?type=teaching' },
       { label: '教学楼详情' },
     ]
   }
@@ -560,7 +561,7 @@ export const getBreadcrumbByPath = (path) => {
   if (teachingFloorMatch) {
     return [
       '校园设施',
-      { label: '教学楼设置', path: '/facility/teaching' },
+      { label: '设施管理', path: '/facility/manage?type=teaching' },
       { label: '教学楼详情', path: `/facility/teaching/${teachingFloorMatch[1]}` },
       { label: '房间管理' },
     ]
@@ -570,7 +571,7 @@ export const getBreadcrumbByPath = (path) => {
   if (indoorMatch) {
     return [
       '校园设施',
-      { label: '食堂管理', path: '/facility/canteen' },
+      { label: '设施管理', path: '/facility/manage?type=canteen' },
       { label: '档口管理', path: `/facility/canteen/${indoorMatch[1]}/stalls` },
       { label: '楼层档口定位' },
     ]
@@ -580,7 +581,7 @@ export const getBreadcrumbByPath = (path) => {
   if (teachingIndoorMatch) {
     return [
       '校园设施',
-      { label: '教学楼设置', path: '/facility/teaching' },
+      { label: '设施管理', path: '/facility/manage?type=teaching' },
       { label: '楼层教室定位' },
     ]
   }
@@ -588,7 +589,7 @@ export const getBreadcrumbByPath = (path) => {
   if (/^\/facility\/teaching\/[^/]+\/rooms$/.test(normalizedPath)) {
     return [
       '校园设施',
-      { label: '教学楼设置', path: '/facility/teaching' },
+      { label: '设施管理', path: '/facility/manage?type=teaching' },
       { label: '楼层列表' },
     ]
   }
@@ -596,7 +597,7 @@ export const getBreadcrumbByPath = (path) => {
   if (/^\/facility\/dormitory\/[^/]+\/rooms\/indoor$/.test(normalizedPath)) {
     return [
       '校园设施',
-      { label: '宿舍设置', path: '/facility/dormitory' },
+      { label: '设施管理', path: '/facility/manage?type=dormitory' },
       { label: '楼层房间定位' },
     ]
   }
@@ -604,7 +605,7 @@ export const getBreadcrumbByPath = (path) => {
   if (/^\/facility\/dormitory\/[^/]+\/rooms$/.test(normalizedPath)) {
     return [
       '校园设施',
-      { label: '宿舍设置', path: '/facility/dormitory' },
+      { label: '设施管理', path: '/facility/manage?type=dormitory' },
       { label: '楼层列表' },
     ]
   }
@@ -613,7 +614,7 @@ export const getBreadcrumbByPath = (path) => {
   if (dishManagementMatch) {
     return [
       '校园设施',
-      { label: '食堂管理', path: '/facility/canteen' },
+      { label: '设施管理', path: '/facility/manage?type=canteen' },
       { label: '档口管理', path: `/facility/canteen/${dishManagementMatch[1]}/stalls` },
       { label: '菜品管理' },
     ]
