@@ -87,6 +87,10 @@ services:
       NEO4J_USERNAME: neo4j
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-neo4j-dev-password}
       AI_PYTHON_BASE_URL: ${AI_PYTHON_BASE_URL:-http://host.docker.internal:8081}
+      # AI 面试官所用的 DeepSeek 凭据只从 .env / 环境变量读取，仓库内不保存密钥。
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
       FILE_BASE_URL: ${FILE_BASE_URL:-http://localhost}
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:-}
     extra_hosts:

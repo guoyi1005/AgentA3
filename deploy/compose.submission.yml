@@ -110,6 +110,10 @@ services:
       APP_CREDENTIAL_ENCRYPTION_KEY: ${APP_CREDENTIAL_ENCRYPTION_KEY:-smart-campus-local-credential-encryption-key-change-me}
       AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:?AI_INTERNAL_TOKEN must be set}
       AI_PYTHON_BASE_URL: http://ai-server:8081
+      # AI 面试官所用的 DeepSeek 凭据由 deploy/.env（已忽略）或 shell 环境注入。
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
       AI_PYTHON_TIMEOUT_SECONDS: ${AI_PYTHON_TIMEOUT_SECONDS:-65}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
