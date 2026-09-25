@@ -8,7 +8,7 @@ import {
   ShopOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons'
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import FacilityPlaceManage from '../FacilityPlaceManage/FacilityPlaceManage'
 import './FacilityManageHub.css'
 
@@ -47,7 +47,6 @@ const FACILITY_TYPES = [
     label: '其他',
     icon: AppstoreOutlined,
     color: '#64748b',
-    route: '/facility/public',
   },
 ]
 
@@ -60,15 +59,7 @@ export default function FacilityManageHub() {
   }, [searchParams])
 
   const changeType = (item) => {
-    if (item.route) {
-      navigate(item.route)
-      return
-    }
     setSearchParams({ type: item.key }, { replace: true })
-  }
-
-  if (activeType.route) {
-    return <Navigate to={activeType.route} replace />
   }
 
   return (

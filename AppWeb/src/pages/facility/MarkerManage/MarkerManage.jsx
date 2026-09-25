@@ -53,7 +53,7 @@ const coordinateKey = (lng, lat) => {
   const normalizedLng = toNum(lng)
   const normalizedLat = toNum(lat)
   if (normalizedLng == null || normalizedLat == null) return ''
-  return `${normalizedLng.toFixed(6)},${normalizedLat.toFixed(6)}`
+  return `${(normalizedLng + 1e-9).toFixed(6)},${(normalizedLat + 1e-9).toFixed(6)}`
 }
 const roundCoord = (v) => { const n = toNum(v); return n == null ? '' : String(Number(n.toFixed(7))) }
 const isChinaCoord = (l, a) => Number.isFinite(l) && Number.isFinite(a) && l >= 73 && l <= 136 && a >= 3 && a <= 54
@@ -461,7 +461,11 @@ export default function MarkerManage() {
         if (cancelled || !window.AMap?.MarkerCluster) return
         const cluster = new window.AMap.MarkerCluster(
           map,
-          pointRows.map((item) => ({ lnglat: [item.lng, item.lat], weight: item.selected ? 10 : 1 })),
+        pointRows.map((item) => ({
+          lnglat: [item.lng, item.lat],
+          weight: item.selected ? 10 : 1,
+          extData: item,
+        })),
           {
             gridSize: 60,
             maxZoom: 16,
@@ -475,11 +479,12 @@ export default function MarkerManage() {
             },
             renderMarker: (context) => {
               const position = context.marker.getPosition?.()
+              const storedItem = context.marker.getExtData?.()
               const key = coordinateKey(
-                position?.getLng?.() ?? position?.lng,
-                position?.getLat?.() ?? position?.lat,
+                Array.isArray(position) ? position[0] : position?.getLng?.() ?? position?.lng,
+                Array.isArray(position) ? position[1] : position?.getLat?.() ?? position?.lat,
               )
-              const item = pointByPosition.get(key)
+              const item = storedItem?.marker ? storedItem : pointByPosition.get(key)
               const node = item
                 ? createMarkerContent(item)
                 : createMarkerContent({

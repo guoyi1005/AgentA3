@@ -23,6 +23,7 @@ import {
 import {
   AimOutlined,
   ApartmentOutlined,
+  AppstoreOutlined,
   BankOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
@@ -88,6 +89,17 @@ const SCENE_CONFIG = {
       'RESIDENTIAL_AREA',
     ],
   },
+  OTHER: {
+    title: '其他设施管理',
+    description: '统一管理校医院、博物馆、景观及其他校园点位。',
+    rootTypes: [
+      'HOSPITAL',
+      'MUSEUM',
+      'LANDSCAPE',
+      'ADMIN_BUILDING',
+      'CAMPUS_BOUNDARY',
+    ],
+  },
 }
 
 const TYPE_LABELS = {
@@ -101,6 +113,12 @@ const TYPE_LABELS = {
   STAFF_DORMITORY: '教职工宿舍',
   GUEST_DORMITORY: '外宾宿舍',
   RESIDENTIAL_AREA: '小区',
+  HOSPITAL: '校医院',
+  MUSEUM: '博物馆',
+  LANDSCAPE: '景观',
+  ADMIN_BUILDING: '行政楼',
+  CAMPUS_BOUNDARY: '校园边界',
+  OTHER: '其他',
   FLOOR: '楼层',
   CANTEEN_STALL: '食堂档口',
   DINING_AREA: '就餐区域',
@@ -778,6 +796,7 @@ export default function FacilityPlaceManage({
   const isOverview = !rootPlaceId && !rootPlace && !floorId
   const isSimpleEditor = sceneType === 'CANTEEN' && isOverview
   const isDormitory = sceneType === 'DORMITORY'
+  const isOther = sceneType === 'OTHER'
   const isFloorLevel = Boolean(rootPlaceId) && !floorId
   const isFacilityLevel = Boolean(floorId)
   const isOutdoorLevel = !isFloorLevel && !isFacilityLevel
@@ -813,7 +832,9 @@ export default function FacilityPlaceManage({
           ? '新增教学楼'
           : sceneType === 'DORMITORY'
             ? '新增宿舍楼'
-            : '新增设施'
+            : isOther
+              ? '新增其他点位'
+              : '新增设施'
   const isCanteenOverview = isOverview
   const isRoomManagement = Boolean(rootPlace)
     && !floorId
@@ -835,6 +856,7 @@ export default function FacilityPlaceManage({
     SPORTS: '运动场列表',
     TEACHING: '教学楼列表',
     DORMITORY: '宿舍楼列表',
+    OTHER: '其他点位列表',
   }[sceneType] || '设施列表'
   const isRoomEditor = isRoomManagement && (
     parent?.placeType === 'FLOOR'
@@ -972,13 +994,14 @@ export default function FacilityPlaceManage({
                 const childCount = canteen.children?.length ?? 0
                 const childLabel = sceneType === 'CANTEEN'
                   ? '个档口'
-                  : sceneType === 'SPORTS' ? '个场地' : '个楼层'
+                  : sceneType === 'SPORTS' ? '个场地' : isOther ? '' : '个楼层'
                 const overviewActionLabel = sceneType === 'SPORTS' ? '进入平面图管理' : '地图位置'
                 const overviewSummaryIcon = {
                   CANTEEN: <ShopOutlined />,
                   SPORTS: <ThunderboltOutlined />,
                   TEACHING: <BankOutlined />,
                   DORMITORY: <ApartmentOutlined />,
+                  OTHER: <AppstoreOutlined />,
                 }[sceneType]
                 return (
                   <Card
@@ -999,7 +1022,11 @@ export default function FacilityPlaceManage({
                     <div className="facility-canteen-card-info">
                       <div className="facility-canteen-summary-row">
                         {overviewSummaryIcon}
-                        <span><strong>{sceneType === 'CANTEEN' ? (canteen.stallCount ?? 0) : childCount}</strong> {childLabel}</span>
+                        {isOther ? (
+                          <span>{TYPE_LABELS[canteen.placeType] || canteen.placeType || '其他点位'}</span>
+                        ) : (
+                          <span><strong>{sceneType === 'CANTEEN' ? (canteen.stallCount ?? 0) : childCount}</strong> {childLabel}</span>
+                        )}
                       </div>
                       <div className="facility-canteen-summary-row">
                         <EnvironmentOutlined />
@@ -1043,8 +1070,8 @@ export default function FacilityPlaceManage({
           ) : (
             <Card className="facility-place-card">
               <Empty description={loading
-                ? (isDormitory ? '正在加载宿舍' : '正在加载食堂')
-                : (isDormitory ? '暂无符合条件的宿舍' : '暂无符合条件的食堂')} />
+                ? (isDormitory ? '正在加载宿舍' : isOther ? '正在加载其他点位' : '正在加载食堂')
+                : (isDormitory ? '暂无符合条件的宿舍' : isOther ? '暂无符合条件的其他点位' : '暂无符合条件的食堂')} />
             </Card>
           )}
         </>

@@ -117,12 +117,13 @@ const activePoiScreen = ref({ x: 0, y: 0, panelX: 18, panelY: 18 })
 const mapViewport = ref({ width: 0, height: 0 })
 const selectedNotice = ref('')       /* 搜索选中提示 */
 const categoryExpanded = ref(false)
-const selectedCategories = ref(new Set(['canteen', 'dormitory', 'teaching', 'sports']))
+const selectedCategories = ref(new Set(['canteen', 'dormitory', 'teaching', 'sports', 'other']))
 const categoryItems = [
   { key: 'canteen', label: '食堂', icon: '餐', sceneType: 'CANTEEN' },
   { key: 'dormitory', label: '宿舍楼', icon: '宿', sceneType: 'DORMITORY' },
   { key: 'teaching', label: '教学楼', icon: '学', sceneType: 'TEACHING' },
   { key: 'sports', label: '运动场', icon: '场', sceneType: 'SPORTS' },
+  { key: 'other', label: '其他', icon: '其', sceneType: 'OTHER' },
 ]
 const filterCategoryKeys = categoryItems.map(item => item.key)
 const allCategoriesSelected = computed(() =>
@@ -1040,7 +1041,7 @@ onUnmounted(() => {
       <!-- 选中点位详情面板 -->
       <Transition name="slide-up">
         <div
-          v-if="activePoi?.sceneType === 'CANTEEN'"
+          v-if="activePoi?.images?.[0]?.imageUrl"
           class="poi-panel canteen-panel"
           :style="{ left: `${activePoiScreen.panelX}px`, top: `${activePoiScreen.panelY}px` }"
         >
@@ -1055,19 +1056,11 @@ onUnmounted(() => {
             @keydown.space.prevent="closeActivePoi"
           >
             <img
-              v-if="activePoi.images?.[0]?.imageUrl"
               class="canteen-photo"
               :src="activePoi.images[0].imageUrl"
               :alt="activePoi.name"
               :style="{ objectPosition: `${activePoi.images[0].focusX ?? 50}% ${activePoi.images[0].focusY ?? 50}%` }"
             />
-            <div v-else class="canteen-photo-placeholder" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="16" rx="2" />
-                <circle cx="8.5" cy="9" r="1.5" />
-                <path d="m5 18 5-5 4 4 2-2 3 3" />
-              </svg>
-            </div>
           </div>
         </div>
       </Transition>

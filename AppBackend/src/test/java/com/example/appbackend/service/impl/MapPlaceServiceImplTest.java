@@ -96,6 +96,21 @@ class MapPlaceServiceImplTest {
     }
 
     @Test
+    void acceptsOtherPlaceTypesUsedByCampusMap() {
+        List<String> placeTypes = List.of(
+                "HOSPITAL", "MUSEUM", "LANDSCAPE", "ADMIN_BUILDING", "CAMPUS_BOUNDARY"
+        );
+
+        for (String placeType : placeTypes) {
+            MapPlaceResponse place = service.create(place("OTHER", placeType, placeType + "点位", null));
+            assertEquals("OTHER", place.getSceneType());
+            assertEquals(placeType, place.getPlaceType());
+        }
+
+        assertEquals(placeTypes.size(), service.tree("OTHER").size());
+    }
+
+    @Test
     void rejectsInvalidHierarchyAndPartialCoordinates() {
         MapPlaceResponse sports = service.create(place("SPORTS", "SPORTS_GROUND", "第一运动场", null));
 
