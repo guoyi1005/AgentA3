@@ -164,12 +164,12 @@ function CategoryManage() {
       {/* 主内容 */}
       <main className="manage-main">
         {/* 统计卡片 */}
-        <div className="ac-stat-row ac-stat-row--3">
+        <div className="ac-stat-row ac-stat-row--3 ac-stat-row--minimal">
           {statItems.map((item) => (
             <div
               key={item.key}
-              className="ac-stat-card ac-stat-card--static"
-              style={{ borderTop: `3px solid ${item.color}`, background: item.bg }}
+              className="ac-stat-card ac-stat-card--static ac-stat-card--minimal"
+              style={{ '--ac-stat-color': item.color }}
             >
               <span className="ac-stat-card-icon" style={{ color: item.color }}>{item.icon}</span>
               <span className="ac-stat-card-text">

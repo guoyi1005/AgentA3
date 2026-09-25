@@ -275,15 +275,17 @@ function getTabCount(tabKey) {
 
 
 <template>
-  <div class="my-activities-view">
+  <div class="feature-page my-activities-view">
     <AppTabBar />
     
-    <main class="page">
+    <main class="activities-main">
       <div class="container">
-        <div class="page-header">
-          <h2>我的活动</h2>
-          <p class="header-desc">管理您的活动报名、收藏和参与记录</p>
-        </div>
+        <header class="feature-heading page-header">
+          <div>
+            <h1>我的活动</h1>
+            <p class="header-desc">管理您的活动报名、收藏和参与记录</p>
+          </div>
+        </header>
         
         <div class="tabs-container">
           <div class="tabs">
@@ -1032,6 +1034,261 @@ function getTabCount(tabKey) {
     flex: 1;
     padding: 10px 12px;
     font-size: 12px;
+  }
+}
+
+/* Align the page with the shared soft-brutalism surfaces and controls. */
+.my-activities-view {
+  color: var(--hp-ink);
+  background: var(--hp-bg);
+}
+
+.activities-main {
+  width: min(1400px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 32px 0 56px;
+}
+
+.container {
+  max-width: none;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  margin: 0;
+  color: var(--hp-ink);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.tabs-container {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  animation: none;
+}
+
+.tabs {
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+  padding: 4px;
+  overflow-x: auto;
+  border: 1px solid var(--hp-line);
+  border-radius: 999px;
+  background: var(--hp-cream);
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  color: var(--hp-muted);
+  background: transparent;
+  font-weight: 600;
+}
+
+.tab-btn:hover {
+  color: var(--hp-ink);
+  background: rgba(23, 23, 23, 0.06);
+}
+
+.tab-btn.active {
+  color: var(--hp-ink);
+  background: var(--hp-yellow);
+}
+
+.tab-count {
+  color: inherit;
+  background: rgba(23, 23, 23, 0.09);
+}
+
+.tab-btn.active .tab-count {
+  background: rgba(23, 23, 23, 0.12);
+}
+
+.state-container,
+.empty-container {
+  border: 1px solid rgba(23, 23, 23, 0.18);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
+}
+
+.state-container.error {
+  border-color: #d9b0ab;
+  background: #faf0ee;
+}
+
+.loader {
+  border-color: rgba(23, 23, 23, 0.12);
+  border-top-color: var(--hp-ink);
+}
+
+.retry-btn,
+.go-activities-btn {
+  border: 1px solid var(--hp-ink);
+  border-radius: 999px;
+  color: var(--hp-cream);
+  background: var(--hp-ink);
+}
+
+.retry-btn:hover,
+.go-activities-btn:hover {
+  background: #2f2f2f;
+}
+
+.empty-icon svg {
+  color: #9a948a;
+}
+
+.activity-list {
+  gap: 18px;
+}
+
+.activity-card {
+  padding: 22px;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--hp-r-lg);
+  background: var(--hp-cream);
+  box-shadow: none;
+}
+
+.activity-card:hover {
+  transform: none;
+  border-color: var(--hp-line);
+  background: #fffaf2;
+  box-shadow: none;
+}
+
+.activity-title {
+  color: var(--hp-ink);
+}
+
+.activity-title:hover {
+  color: var(--hp-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.status-upcoming {
+  color: var(--hp-ink);
+  background: var(--hp-yellow);
+}
+
+.status-ongoing {
+  color: var(--hp-ink);
+  background: var(--hp-green);
+}
+
+.status-ended {
+  color: var(--hp-muted);
+  background: rgba(23, 23, 23, 0.08);
+}
+
+.status-full {
+  color: #8f4139;
+  background: #eec3cb;
+}
+
+.info-row,
+.info-icon {
+  color: var(--hp-muted);
+}
+
+.card-footer {
+  border-top-color: rgba(23, 23, 23, 0.12);
+}
+
+.cancel-notice {
+  color: #8a642d;
+}
+
+.highlight-badge {
+  color: var(--hp-ink);
+  background: var(--hp-green);
+}
+
+.btn {
+  min-height: 40px;
+  padding: 0 17px;
+  border: 1px solid rgba(23, 23, 23, 0.28);
+  border-radius: 999px;
+  color: var(--hp-ink);
+  background: transparent;
+  font-weight: 600;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--hp-ink);
+  color: var(--hp-cream);
+  background: var(--hp-ink);
+}
+
+.btn-primary {
+  border: 1px solid var(--hp-ink);
+  color: var(--hp-cream);
+  background: var(--hp-ink);
+}
+
+.btn-primary:hover:not(:disabled) {
+  color: var(--hp-cream);
+  background: #2f2f2f;
+}
+
+.btn-cancel {
+  border-color: #d9b0ab;
+  color: #a54239;
+}
+
+.btn-remove {
+  border-color: #ead5b1;
+  color: #8a642d;
+}
+
+.btn-cert,
+.btn-share,
+.btn-edit,
+.btn-detail {
+  border-color: rgba(23, 23, 23, 0.28);
+  color: var(--hp-ink);
+  background: transparent;
+}
+
+.btn-cancel:hover:not(:disabled),
+.btn-remove:hover:not(:disabled),
+.btn-cert:hover:not(:disabled),
+.btn-share:hover:not(:disabled),
+.btn-edit:hover:not(:disabled),
+.btn-detail:hover:not(:disabled) {
+  border-color: var(--hp-ink);
+  color: var(--hp-cream);
+  background: var(--hp-ink);
+}
+
+@media (max-width: 768px) {
+  .activities-main {
+    width: calc(100% - 32px);
+    padding: 24px 0 40px;
+  }
+
+  .tabs {
+    display: flex;
+    width: 100%;
+  }
+
+  .tab-btn {
+    flex: 1 0 auto;
   }
 }
 </style>

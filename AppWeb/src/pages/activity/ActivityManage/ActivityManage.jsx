@@ -232,13 +232,13 @@ function ActivityManage() {
   return (
     <div className="activity-manage-container">
       <main className="manage-main">
-        <div className="ac-stat-row">
+        <div className="ac-stat-row ac-stat-row--minimal">
           {PHASE_TABS.map((tab) => (
             <button
               key={tab.key}
               type="button"
-              className={`ac-stat-card ${phase === tab.key ? 'active' : ''}`}
-              style={{ borderTop: `3px solid ${tab.color}`, background: tab.bg }}
+              className={`ac-stat-card ac-stat-card--minimal ${phase === tab.key ? 'active' : ''}`}
+              style={{ '--ac-stat-color': tab.color }}
               onClick={() => handlePhaseChange(tab.key)}
             >
               <span className="ac-stat-card-icon" style={{ color: tab.color }}>{tab.icon}</span>
