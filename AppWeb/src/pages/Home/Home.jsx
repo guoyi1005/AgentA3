@@ -397,7 +397,6 @@ function Home() {
   return (
     <div className="home-container">
       <div className="home-toolbar">
-        <p>基于论坛、活动、地图导航、特惠与设施等模块的真实运营数据，帮助管理员快速发现趋势、热度与待办事项。</p>
         <div className="home-toolbar__actions">
           {updatedAt ? <span>更新于 {updatedAt}</span> : null}
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadDashboard}>刷新</Button>

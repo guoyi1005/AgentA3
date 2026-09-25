@@ -393,7 +393,6 @@ function getActivitiesForDay(day) {
         <header class="ca-header">
           <div class="ca-header__copy">
             <h2>校园活动</h2>
-            <p class="ca-header__subtitle">浏览、筛选并报名校园活动</p>
           </div>
           <div class="ca-header__actions">
             <div class="ca-seg ca-seg--view">

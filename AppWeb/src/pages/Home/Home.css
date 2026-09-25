@@ -2,21 +2,15 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: min(100%, calc(100% - 56px));
+  margin-inline: auto;
 }
 
 .home-toolbar {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
-}
-
-.home-toolbar p {
-  margin: 0;
-  max-width: 560px;
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 .home-toolbar__actions {
@@ -375,6 +369,10 @@
 }
 
 @media (max-width: 960px) {
+  .home-container {
+    width: calc(100% - 28px);
+  }
+
   .home-toolbar {
     flex-direction: column;
   }
@@ -390,6 +388,10 @@
 }
 
 @media (max-width: 640px) {
+  .home-container {
+    width: calc(100% - 20px);
+  }
+
   .home-metric-grid--primary,
   .home-metric-grid--secondary,
   .home-dashboard-grid,
