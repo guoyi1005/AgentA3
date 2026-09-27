@@ -137,6 +137,25 @@ if ! "${compose[@]}" up -d --remove-orphans; then
   exit 1
 fi
 
+backend_ready=false
+for attempt in $(seq 1 60); do
+  if "${compose[@]}" exec -T backend curl --fail --silent http://127.0.0.1:8080/actuator/health >/dev/null 2>&1; then
+    backend_ready=true
+    break
+  fi
+  sleep 2
+done
+if [[ "$backend_ready" != "true" ]]; then
+  echo "[deploy] Backend did not become healthy in time; campus activity seed import skipped." >&2
+  dump_deploy_diagnostics
+  exit 1
+fi
+
+if [[ -f deploy/import-campus-activities.sh && -f deploy/seed-campus-activities.sql && -f deploy/campus-activity-images.tar.gz ]]; then
+  echo "[deploy] Importing campus activity demo data."
+  bash deploy/import-campus-activities.sh
+fi
+
 if ! BACKEND_BASE_URL="${BACKEND_BASE_URL:-http://127.0.0.1:${BACKEND_PORT:-18080}}" \
   AI_BASE_URL="${AI_BASE_URL:-http://127.0.0.1:${AI_PORT:-18081}}" \
   WEB_BASE_URL="${WEB_BASE_URL:-http://127.0.0.1:${WEB_PORT:-3000}}" \
